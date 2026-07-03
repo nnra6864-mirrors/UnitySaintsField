@@ -18,6 +18,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
     public partial class TableRenderer
     {
         private const float HeaderSizeWidthIMGUI = 50f;
+        private const float HeaderMenuButtonWidthIMGUI = 20f;
         private const float FooterButtonWidthIMGUI = 20f;
         private const float FooterHeightIMGUI = 22f;
         private const float ControlGapIMGUI = 4f;
@@ -25,6 +26,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
         private const float MinColumnWidthIMGUI = 80f;
         private const float DefaultColumnWidthIMGUI = 120f;
         private const float NonEmptyTableHeightPaddingIMGUI = 18f;
+        private const float RowFoldoutWidthIMGUI = 16f;
 
         private TableTreeViewIMGUI _tableIMGUI;
         private string _tableSignatureIMGUI;
@@ -196,6 +198,11 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                     return SaintsPropertyDrawer.SingleLineHeight;
                 }
 
+                if (!_owner.IsRowExpandedIMGUI(_context, item.id))
+                {
+                    return CollapsedRowHeightIMGUI();
+                }
+
                 float maxHeight = SaintsPropertyDrawer.SingleLineHeight;
                 MultiColumnHeaderState.Column[] columns = multiColumnHeader.state.columns;
                 for (int columnIndex = 0; columnIndex < _context.Columns.Count; columnIndex++)
@@ -206,6 +213,10 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                     }
 
                     float width = Mathf.Max(40f, columns[columnIndex].width);
+                    if (columnIndex == 0)
+                    {
+                        width = Mathf.Max(40f, width - RowFoldoutWidthIMGUI);
+                    }
                     maxHeight = Mathf.Max(maxHeight, _owner.GetCellHeightIMGUI(_context, item.id,
                         _context.Columns[columnIndex], width));
                 }
@@ -221,6 +232,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 #endif
                     item = args.item;
 
+                bool rowExpanded = _owner.IsRowExpandedIMGUI(_context, item.id);
                 for (int visibleColumn = 0; visibleColumn < args.GetNumVisibleColumns(); visibleColumn++)
                 {
                     int columnIndex = args.GetColumn(visibleColumn);
@@ -229,8 +241,20 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                         continue;
                     }
 
-                    _owner.DrawCellIMGUI(args.GetCellRect(visibleColumn), _context, item.id,
-                        _context.Columns[columnIndex]);
+                    Rect cellRect = args.GetCellRect(visibleColumn);
+                    if (visibleColumn == 0)
+                    {
+                        rowExpanded = _owner.DrawRowFoldoutIMGUI(cellRect, _context, item.id, rowExpanded);
+                        cellRect.x += RowFoldoutWidthIMGUI;
+                        cellRect.width = Mathf.Max(0f, cellRect.width - RowFoldoutWidthIMGUI);
+                    }
+
+                    if (cellRect.width <= 0f)
+                    {
+                        continue;
+                    }
+
+                    _owner.DrawCellIMGUI(cellRect, _context, item.id, _context.Columns[columnIndex], rowExpanded);
                 }
             }
 
@@ -811,6 +835,46 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             return $"{context.ArrayProperty.propertyPath}:{context.HasObjectReferencePicker}:{columnSignature}";
         }
 
+        private static float CollapsedRowHeightIMGUI()
+        {
+            return SaintsPropertyDrawer.SingleLineHeight + 2f;
+        }
+
+        private static string GetRowViewKeyIMGUI(SerializedProperty arrayProperty, int rowIndex)
+        {
+            return $"{SerializedUtils.GetUniqueId(arrayProperty)}:{rowIndex}";
+        }
+
+        private bool IsRowExpandedIMGUI(TableContextIMGUI context, int rowIndex)
+        {
+            return SessionState.GetBool(GetRowViewKeyIMGUI(context.ArrayProperty, rowIndex),
+                !context.TableAttribute.DefaultCollapse);
+        }
+
+        private void SetRowExpandedIMGUI(TableContextIMGUI context, int rowIndex, bool expanded)
+        {
+            SessionState.SetBool(GetRowViewKeyIMGUI(context.ArrayProperty, rowIndex), expanded);
+            RefreshTableFoldStateIMGUI();
+        }
+
+        private void SetAllRowsExpandedIMGUI(TableContextIMGUI context, bool expanded)
+        {
+            SerializedProperty arrayProperty = context.ArrayProperty;
+            for (int index = 0; index < arrayProperty.arraySize; index++)
+            {
+                SessionState.SetBool(GetRowViewKeyIMGUI(arrayProperty, index), expanded);
+            }
+
+            RefreshTableFoldStateIMGUI();
+        }
+
+        private void RefreshTableFoldStateIMGUI()
+        {
+            _tableIMGUI?.Reload();
+            GUI.changed = true;
+            EditorWindow.focusedWindow?.Repaint();
+        }
+
         private void NotifyTableChangedIMGUI()
         {
             _tableIMGUI?.Reload();
@@ -826,13 +890,24 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 x = rect.xMax - HeaderSizeWidthIMGUI,
                 width = HeaderSizeWidthIMGUI,
             };
+            Rect menuRect = new Rect(rect)
+            {
+                x = sizeRect.x - HeaderMenuButtonWidthIMGUI - ControlGapIMGUI,
+                width = HeaderMenuButtonWidthIMGUI,
+            };
             Rect foldoutRect = new Rect(rect)
             {
-                width = Mathf.Max(0f, rect.width - HeaderSizeWidthIMGUI - ControlGapIMGUI),
+                width = Mathf.Max(0f,
+                    rect.width - HeaderSizeWidthIMGUI - HeaderMenuButtonWidthIMGUI - ControlGapIMGUI * 2f),
             };
 
             arrayProperty.isExpanded = EditorGUI.Foldout(foldoutRect, arrayProperty.isExpanded, arrayProperty.displayName,
                 true);
+
+            if (GUI.Button(menuRect, "...", EditorStyles.miniButton))
+            {
+                ShowHeaderMenuIMGUI(menuRect, context);
+            }
 
             using (new EditorGUI.DisabledScope(context.TableAttribute.HideAddButton
                                                && context.TableAttribute.HideRemoveButton))
@@ -849,6 +924,23 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                     }
                 }
             }
+        }
+
+        private void ShowHeaderMenuIMGUI(Rect rect, TableContextIMGUI context)
+        {
+            GenericMenu menu = new GenericMenu();
+            if (CanDrawTreeViewIMGUI(context))
+            {
+                menu.AddItem(new GUIContent("Collapse All"), false, () => SetAllRowsExpandedIMGUI(context, false));
+                menu.AddItem(new GUIContent("Expand All"), false, () => SetAllRowsExpandedIMGUI(context, true));
+            }
+            else
+            {
+                menu.AddDisabledItem(new GUIContent("Collapse All"), false);
+                menu.AddDisabledItem(new GUIContent("Expand All"), false);
+            }
+
+            menu.DropDown(rect);
         }
 
         private void DrawBodyIMGUI(Rect rect, TableContextIMGUI context)
@@ -966,7 +1058,43 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             return height;
         }
 
-        private void DrawCellIMGUI(Rect rect, TableContextIMGUI context, int rowIndex, ColumnInfoIMGUI column)
+        private bool DrawRowFoldoutIMGUI(Rect rect, TableContextIMGUI context, int rowIndex, bool expanded)
+        {
+            Rect foldoutRect = new Rect(rect)
+            {
+                width = RowFoldoutWidthIMGUI,
+                height = SaintsPropertyDrawer.SingleLineHeight,
+            };
+
+            using (EditorGUI.ChangeCheckScope changed = new EditorGUI.ChangeCheckScope())
+            using (new ResetIndentScoop())
+            {
+                bool newExpanded = GUI.Toggle(foldoutRect, expanded, GUIContent.none, EditorStyles.foldout);
+                if (changed.changed)
+                {
+                    SetRowExpandedIMGUI(context, rowIndex, newExpanded);
+                    return newExpanded;
+                }
+            }
+
+            return expanded;
+        }
+
+        private void DrawCellIMGUI(Rect rect, TableContextIMGUI context, int rowIndex, ColumnInfoIMGUI column,
+            bool expanded)
+        {
+            if (!expanded)
+            {
+                GUI.BeginGroup(rect);
+                DrawCellContentIMGUI(new Rect(0f, 0f, rect.width, rect.height), context, rowIndex, column);
+                GUI.EndGroup();
+                return;
+            }
+
+            DrawCellContentIMGUI(rect, context, rowIndex, column);
+        }
+
+        private void DrawCellContentIMGUI(Rect rect, TableContextIMGUI context, int rowIndex, ColumnInfoIMGUI column)
         {
             CellContentIMGUI content = GetCellContentIMGUI(context, rowIndex, column);
             if (content.Error != "")
