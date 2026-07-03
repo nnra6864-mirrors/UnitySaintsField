@@ -12,15 +12,19 @@ namespace SaintsField
     [AttributeUsage(AttributeTargets.Field)]
     public class TableAttribute: Attribute, IPlayaAttribute
     {
-        // public readonly bool DefaultExpanded;
-        public readonly bool HideAddButton;
-        public readonly bool HideRemoveButton;
+        // ReSharper disable once FieldCanBeMadeReadOnly.Global
+        public bool HideAddButton;
+        // ReSharper disable once FieldCanBeMadeReadOnly.Global
+        public bool HideRemoveButton;
+        // ReSharper disable once FieldCanBeMadeReadOnly.Global
+        public bool DefaultCollapse;
 
-        public TableAttribute(bool hideAddButton=false, bool hideRemoveButton=false)
+        public TableAttribute(bool hideAddButton=false, bool hideRemoveButton=false, bool defaultCollapse=false)
         {
             // DefaultExpanded = defaultExpanded;
             HideAddButton = hideAddButton;
             HideRemoveButton = hideRemoveButton;
+            DefaultCollapse = defaultCollapse;
         }
     }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.21.4 ##
+
+1.  Add: Table rows now allow to fold/expand just like Unity's list [#402](https://github.com/TylerTemp/SaintsField/issues/402)
+2.  Fix: Table shown an empty row if the target Object has class attributes
+
 ## 5.21.3 ##
 
 1.  Fix: `Tooltip` did not work [#412](https://github.com/TylerTemp/SaintsField/issues/412)

@@ -1,5 +1,4 @@
 #if UNITY_2021_3_OR_NEWER
-using System.Collections.Generic;
 using System.Linq;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.UIToolkitElements;
@@ -33,7 +32,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             };
 
             // FillTableToContainer(result);
-            FillTableToContainer(result);
+            FillTableToContainer(result, tableAttribute.DefaultCollapse);
 
             OnSearchFieldUIToolkit.AddListener(Search);
             result.RegisterCallback<DetachFromPanelEvent>(_ => OnSearchFieldUIToolkit.RemoveListener(Search));
@@ -57,7 +56,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 
         private int _preArraySize;
 
-        private void FillTableToContainer(VisualElement root)
+        private void FillTableToContainer(VisualElement root, bool defaultCollapse)
         {
             SerializedProperty arrayProp = FieldWithInfo.SerializedProperty;
             TableAttribute tableAttribute = FieldWithInfo.PlayaAttributes.OfType<TableAttribute>().First();
@@ -76,6 +75,32 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             UIToolkitUtils.AddContextualMenuManipulator(foldout, arrayProp, () => {});
             root.Add(foldout);
 
+            VisualElement topRightContainer = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row,
+                    // width = 50,
+                    position = Position.Absolute,
+                    top = 0,
+                    right = 0,
+                    height = EditorGUIUtility.singleLineHeight + 2,
+                    // marginLeft = 0,
+                    // alignSelf = Align.FlexEnd,
+                    // marginTop = -18,
+                },
+            };
+            root.Add(topRightContainer);
+
+            Button menuButton = new Button
+            {
+                style =
+                {
+                    backgroundImage = Util.LoadResource<Texture2D>("EllipsisMenu"),
+                },
+            };
+            topRightContainer.Add(menuButton);
+
             IntegerField arraySizeField = new IntegerField
             {
                 isDelayed = true,
@@ -83,15 +108,16 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 style =
                 {
                     width = 50,
-                    position = Position.Absolute,
-                    top = 0,
-                    right = 0,
+                    // position = Position.Absolute,
+                    // top = 0,
+                    // right = 0,
                     // marginLeft = 0,
                     // alignSelf = Align.FlexEnd,
                     // marginTop = -18,
                 },
             };
-            root.Add(arraySizeField);
+            topRightContainer.Add(arraySizeField);
+            // root.Add(arraySizeField);
 
 
             VisualElement foldoutContent = foldout.contentContainer;
@@ -116,6 +142,42 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 
             TableContentElement tableContentElement = new TableContentElement(FieldWithInfo);
             foldout.Add(tableContentElement);
+
+            menuButton.clicked += () =>
+            {
+                GenericDropdownMenu genericDropdownMenu = new GenericDropdownMenu();
+                if(tableContentElement.HasListView())
+                {
+                    genericDropdownMenu.AddItem("Collapse All", false, tableContentElement.CollapseAll);
+                    genericDropdownMenu.AddItem("Expand All", false, tableContentElement.ExpandAll);
+                }
+                else
+                {
+                    genericDropdownMenu.AddDisabledItem("Collapse All", false);
+                    genericDropdownMenu.AddDisabledItem("Expand All", false);
+                }
+                genericDropdownMenu.DropDown(menuButton.worldBound, menuButton,
+#if UNITY_6000_3_OR_NEWER
+                    DropdownMenuSizeMode.Auto
+#else
+                    true
+#endif
+                );
+            };
+
+            if(defaultCollapse)
+            {
+                UIToolkitUtils.OnAttachToPanelOnce(foldout, _ =>
+                {
+                    foldout.schedule.Execute(() =>
+                    {
+                        if (tableContentElement.HasListView())
+                        {
+                            tableContentElement.CollapseAll();
+                        }
+                    });
+                });
+            }
             // tableContentElement.AddToClassList("unity-collection-view--with-border");
 
             arraySizeField.RegisterValueChangedCallback(evt =>
@@ -190,7 +252,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             if (tableAttribute.HideAddButton && tableAttribute.HideRemoveButton)
             {
                 arraySizeField.SetEnabled(false);
-                listViewFooter.style.display = DisplayStyle.None;
+                // listViewFooter.style.display = DisplayStyle.None;
+                listViewFooter.ButtonsContainer.style.display = DisplayStyle.None;
             }
 
             // controls.Add(toolbar);

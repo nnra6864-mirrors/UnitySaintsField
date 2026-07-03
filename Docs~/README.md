@@ -2033,9 +2033,9 @@ UI Toolkit: `Button`, `ShowInInspector` & `Playa*` will work as expected, and `L
 
 **Parameters**:
 
-*   `bool defaultExpanded=false`: Should the foldout be expanded by default?
 *   `bool hideAddButton=false`: Should the add button be hidden?
 *   `bool hideRemoveButton=false`: Shoule the remove button be hidden?
+*   `bool defaultCollapse=false`: Should all the rows be collapsed by default?
 
 ```csharp
 using SaintsField;
@@ -2056,6 +2056,10 @@ public MyStruct[] myStructs;
 ```
 
 [![video](https://github.com/user-attachments/assets/82193a57-c051-4188-950d-9e7a9ee6e08d)](https://github.com/user-attachments/assets/1c574c0c-56e0-4912-8e00-49fb7e29d80c)
+
+You can use foldout on beginning of each row to fold/expand the row. Or use menu on top right to toggle all
+
+[![video](https://github.com/user-attachments/assets/adc6c003-636d-4fe3-a023-ecb160982d3e)](https://github.com/user-attachments/assets/24a011ad-bc06-44d8-b0a2-b12276314781)
 
 **`TableColumn`**
 
@@ -2079,7 +2083,7 @@ public List<MyStruct> myStructs;
 
 ![image](https://github.com/user-attachments/assets/53a20670-c281-49e1-a034-c11d96d270bc)
 
-For UI Toolkit, You can also use `Button`, `ShowInInspector` etc.:
+You can also use `Button`, `ShowInInspector` etc.:
 
 ```csharp
 using SaintsField;

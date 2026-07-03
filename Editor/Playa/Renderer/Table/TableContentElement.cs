@@ -151,6 +151,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 
         private void OnArrayPropertyChanged()
         {
+            bool columnFoldoutRefreshScheduled = false;
+
             SerializedProperty arrayProp = _fieldWithInfo.SerializedProperty;
             int newArraySize = arrayProp.arraySize;
             if (newArraySize == 0)
@@ -188,6 +190,9 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 };
                 multiColumnListView.selectedIndicesChanged += _ => ClearNestedSelectionAndFocusOutsideSelection(multiColumnListView);
 
+
+                multiColumnListView.columns.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
+
                 SerializedProperty firstProp = arrayProp.GetArrayElementAtIndex(0);
                 bool itemIsObject = firstProp.propertyType == SerializedPropertyType.ObjectReference;
 
@@ -211,7 +216,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 
                         arrayItemProp.RegisterValueChangedCallback(evt =>
                         {
-                            var newValue = evt.newValue;
+                            Object newValue = evt.newValue;
                             _tableContentContainer.Clear();
                             _preArraySize = 0;
                             _fieldWithInfo.SerializedProperty.GetArrayElementAtIndex(0).objectReferenceValue = newValue;
@@ -291,98 +296,119 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             thisIsVisible = !hide;
                         }
 
-                        multiColumnListView.columns.Add(new Column
+                        Column curColumn = new Column
                         {
                             name = id,
                             title = columnName,
                             stretchable = true,
                             visible = thisIsVisible,
-                            makeCell = () =>
+                        };
+                        multiColumnListView.columns.Add(curColumn);
+
+                        curColumn.makeCell = MakeTableCellFoldableElement;
+
+                        curColumn.bindCell = (element, index) =>
+                        {
+                            TableCellFoldableElement cellElement = (TableCellFoldableElement)element;
+                            string viewKey = $"{SerializedUtils.GetUniqueId(arrayProp)}:{index}";
+                            cellElement.SetViewKey(viewKey);
+                            RowData currentRowData = new RowData(multiColumnListView, index);
+                            cellElement.userData = currentRowData;
+                            cellElement.ToggleDisplay(false);
+
+                            cellElement.RegisterValueChangedCallback(expand =>
                             {
-                                VisualElement itemContainer = new VisualElement();
-
-                                itemContainer.RegisterCallback<AttachToPanelEvent>(_ => UIToolkitUtils.LoopCheckOutOfScoopFoldout(itemContainer));
-
-                                return itemContainer;
-                            },
-                            bindCell = (element, index) =>
-                            {
-                                MarkElementTreeRowIndex(multiColumnListView, element, index);
-                                SerializedProperty targetProp = ((SerializedProperty)multiColumnListView.itemsSource[index]).Copy();
-                                targetProp.isExpanded = true;
-
-                                Object targetPropValue = targetProp.objectReferenceValue;
-
-                                if (RuntimeUtil.IsNull(targetPropValue))
+                                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                                foreach (TableCellFoldableElement rowCell in multiColumnListView.Query<TableCellFoldableElement>().Build())
                                 {
-                                    ObjectField arrayItemProp = new ObjectField("")
+                                    RowData checkRowData = (RowData)rowCell.userData;
+                                    if (!ReferenceEquals(checkRowData.Owner, currentRowData.Owner)
+                                        || checkRowData.RowIndex != currentRowData.RowIndex)
                                     {
-                                        objectType = _elementType,
-                                    };
-
-                                    element.Clear();
-                                    element.Add(arrayItemProp);
-
-                                    arrayItemProp.RegisterValueChangedCallback(evt =>
-                                    {
-                                        targetProp.objectReferenceValue = evt.newValue;
-                                        targetProp.serializedObject.ApplyModifiedProperties();
-                                        multiColumnListView.Rebuild();
-                                    });
-                                    return;
-                                }
-
-                                SerializedObject targetSerializedObject = new SerializedObject(targetPropValue);
-
-                                Dictionary<string, SerializedProperty> targetPropertyDict = SerializedUtils
-                                    .GetAllField(targetSerializedObject)
-                                    .Where(each => each != null)
-                                    .ToDictionary(each => each.name, each => each.Copy());
-
-                                List<SaintsFieldWithInfo> allSaintsFieldWithInfos =
-                                    new List<SaintsFieldWithInfo>(memberIds.Count);
-
-                                int serCount = 0;
-                                foreach (SaintsFieldWithInfo saintsFieldWithInfo in SaintsEditor
-                                             .HelperGetSaintsFieldWithInfo(_fieldWithInfo.SerializedProperty.serializedObject, targetPropertyDict, null, null, -1, new[]{targetPropValue})
-                                             .Where(saintsFieldWithInfo => memberIds.Contains(saintsFieldWithInfo.MemberId)))
-                                {
-                                    allSaintsFieldWithInfos.Add(saintsFieldWithInfo);
-                                    if (saintsFieldWithInfo.SerializedProperty != null)
-                                    {
-                                        serCount += 1;
+                                        continue;
                                     }
+
+                                    rowCell.SetValueWithoutNotify(expand.newValue);
                                 }
+                            });
+
+                            ScheduleColumnFoldoutRefreshDisplay();
+                            SerializedProperty targetProp = ((SerializedProperty)multiColumnListView.itemsSource[index]).Copy();
+                            targetProp.isExpanded = true;
+
+                            Object targetPropValue = targetProp.objectReferenceValue;
+
+                            if (RuntimeUtil.IsNull(targetPropValue))
+                            {
+                                ObjectField arrayItemProp = new ObjectField("")
+                                {
+                                    objectType = _elementType,
+                                };
 
                                 element.Clear();
+                                element.Add(arrayItemProp);
 
-                                bool saintsRowInline = memberIds.Count == 1;
-                                bool noLabel = serCount <= 1;
-
-                                using(new SaintsRowAttributeDrawer.ForceInlineScoop(saintsRowInline? 1: 0))
+                                arrayItemProp.RegisterValueChangedCallback(evt =>
                                 {
-                                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-                                    foreach (SaintsFieldWithInfo saintsFieldWithInfo in allSaintsFieldWithInfos)
+                                    targetProp.objectReferenceValue = evt.newValue;
+                                    targetProp.serializedObject.ApplyModifiedProperties();
+                                    multiColumnListView.Rebuild();
+                                });
+                                return;
+                            }
+
+                            SerializedObject targetSerializedObject = new SerializedObject(targetPropValue);
+
+                            Dictionary<string, SerializedProperty> targetPropertyDict = SerializedUtils
+                                .GetAllField(targetSerializedObject)
+                                .Where(each => each != null)
+                                .ToDictionary(each => each.name, each => each.Copy());
+
+                            List<SaintsFieldWithInfo> allSaintsFieldWithInfos =
+                                new List<SaintsFieldWithInfo>(memberIds.Count);
+
+                            int serCount = 0;
+                            foreach (SaintsFieldWithInfo saintsFieldWithInfo in SaintsEditor
+                                         .HelperGetSaintsFieldWithInfo(_fieldWithInfo.SerializedProperty.serializedObject, targetPropertyDict, null, null, -1, new[]{targetPropValue})
+                                         .Where(saintsFieldWithInfo => memberIds.Contains(saintsFieldWithInfo.MemberId)))
+                            {
+                                allSaintsFieldWithInfos.Add(saintsFieldWithInfo);
+                                if (saintsFieldWithInfo.SerializedProperty != null)
+                                {
+                                    serCount += 1;
+                                }
+                            }
+
+                            cellElement.Clear();
+
+                            bool saintsRowInline = memberIds.Count == 1;
+                            bool noLabel = serCount <= 1;
+
+                            using(new SaintsRowAttributeDrawer.ForceInlineScoop(saintsRowInline? 1: 0))
+                            {
+                                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                                foreach (SaintsFieldWithInfo saintsFieldWithInfo in allSaintsFieldWithInfos)
+                                {
+                                    foreach (IReadOnlyList<AbsRenderer> renderers in SaintsEditor.HelperMakeRenderer(arrayProp.serializedObject, saintsFieldWithInfo))
                                     {
-                                        foreach (IReadOnlyList<AbsRenderer> renderers in SaintsEditor.HelperMakeRenderer(arrayProp.serializedObject, saintsFieldWithInfo))
+                                        // Debug.Log(renderer);
+                                        // ReSharper disable once InvertIf
+                                        foreach (AbsRenderer renderer in renderers)
                                         {
-                                            // Debug.Log(renderer);
-                                            // ReSharper disable once InvertIf
-                                            foreach (AbsRenderer renderer in renderers)
+                                            renderer.NoLabel = noLabel;
+                                            renderer.InDirectHorizontalLayout = renderer.InAnyHorizontalLayout = true;
+                                            VisualElement fieldElement = renderer.CreateVisualElement(element);
+
+                                            if (fieldElement != null)
                                             {
-                                                renderer.NoLabel = noLabel;
-                                                renderer.InDirectHorizontalLayout = renderer.InAnyHorizontalLayout = true;
-                                                VisualElement fieldElement = renderer.CreateVisualElement(element);
-                                                if (fieldElement != null)
-                                                {
-                                                    element.Add(fieldElement);
-                                                }
+                                                element.Add(fieldElement);
                                             }
                                         }
                                     }
                                 }
                             }
-                        });
+                        };
+                        curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
                     }
                 }
                 else  // item is general
@@ -468,18 +494,38 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                         };
                         multiColumnListView.columns.Add(curColumn);
 
-                        curColumn.makeCell = () =>
-                        {
-                            VisualElement itemContainer = new VisualElement();
-
-                            itemContainer.RegisterCallback<AttachToPanelEvent>(_ => UIToolkitUtils.LoopCheckOutOfScoopFoldout(itemContainer));
-
-                            return itemContainer;
-                        };
-
+                        curColumn.makeCell = MakeTableCellFoldableElement;
                         curColumn.bindCell = (element, index) =>
                         {
-                            MarkElementTreeRowIndex(multiColumnListView, element, index);
+                            TableCellFoldableElement cellElement = (TableCellFoldableElement)element;
+                            RowData currentRowData = new RowData(multiColumnListView, index);
+                            cellElement.userData = currentRowData;
+                            cellElement.ToggleDisplay(false);
+
+                            cellElement.RegisterValueChangedCallback(expand =>
+                            {
+                                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                                foreach (TableCellFoldableElement rowCell in multiColumnListView.Query<TableCellFoldableElement>().Build())
+                                {
+                                    RowData checkRowData = (RowData)rowCell.userData;
+                                    if (!ReferenceEquals(checkRowData.Owner, currentRowData.Owner)
+                                        || checkRowData.RowIndex != currentRowData.RowIndex)
+                                    {
+                                        continue;
+                                    }
+
+                                    rowCell.SetValueWithoutNotify(expand.newValue);
+                                }
+                            });
+                            // UIToolkitUtils.OnAttachToPanelOnce(cellElement, _ =>
+                            // {
+                            //     cellElement.RegisterValueChangedCallback(expand =>
+                            //     {
+                            //         Debug.Log($"{index}/{expand}");
+                            //     });
+                            // });
+
+                            ScheduleColumnFoldoutRefreshDisplay();
                             // Debug.Log($"id={id}/index={index}");
                             SerializedProperty targetProp = (SerializedProperty)multiColumnListView.itemsSource[index];
                             targetProp.isExpanded = true;
@@ -489,8 +535,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             (string error, int index, object value) targetPropValue = Util.GetValue(targetProp, info, thisParentRefreshed);
                             if (targetPropValue.error != "")
                             {
-                                element.Clear();
-                                element.Add(new HelpBox(targetPropValue.error, HelpBoxMessageType.Error));
+                                cellElement.Clear();
+                                cellElement.Add(new HelpBox(targetPropValue.error, HelpBoxMessageType.Error));
                                 return;
                             }
                             Dictionary<string, SerializedProperty> targetSerializedPropertyDict = SerializedUtils.GetPropertyChildren(targetProp)
@@ -514,7 +560,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                 }
                             }
 
-                            element.Clear();
+                            cellElement.Clear();
 
                             bool saintsRowInline = memberIds.Count == 1;
                             bool noLabel = serCount <= 1;
@@ -533,7 +579,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                             VisualElement fieldElement = renderer.CreateVisualElement(element);
                                             if (fieldElement != null)
                                             {
-                                                element.Add(fieldElement);
+                                                cellElement.Add(fieldElement);
                                             }
                                         }
                                         // if(renderer != null)
@@ -550,6 +596,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                 }
                             }
                         };
+                        curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
                     }
                 }
 
@@ -615,8 +662,38 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 });
 
                 _tableContentContainer.Add(multiColumnListView);
+                ScheduleColumnFoldoutRefreshDisplay();
 
                 return;
+
+                void ScheduleColumnFoldoutRefreshDisplay()
+                {
+                    if (columnFoldoutRefreshScheduled)
+                    {
+                        return;
+                    }
+
+                    columnFoldoutRefreshScheduled = true;
+                    multiColumnListView.schedule.Execute(() =>
+                    {
+                        columnFoldoutRefreshScheduled = false;
+                        RefreshColumnFoldoutsDisplay(multiColumnListView);
+                    });
+                }
+
+                TableCellFoldableElement MakeTableCellFoldableElement()
+                {
+                    TableCellFoldableElement itemContainer = new TableCellFoldableElement();
+
+                    itemContainer.RegisterCallback<AttachToPanelEvent>(_ =>
+                    {
+                        UIToolkitUtils.LoopCheckOutOfScoopFoldout(itemContainer.contentContainer);
+                        ScheduleColumnFoldoutRefreshDisplay();
+                    });
+                    itemContainer.RegisterCallback<GeometryChangedEvent>(_ => ScheduleColumnFoldoutRefreshDisplay());
+
+                    return itemContainer;
+                }
             }
 
             if (_preArraySize != newArraySize)
@@ -626,6 +703,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 List<SerializedProperty> source = MakeSource(arrayProp);
                 // Debug.Log($"Refresh set source to {string.Join(", ", source.Select(each => $"{each.propertyPath}/{each.propertyType}"))}");
                 _multiColumnListView.itemsSource = source;
+                _multiColumnListView.Rebuild();
+                _multiColumnListView.schedule.Execute(() => RefreshColumnFoldoutsDisplay(_multiColumnListView));
                 // _multiColumnListView.Rebuild();
                 // _multiColumnListView.schedule.Execute(() =>
                 // {
@@ -643,9 +722,41 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 .Select(arrayProp.GetArrayElementAtIndex).ToList();
         }
 
-        private static void MarkElementTreeRowIndex(VisualElement owner, VisualElement element, int rowIndex)
+        private static void RefreshColumnFoldoutsDisplay(MultiColumnListView multiColumnListView)
         {
-            element.userData = new RowFocusData(owner, rowIndex);
+            Dictionary<int, TableCellFoldableElement> rowToFirstCell = new Dictionary<int, TableCellFoldableElement>();
+            Dictionary<int, float> rowToFirstX = new Dictionary<int, float>();
+
+            foreach (TableCellFoldableElement cell in multiColumnListView.Query<TableCellFoldableElement>().Build())
+            {
+                cell.ToggleDisplay(false);
+
+                // if (!(cell.userData is RowData rowData) || !ReferenceEquals(rowData.Owner, multiColumnListView))
+                // {
+                //     continue;
+                // }
+                RowData rowData = (RowData)cell.userData;
+
+                int rowIndex = rowData.RowIndex;
+                Rect worldBound = cell.worldBound;
+                if (cell.panel == null || cell.resolvedStyle.display == DisplayStyle.None || worldBound.width <= 0)
+                {
+                    continue;
+                }
+
+                if (rowToFirstX.TryGetValue(rowIndex, out float firstX) && !(worldBound.x < firstX))
+                {
+                    continue;
+                }
+
+                rowToFirstX[rowIndex] = worldBound.x;
+                rowToFirstCell[rowIndex] = cell;
+            }
+
+            foreach (TableCellFoldableElement firstCell in rowToFirstCell.Values)
+            {
+                firstCell.ToggleDisplay(true);
+            }
         }
 
         private static void ClearNestedSelectionAndFocusOutsideSelection(MultiColumnListView multiColumnListView)
@@ -705,7 +816,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
         {
             for (VisualElement current = element; current != null; current = current.parent)
             {
-                if (current.userData is RowFocusData rowData && ReferenceEquals(rowData.Owner, owner))
+                if (current.userData is RowData rowData && ReferenceEquals(rowData.Owner, owner))
                 {
                     rowIndex = rowData.RowIndex;
                     return true;
@@ -716,12 +827,12 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             return false;
         }
 
-        private readonly struct RowFocusData
+        private readonly struct RowData
         {
             public readonly VisualElement Owner;
             public readonly int RowIndex;
 
-            public RowFocusData(VisualElement owner, int rowIndex)
+            public RowData(VisualElement owner, int rowIndex)
             {
                 Owner = owner;
                 RowIndex = rowIndex;
@@ -748,6 +859,26 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 return inHeader;
             }
             return !inHeader;
+        }
+
+        public bool HasListView() => _multiColumnListView != null;
+
+        public void CollapseAll()
+        {
+            ToggleFoldableAll(false);
+        }
+
+        public void ExpandAll()
+        {
+            ToggleFoldableAll(true);
+        }
+
+        private void ToggleFoldableAll(bool expand)
+        {
+            foreach (TableCellFoldableElement cell in _multiColumnListView.Query<TableCellFoldableElement>().Build())
+            {
+                cell.value = expand;
+            }
         }
     }
 }

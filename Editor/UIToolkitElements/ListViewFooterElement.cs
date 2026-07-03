@@ -11,6 +11,10 @@ namespace SaintsField.Editor.UIToolkitElements
         public readonly Button AddButton;
         public readonly Button RemoveButton;
 
+        public readonly VisualElement ButtonsContainer;
+
+        public override VisualElement contentContainer { get; }
+
         public ListViewFooterElement()
         {
             if (_containerTree == null)
@@ -19,11 +23,13 @@ namespace SaintsField.Editor.UIToolkitElements
             }
 
             TemplateContainer element = _containerTree.CloneTree();
+            hierarchy.Add(element);
+            contentContainer = element;
 
-            AddButton = element.Q<Button>("saints-add-button");
-            RemoveButton = element.Q<Button>("saints-remove-button");
+            ButtonsContainer = element.Q<VisualElement>("unity-list-view__footer");
 
-            Add(element);
+            AddButton = ButtonsContainer.Q<Button>("saints-add-button");
+            RemoveButton = ButtonsContainer.Q<Button>("saints-remove-button");
         }
     }
 }
