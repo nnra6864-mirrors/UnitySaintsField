@@ -191,7 +191,9 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 multiColumnListView.selectedIndicesChanged += _ => ClearNestedSelectionAndFocusOutsideSelection(multiColumnListView);
 
 
+#if UNITY_6000_0_OR_NEWER
                 multiColumnListView.columns.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
+#endif
 
                 SerializedProperty firstProp = arrayProp.GetArrayElementAtIndex(0);
                 bool itemIsObject = firstProp.propertyType == SerializedPropertyType.ObjectReference;
@@ -408,7 +410,9 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                 }
                             }
                         };
+#if UNITY_6000_0_OR_NEWER
                         curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
+#endif
                     }
                 }
                 else  // item is general
@@ -596,7 +600,9 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                 }
                             }
                         };
+#if UNITY_6000_0_OR_NEWER
                         curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
+#endif
                     }
                 }
 

@@ -1,6 +1,8 @@
 #if UNITY_2021_3_OR_NEWER
 using SaintsField.Editor.Utils;
 using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace SaintsField.Editor.Playa.Renderer.Table
@@ -9,34 +11,54 @@ namespace SaintsField.Editor.Playa.Renderer.Table
     {
         private class NoBubbleContainer : VisualElement, IBindable
         {
-            private static bool IsBoolEvent(EventBase evt)
+            public NoBubbleContainer()
             {
-                return $"{evt}" == "UnityEngine.UIElements.ChangeEvent`1[System.Boolean]";
+                RegisterCallback<ChangeEvent<bool>>(StopBoolChangeEvent);
             }
 
-#if UNITY_2023_2_OR_NEWER
-            // [EventInterest(new System.Type[] {typeof (SerializedPropertyBindEvent)})]
-            protected override void HandleEventBubbleUp(EventBase evt)
+            private static void StopBoolChangeEvent(ChangeEvent<bool> evt)
             {
-                if (IsBoolEvent(evt))
-                {
-                    evt.StopPropagation();
-                    return;
-                }
-                base.HandleEventBubbleUp(evt);
+                evt.StopPropagation();
             }
-#else
-            // [EventInterest(new System.Type[] {typeof (SerializedPropertyBindEvent)})]
-            protected override void ExecuteDefaultActionAtTarget(EventBase evt)
-            {
-                if (IsBoolEvent(evt))
-                {
-                    evt.StopPropagation();
-                    return;
-                }
-                base.ExecuteDefaultActionAtTarget(evt);
-            }
-#endif
+
+// #if UNITY_2023_2_OR_NEWER
+//             private static bool IsBoolEvent(EventBase evt)
+//             {
+//                 return $"{evt}" == "UnityEngine.UIElements.ChangeEvent`1[System.Boolean]";
+//             }
+//
+//             // [EventInterest(new System.Type[] {typeof (SerializedPropertyBindEvent)})]
+//             protected override void HandleEventBubbleUp(EventBase evt)
+//             {
+//                 if (IsBoolEvent(evt))
+//                 {
+//                     evt.StopPropagation();
+//                     return;
+//                 }
+//                 base.HandleEventBubbleUp(evt);
+//             }
+// #else
+//             public NoBubbleContainer()
+//             {
+//                 RegisterCallback<ChangeEvent<bool>>(StopBoolChangeEvent);
+//             }
+//
+//             private static void StopBoolChangeEvent(ChangeEvent<bool> evt)
+//             {
+//                 evt.StopPropagation();
+//             }
+//
+//             // // [EventInterest(new System.Type[] {typeof (SerializedPropertyBindEvent)})]
+//             // protected override void ExecuteDefaultActionAtTarget(EventBase evt)
+//             // {
+//             //     if (IsBoolEvent(evt))
+//             //     {
+//             //         evt.StopPropagation();
+//             //         return;
+//             //     }
+//             //     base.ExecuteDefaultActionAtTarget(evt);
+//             // }
+// #endif
 
             public IBinding binding { get; set; }
             public string bindingPath { get; set; }

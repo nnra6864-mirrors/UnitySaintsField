@@ -96,7 +96,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             {
                 style =
                 {
-                    backgroundImage = Util.LoadResource<Texture2D>("EllipsisMenu"),
+                    backgroundImage = Util.LoadResource<Texture2D>("d__Menu"),
                 },
             };
             topRightContainer.Add(menuButton);
@@ -156,7 +156,12 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                     genericDropdownMenu.AddDisabledItem("Collapse All", false);
                     genericDropdownMenu.AddDisabledItem("Expand All", false);
                 }
-                genericDropdownMenu.DropDown(menuButton.worldBound, menuButton,
+
+                Rect menuBound = menuButton.worldBound;
+#if !UNITY_6000_3_OR_NEWER
+                menuBound.xMin = menuBound.xMax - Mathf.Max(menuBound.width, 120f);
+#endif
+                genericDropdownMenu.DropDown(menuBound, menuButton,
 #if UNITY_6000_3_OR_NEWER
                     DropdownMenuSizeMode.Auto
 #else
