@@ -2059,7 +2059,7 @@ public MyStruct[] myStructs;
 
 You can use foldout on beginning of each row to fold/expand the row. Or use menu on top right to toggle all
 
-[![video](https://github.com/user-attachments/assets/adc6c003-636d-4fe3-a023-ecb160982d3e)](https://github.com/user-attachments/assets/24a011ad-bc06-44d8-b0a2-b12276314781)
+[![video](vlcsnap-2026-07-05-22h42m41s423" src="https://github.com/user-attachments/assets/87169f32-ba3b-4506-8af6-362a67c61ebe)](https://github.com/user-attachments/assets/95c52aad-83d0-492c-9364-5001f3ebfbba)
 
 **`TableColumn`**
 
