@@ -65,6 +65,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             public Type FallbackType;
             public SerializedObject TargetSerializedObject;
             public List<AbsRenderer> Renderers = new List<AbsRenderer>();
+            public string PreviewText = "";
         }
 
         private class TableTreeViewIMGUI :
@@ -1085,9 +1086,17 @@ namespace SaintsField.Editor.Playa.Renderer.Table
         {
             if (!expanded)
             {
-                GUI.BeginGroup(rect);
-                DrawCellContentIMGUI(new Rect(0f, 0f, rect.width, rect.height), context, rowIndex, column);
-                GUI.EndGroup();
+                CellContentIMGUI content = GetCellContentIMGUI(context, rowIndex, column);
+                if (content.Error != "")
+                {
+                    GUI.BeginGroup(rect);
+                    ImGuiHelpBox.Draw(new Rect(0f, 0f, rect.width, rect.height), content.Error, MessageType.Error);
+                    GUI.EndGroup();
+                }
+                else if (GUI.Button(rect, content.PreviewText, EditorStyles.label))
+                {
+                    SetRowExpandedIMGUI(context, rowIndex, true);
+                }
                 return;
             }
 
@@ -1168,6 +1177,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 {
                     content.FallbackProperty = targetProp;
                     content.FallbackType = context.ElementType;
+                    content.PreviewText = "Null";
                     return content;
                 }
 
@@ -1239,6 +1249,10 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                     }
                 }
             }
+
+            content.PreviewText = string.Join(", ", content.Renderers
+                .Select(each => each.GetField("", "field", ""))
+                .Where(each => !string.IsNullOrEmpty(each)));
         }
 
         private void DrawContextErrorIMGUI(Rect position, string error)

@@ -1,7 +1,7 @@
 #if UNITY_2021_3_OR_NEWER
+using System;
 using SaintsField.Editor.Utils;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -21,45 +21,6 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 evt.StopPropagation();
             }
 
-// #if UNITY_2023_2_OR_NEWER
-//             private static bool IsBoolEvent(EventBase evt)
-//             {
-//                 return $"{evt}" == "UnityEngine.UIElements.ChangeEvent`1[System.Boolean]";
-//             }
-//
-//             // [EventInterest(new System.Type[] {typeof (SerializedPropertyBindEvent)})]
-//             protected override void HandleEventBubbleUp(EventBase evt)
-//             {
-//                 if (IsBoolEvent(evt))
-//                 {
-//                     evt.StopPropagation();
-//                     return;
-//                 }
-//                 base.HandleEventBubbleUp(evt);
-//             }
-// #else
-//             public NoBubbleContainer()
-//             {
-//                 RegisterCallback<ChangeEvent<bool>>(StopBoolChangeEvent);
-//             }
-//
-//             private static void StopBoolChangeEvent(ChangeEvent<bool> evt)
-//             {
-//                 evt.StopPropagation();
-//             }
-//
-//             // // [EventInterest(new System.Type[] {typeof (SerializedPropertyBindEvent)})]
-//             // protected override void ExecuteDefaultActionAtTarget(EventBase evt)
-//             // {
-//             //     if (IsBoolEvent(evt))
-//             //     {
-//             //         evt.StopPropagation();
-//             //         return;
-//             //     }
-//             //     base.ExecuteDefaultActionAtTarget(evt);
-//             // }
-// #endif
-
             public IBinding binding { get; set; }
             public string bindingPath { get; set; }
         }
@@ -67,6 +28,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
         public override VisualElement contentContainer { get; }
 
         private readonly Foldout _foldout;
+        private readonly Button _expandDisplayButton;
 
         public TableCellFoldableElement()
         {
@@ -89,7 +51,42 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                     flexShrink = 1,
                 },
             });
+            hierarchy.Add(_expandDisplayButton = new Button(() => value = !value)
+            {
+                text = "",
+                style =
+                {
+                    display = DisplayStyle.None,
+                    flexShrink = 1,
+                    flexGrow = 1,
+                    overflow = Overflow.Hidden,
+                    textOverflow = TextOverflow.Ellipsis,
+                    unityTextAlign = TextAnchor.MiddleLeft,
+                    borderLeftWidth = 0,
+                    borderTopWidth = 0,
+                    borderRightWidth = 0,
+                    borderBottomWidth = 0,
+                    backgroundColor = StyleKeyword.Initial,
+                    marginTop = 0,
+                    marginBottom = 0,
+                    marginLeft = 0,
+                    marginRight = 0,
+                    paddingLeft = 1,
+                    paddingRight = 1,
+                },
+            });
             style.flexDirection = FlexDirection.Row;
+        }
+
+        private Func<string> _getPreviewText;
+
+        public void BindButton(Func<string> getPreviewText)
+        {
+            _getPreviewText = getPreviewText;
+            if (!value)
+            {
+                _expandDisplayButton.text = _getPreviewText.Invoke();
+            }
         }
 
         public void ToggleDisplay(bool on)
@@ -119,6 +116,22 @@ namespace SaintsField.Editor.Playa.Renderer.Table
         {
             _foldout.SetValueWithoutNotify(newValue);
             style.maxHeight = newValue ? StyleKeyword.Initial : EditorGUIUtility.singleLineHeight + 2;
+            if (newValue)
+            {
+                UIToolkitUtils.SetDisplayStyle(contentContainer, DisplayStyle.Flex);
+                UIToolkitUtils.SetDisplayStyle(_expandDisplayButton, DisplayStyle.None);
+            }
+            else
+            {
+                UIToolkitUtils.SetDisplayStyle(contentContainer, DisplayStyle.None);
+                UIToolkitUtils.SetDisplayStyle(_expandDisplayButton, DisplayStyle.Flex);
+
+                string buttonText = _getPreviewText?.Invoke() ?? "";
+                if (_expandDisplayButton.text != buttonText)
+                {
+                    _expandDisplayButton.text = buttonText;
+                }
+            }
         }
 
         public bool value

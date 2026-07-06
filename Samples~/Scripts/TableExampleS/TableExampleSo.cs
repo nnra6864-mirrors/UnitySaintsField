@@ -15,7 +15,7 @@ namespace SaintsField.Samples.Scripts.TableExampleS
         [Serializable]
         public struct MyStruct
         {
-            public Vector2 vector2;
+            public Bounds bounds;
             public Vector2Int vector2Int;
             public Vector3 vector3;
             public Vector3Int vector3Int;

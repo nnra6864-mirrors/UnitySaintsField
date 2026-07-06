@@ -141,26 +141,496 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
             }
 
             ButtonUserDataIMGUI userData = EnsureButtonUserDataIMGUI();
-            TickEnumeratorsIMGUI(userData);
+
+            #region Tick Enumerators
+
+            if (Event.current != null && Event.current.type == EventType.Repaint && userData.Enumerators.Count > 0)
+            {
+                List<Waiter> finishedEnumerators = new List<Waiter>();
+                int oldCounter = userData.Enumerators.Count;
+                float progress = -1f;
+
+                foreach (Waiter waiter in userData.Enumerators)
+                {
+                    waiter.Update();
+
+                    if (!waiter.Done())
+                    {
+                        float curProgress = waiter.GetProgress();
+                        if (curProgress >= 0)
+                        {
+                            progress = Mathf.Max(progress, curProgress);
+                        }
+
+                        continue;
+                    }
+
+                    Waiter.MoveNextResult moveNext = waiter.MoveNext();
+                    if (moveNext.Exception != null)
+                    {
+                        Debug.LogException(moveNext.Exception.InnerException ?? moveNext.Exception);
+                        userData.WaiterHasError = true;
+                        userData.ResultErrors.Add(moveNext.Exception.InnerException?.Message ?? moveNext.Exception.Message);
+                    }
+
+                    if (moveNext.Exception == null && moveNext.Status == Waiter.MoveNextStatus.Pending)
+                    {
+                        waiter.CheckCurrentNeedWaiter();
+                    }
+
+                    if (!_buttonAttribute.HideReturnValue
+                        && moveNext.Status == Waiter.MoveNextStatus.Completed
+                        && moveNext.ReturnType != null
+                        && !userData.ShowReturnValue)
+                    {
+                        userData.ReturnType = moveNext.ReturnType;
+                        userData.ReturnValue = moveNext.ReturnValue;
+                        userData.ShowReturnValue = true;
+                    }
+
+                    if (moveNext.Status != Waiter.MoveNextStatus.Pending)
+                    {
+                        finishedEnumerators.Add(waiter);
+
+                        if (moveNext.Status == Waiter.MoveNextStatus.Completed)
+                        {
+                            userData.WaiterHasFinished = true;
+                        }
+                        else if (moveNext.Status == Waiter.MoveNextStatus.Cancelled)
+                        {
+                            userData.WaiterHasCancel = true;
+                        }
+                    }
+                }
+
+                userData.Enumerators.RemoveAll(each => finishedEnumerators.Contains(each));
+
+                bool stillHaveRunner = userData.Enumerators.Count > 0;
+                if (stillHaveRunner)
+                {
+                    userData.Status = ButtonStatusIMGUI.Loading;
+                    userData.Progress = progress;
+                    userData.StatusHideAt = -1d;
+                }
+                else
+                {
+                    userData.Progress = -1f;
+                    if (oldCounter > 0)
+                    {
+                        if (userData.WaiterHasError)
+                        {
+                            PlayStatusIMGUI(userData,
+                                userData.WaiterHasFinished ? ButtonStatusIMGUI.Warning : ButtonStatusIMGUI.Error);
+                        }
+                        else if (userData.WaiterHasCancel)
+                        {
+                            PlayStatusIMGUI(userData, ButtonStatusIMGUI.Pause);
+                        }
+                        else
+                        {
+                            PlayStatusIMGUI(userData, ButtonStatusIMGUI.Ok);
+                        }
+                    }
+                }
+            }
+
+            #endregion
 
             float parameterHeight = GetParametersHeightIMGUI(userData, position.width);
             (Rect parametersRect, Rect leftRect) = RectUtils.SplitHeightRect(position, parameterHeight);
             if (parameterHeight > Mathf.Epsilon)
             {
-                DrawParametersIMGUI(parametersRect, userData);
+                #region Draw Parameters
+
+                GUI.Box(parametersRect, GUIContent.none);
+
+                Rect contentRect = new Rect(parametersRect)
+                {
+                    x = parametersRect.x + PaddingBox,
+                    y = parametersRect.y + PaddingBox,
+                    width = Mathf.Max(0f, parametersRect.width - PaddingBox * 2f),
+                    height = Mathf.Max(0f, parametersRect.height - PaddingBox * 2f),
+                };
+
+                float y = contentRect.y;
+                foreach ((ParameterInfo parameterInfo, int index) in userData.Parameters.WithIndex())
+                {
+                    float height = GetParameterHeightIMGUI(userData, index, contentRect.width);
+                    Rect parameterRect = new Rect(contentRect)
+                    {
+                        y = y,
+                        height = height,
+                    };
+                    y += height;
+
+                    IMGUIEdit.OnGUI(
+                        parameterRect,
+                        ObjectNames.NicifyVariableName(parameterInfo.Name),
+                        parameterInfo.ParameterType,
+                        userData.ParameterValues[index],
+                        NoBeforeSetIMGUI,
+                        newValue => SetParameterValueIMGUI(userData, index, newValue),
+                        false,
+                        InAnyHorizontalLayout,
+                        userData.ParameterAttributes[index],
+                        FieldWithInfo.Targets,
+                        this,
+                        $"{userData.ButtonId}.{parameterInfo.Name}");
+                }
+
+                #endregion
             }
 
             (Rect buttonRect, Rect resultRect) =
                 RectUtils.SplitHeightRect(leftRect, SaintsPropertyDrawer.SingleLineHeight);
-            DrawButtonAreaIMGUI(buttonRect, preCheckResult, userData);
+
+            #region Draw Button Area
+
+            Rect mainButtonRect = buttonRect;
+            bool showCloseButton = HasResultIMGUI(userData) || userData.Enumerators.Count > 0;
+            Rect closeButtonRect = default;
+            if (showCloseButton)
+            {
+                mainButtonRect.width = Mathf.Max(0f, mainButtonRect.width - CloseButtonWidthIMGUI);
+                closeButtonRect = new Rect(buttonRect)
+                {
+                    x = mainButtonRect.xMax,
+                    width = CloseButtonWidthIMGUI,
+                };
+            }
+
+            using (new EditorGUI.DisabledScope(preCheckResult.IsDisabled))
+            {
+                if (GUI.Button(mainButtonRect, GUIContent.none))
+                {
+                    #region Invoke Button
+
+                    userData.ResultErrors.Clear();
+                    userData.ShowReturnValue = false;
+                    userData.ReturnType = null;
+                    userData.ReturnValue = null;
+                    userData.Enumerators.Clear();
+                    userData.WaiterHasError = false;
+                    userData.WaiterHasFinished = false;
+                    userData.WaiterHasCancel = false;
+                    userData.Progress = -1f;
+                    userData.Status = ButtonStatusIMGUI.None;
+                    userData.StatusHideAt = -1d;
+
+                    SaintsContext.SerializedProperty = _serializedProperty;
+                    int targetCount = FieldWithInfo.Targets.Count;
+                    object[] returnValues = new object[targetCount];
+                    Exception error = null;
+                    bool isStruct = ReflectUtils.TypeIsStruct(FieldWithInfo.Targets[0].GetType());
+
+                    for (int index = 0; index < targetCount; index++)
+                    {
+                        object eachTarget = FieldWithInfo.Targets[index];
+                        (object rawMemberValue, object useTarget) = GetRefreshedTarget(FieldWithInfo, eachTarget);
+
+                        object result;
+                        try
+                        {
+                            result = userData.MethodInfo.Invoke(useTarget, userData.ParameterValues);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                            error = e;
+                            break;
+                        }
+
+                        returnValues[index] = result;
+                        if (isStruct)
+                        {
+                            BackWriteCallback(rawMemberValue, useTarget);
+                        }
+                    }
+
+                    if (error != null)
+                    {
+                        userData.ResultErrors.Add(error.InnerException?.Message ?? error.Message);
+                        PlayStatusIMGUI(userData, ButtonStatusIMGUI.Error);
+                    }
+                    else
+                    {
+                        if (!_buttonAttribute.HideReturnValue
+                            && userData.MethodInfo.ReturnType != typeof(void)
+                            && !typeof(IEnumerator).IsAssignableFrom(userData.MethodInfo.ReturnType)
+                            && !typeof(Task).IsAssignableFrom(userData.MethodInfo.ReturnType)
+#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
+                            && !GetUniTaskReturnInfo(userData.MethodInfo.ReturnType).returnIsUniTask
+#endif
+                           )
+                        {
+                            userData.ReturnType = userData.MethodInfo.ReturnType;
+                            userData.ReturnValue = returnValues[0];
+                            userData.ShowReturnValue = true;
+                        }
+
+                        foreach (object returnValue in returnValues)
+                        {
+                            switch (returnValue)
+                            {
+                                case IEnumerator enumerator:
+                                    userData.Enumerators.Add(new Waiter(enumerator));
+                                    break;
+                                case Task task:
+                                    userData.Enumerators.Add(new Waiter(task));
+                                    break;
+#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
+                                case UniTask uniTask:
+                                    userData.Enumerators.Add(new Waiter(uniTask));
+                                    break;
+#endif
+                                default:
+#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
+                                    if (userData.ReturnIsUniTask && userData.ReturnUniTaskValueType != null)
+                                    {
+                                        userData.Enumerators.Add(Waiter.UniTaskWithValue(returnValue,
+                                            userData.ReturnUniTaskValueType));
+                                    }
+#endif
+                                    break;
+                            }
+                        }
+
+                        if (userData.Enumerators.Count == 0)
+                        {
+                            PlayStatusIMGUI(userData, ButtonStatusIMGUI.Ok);
+                        }
+                        else
+                        {
+                            PlayStatusIMGUI(userData, ButtonStatusIMGUI.Loading);
+                        }
+                    }
+
+                    #endregion
+                }
+
+                #region Draw Button Label
+
+                IReadOnlyList<RichTextDrawer.RichTextChunk> richTextChunks;
+                string useXml = userData.Xml;
+                if (!string.IsNullOrEmpty(userData.Callback))
+                {
+                    (string error, MemberInfo _, string result) = Util.GetOf<string>(userData.Callback, null,
+                        FieldWithInfo.SerializedProperty, FieldWithInfo.MethodInfo, FieldWithInfo.Targets[0], null);
+
+                    if (error != "")
+                    {
+#if SAINTSFIELD_DEBUG
+                        Debug.LogError(error);
+#endif
+                        useXml = ObjectNames.NicifyVariableName(userData.MethodInfo.Name);
+                    }
+                    else
+                    {
+                        useXml = result;
+                    }
+                }
+
+                if (useXml == "")
+                {
+                    userData.RichTextChunksXml = useXml;
+                    userData.RichTextChunks = Array.Empty<RichTextDrawer.RichTextChunk>();
+                    richTextChunks = userData.RichTextChunks;
+                }
+                else
+                {
+                    if (useXml is null)
+                    {
+                        useXml = ObjectNames.NicifyVariableName(userData.MethodInfo.Name);
+                    }
+
+                    if (userData.RichTextChunks != null && userData.RichTextChunksXml == useXml)
+                    {
+                        richTextChunks = userData.RichTextChunks;
+                    }
+                    else
+                    {
+                        userData.Xml = useXml;
+                        userData.RichTextChunksXml = useXml;
+                        userData.RichTextChunks = RichTextDrawer.ParseRichXmlWithProvider(useXml, this).ToArray();
+                        richTextChunks = userData.RichTextChunks;
+                    }
+                }
+
+                if (richTextChunks.Count > 0)
+                {
+                    GUIContent oldLabel = new GUIContent(ObjectNames.NicifyVariableName(FieldWithInfo.MethodInfo.Name));
+                    float drawNeedWidth = userData.RichTextDrawer.GetWidth(oldLabel, mainButtonRect.height, richTextChunks);
+                    Rect drawRect = drawNeedWidth > mainButtonRect.width
+                        ? mainButtonRect
+                        : new Rect(mainButtonRect.x + (mainButtonRect.width - drawNeedWidth) / 2f, mainButtonRect.y,
+                            drawNeedWidth, mainButtonRect.height);
+                    userData.RichTextDrawer.DrawChunks(drawRect, richTextChunks);
+                }
+
+                #endregion
+
+                if (showCloseButton && GUI.Button(closeButtonRect, "x"))
+                {
+                    #region Close Result
+
+                    bool hadRunner = userData.Enumerators.Count > 0;
+                    userData.Enumerators.Clear();
+                    userData.ResultErrors.Clear();
+                    userData.ShowReturnValue = false;
+                    userData.ReturnType = null;
+                    userData.ReturnValue = null;
+                    userData.Progress = -1f;
+
+                    if (hadRunner)
+                    {
+                        PlayStatusIMGUI(userData, ButtonStatusIMGUI.Pause);
+                    }
+
+                    #endregion
+                }
+            }
+
+            #region Draw Status
+
+            if (userData.Status != ButtonStatusIMGUI.None)
+            {
+                if (userData.Status != ButtonStatusIMGUI.Loading
+                    && userData.StatusHideAt > 0d
+                    && EditorApplication.timeSinceStartup > userData.StatusHideAt)
+                {
+                    userData.Status = ButtonStatusIMGUI.None;
+                    userData.StatusHideAt = -1d;
+                }
+                else
+                {
+                    Rect statusRect = new Rect(buttonRect)
+                    {
+                        x = buttonRect.x + 4f,
+                        y = buttonRect.y + (buttonRect.height - StatusSizeIMGUI) / 2f,
+                        width = StatusSizeIMGUI,
+                        height = StatusSizeIMGUI,
+                    };
+
+                    switch (userData.Status)
+                    {
+                        case ButtonStatusIMGUI.Loading:
+                            userData.Loading.Draw(statusRect);
+                            if (userData.Progress >= 0f)
+                            {
+                                #region Draw Progress
+
+                                Rect progressBackRect = new Rect(buttonRect)
+                                {
+                                    x = buttonRect.x + 2f,
+                                    y = buttonRect.yMax - 2f,
+                                    width = Mathf.Max(0f, buttonRect.width - 4f),
+                                    height = 1f,
+                                };
+                                EditorGUI.DrawRect(progressBackRect, new Color(0f, 0f, 0f, 0.25f));
+
+                                Rect progressRect = new Rect(progressBackRect)
+                                {
+                                    width = progressBackRect.width * Mathf.Clamp01(userData.Progress),
+                                };
+                                EditorGUI.DrawRect(progressRect, new Color(0f, 182f / 255f, 1f, 0.75f));
+
+                                #endregion
+                            }
+                            break;
+                        case ButtonStatusIMGUI.Ok:
+                            DrawStatusIconIMGUI(statusRect, StatusOkIconIMGUI, StatusOkColorIMGUI);
+                            break;
+                        case ButtonStatusIMGUI.Error:
+                            DrawStatusIconIMGUI(statusRect, StatusErrorIconIMGUI, StatusErrorColorIMGUI);
+                            break;
+                        case ButtonStatusIMGUI.Warning:
+                            DrawStatusIconIMGUI(statusRect, StatusWarningIconIMGUI, StatusWarningColorIMGUI);
+                            break;
+                        case ButtonStatusIMGUI.Pause:
+                            DrawStatusIconIMGUI(statusRect, StatusPauseIconIMGUI, StatusPauseColorIMGUI);
+                            break;
+                        case ButtonStatusIMGUI.None:
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+            }
+
+            #endregion
+
+            #endregion
 
             float resultHeight = GetResultHeightIMGUI(userData, position.width);
             if (resultHeight > Mathf.Epsilon)
             {
-                DrawResultIMGUI(new Rect(resultRect)
+                #region Draw Result
+
+                Rect drawResultRect = new Rect(resultRect)
                 {
                     height = resultHeight,
-                }, userData);
+                };
+
+                GUI.Box(drawResultRect, GUIContent.none);
+
+                Rect contentRect = new Rect(drawResultRect)
+                {
+                    x = drawResultRect.x + PaddingBox,
+                    y = drawResultRect.y + PaddingBox,
+                    width = Mathf.Max(0f, drawResultRect.width - PaddingBox * 2f),
+                    height = Mathf.Max(0f, drawResultRect.height - PaddingBox * 2f),
+                };
+
+                float y = contentRect.y;
+                foreach (string error in userData.ResultErrors)
+                {
+                    float height = ImGuiHelpBox.GetHeight(error, contentRect.width, MessageType.Error);
+                    Rect errorRect = new Rect(contentRect)
+                    {
+                        y = y,
+                        height = height,
+                    };
+                    ImGuiHelpBox.Draw(errorRect, error, MessageType.Error);
+                    y += height;
+                }
+
+                if (userData.ShowReturnValue)
+                {
+                    float returnHeight = IMGUIEdit.GetPropertyHeight(
+                        "[return]",
+                        userData.ReturnType,
+                        userData.ReturnValue,
+                        NoBeforeSetIMGUI,
+                        newValue => userData.ReturnValue = newValue,
+                        false,
+                        InAnyHorizontalLayout,
+                        userData.ReturnAttributes,
+                        FieldWithInfo.Targets,
+                        this,
+                        $"{userData.ButtonId}.[return]");
+
+                    Rect returnRect = new Rect(contentRect)
+                    {
+                        y = y,
+                        height = returnHeight,
+                    };
+
+                    IMGUIEdit.OnGUI(
+                        returnRect,
+                        "[return]",
+                        userData.ReturnType,
+                        userData.ReturnValue,
+                        NoBeforeSetIMGUI,
+                        newValue => userData.ReturnValue = newValue,
+                        false,
+                        InAnyHorizontalLayout,
+                        userData.ReturnAttributes,
+                        FieldWithInfo.Targets,
+                        this,
+                        $"{userData.ButtonId}.[return]");
+                }
+
+                #endregion
             }
         }
 
@@ -233,409 +703,6 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
             return userData.ShowReturnValue || userData.ResultErrors.Count > 0;
         }
 
-        private void DrawParametersIMGUI(Rect position, ButtonUserDataIMGUI userData)
-        {
-            GUI.Box(position, GUIContent.none);
-
-            Rect contentRect = new Rect(position)
-            {
-                x = position.x + PaddingBox,
-                y = position.y + PaddingBox,
-                width = Mathf.Max(0f, position.width - PaddingBox * 2f),
-                height = Mathf.Max(0f, position.height - PaddingBox * 2f),
-            };
-
-            float y = contentRect.y;
-            foreach ((ParameterInfo parameterInfo, int index) in userData.Parameters.WithIndex())
-            {
-                float height = GetParameterHeightIMGUI(userData, index, contentRect.width);
-                Rect parameterRect = new Rect(contentRect)
-                {
-                    y = y,
-                    height = height,
-                };
-                y += height;
-
-                IMGUIEdit.OnGUI(
-                    parameterRect,
-                    ObjectNames.NicifyVariableName(parameterInfo.Name),
-                    parameterInfo.ParameterType,
-                    userData.ParameterValues[index],
-                    NoBeforeSetIMGUI,
-                    newValue => SetParameterValueIMGUI(userData, index, newValue),
-                    false,
-                    InAnyHorizontalLayout,
-                    userData.ParameterAttributes[index],
-                    FieldWithInfo.Targets,
-                    this,
-                    $"{userData.ButtonId}.{parameterInfo.Name}");
-            }
-        }
-
-        private void DrawButtonAreaIMGUI(Rect position, PreCheckResult preCheckResult, ButtonUserDataIMGUI userData)
-        {
-            Rect mainButtonRect = position;
-            bool showCloseButton = HasResultIMGUI(userData) || userData.Enumerators.Count > 0;
-            Rect closeButtonRect = default;
-            if (showCloseButton)
-            {
-                mainButtonRect.width = Mathf.Max(0f, mainButtonRect.width - CloseButtonWidthIMGUI);
-                closeButtonRect = new Rect(position)
-                {
-                    x = mainButtonRect.xMax,
-                    width = CloseButtonWidthIMGUI,
-                };
-            }
-
-            using (new EditorGUI.DisabledScope(preCheckResult.IsDisabled))
-            {
-                if (GUI.Button(mainButtonRect, GUIContent.none))
-                {
-                    InvokeButtonIMGUI(userData);
-                }
-
-                DrawButtonLabelIMGUI(mainButtonRect, userData);
-
-                if (showCloseButton && GUI.Button(closeButtonRect, "x"))
-                {
-                    CloseResultIMGUI(userData);
-                }
-            }
-
-            DrawStatusIMGUI(position, userData);
-        }
-
-        private void DrawButtonLabelIMGUI(Rect buttonRect, ButtonUserDataIMGUI userData)
-        {
-            IReadOnlyList<RichTextDrawer.RichTextChunk> richTextChunks = GetRichIMGUI(userData);
-            if (richTextChunks.Count == 0)
-            {
-                return;
-            }
-
-            GUIContent oldLabel = new GUIContent(ObjectNames.NicifyVariableName(FieldWithInfo.MethodInfo.Name));
-            float drawNeedWidth = userData.RichTextDrawer.GetWidth(oldLabel, buttonRect.height, richTextChunks);
-            Rect drawRect = drawNeedWidth > buttonRect.width
-                ? buttonRect
-                : new Rect(buttonRect.x + (buttonRect.width - drawNeedWidth) / 2f, buttonRect.y, drawNeedWidth,
-                    buttonRect.height);
-            userData.RichTextDrawer.DrawChunks(drawRect, richTextChunks);
-        }
-
-        private void DrawResultIMGUI(Rect position, ButtonUserDataIMGUI userData)
-        {
-            GUI.Box(position, GUIContent.none);
-
-            Rect contentRect = new Rect(position)
-            {
-                x = position.x + PaddingBox,
-                y = position.y + PaddingBox,
-                width = Mathf.Max(0f, position.width - PaddingBox * 2f),
-                height = Mathf.Max(0f, position.height - PaddingBox * 2f),
-            };
-
-            float y = contentRect.y;
-            foreach (string error in userData.ResultErrors)
-            {
-                float height = ImGuiHelpBox.GetHeight(error, contentRect.width, MessageType.Error);
-                Rect errorRect = new Rect(contentRect)
-                {
-                    y = y,
-                    height = height,
-                };
-                ImGuiHelpBox.Draw(errorRect, error, MessageType.Error);
-                y += height;
-            }
-
-            if (!userData.ShowReturnValue)
-            {
-                return;
-            }
-
-            float returnHeight = IMGUIEdit.GetPropertyHeight(
-                "[return]",
-                userData.ReturnType,
-                userData.ReturnValue,
-                NoBeforeSetIMGUI,
-                newValue => userData.ReturnValue = newValue,
-                false,
-                InAnyHorizontalLayout,
-                userData.ReturnAttributes,
-                FieldWithInfo.Targets,
-                this,
-                $"{userData.ButtonId}.[return]");
-
-            Rect returnRect = new Rect(contentRect)
-            {
-                y = y,
-                height = returnHeight,
-            };
-
-            IMGUIEdit.OnGUI(
-                returnRect,
-                "[return]",
-                userData.ReturnType,
-                userData.ReturnValue,
-                NoBeforeSetIMGUI,
-                newValue => userData.ReturnValue = newValue,
-                false,
-                InAnyHorizontalLayout,
-                userData.ReturnAttributes,
-                FieldWithInfo.Targets,
-                this,
-                $"{userData.ButtonId}.[return]");
-        }
-
-        private IReadOnlyList<RichTextDrawer.RichTextChunk> GetRichIMGUI(ButtonUserDataIMGUI userData)
-        {
-            string useXml = userData.Xml;
-            if (!string.IsNullOrEmpty(userData.Callback))
-            {
-                (string error, MemberInfo _, string result) = Util.GetOf<string>(userData.Callback, null,
-                    FieldWithInfo.SerializedProperty, FieldWithInfo.MethodInfo, FieldWithInfo.Targets[0], null);
-
-                if (error != "")
-                {
-#if SAINTSFIELD_DEBUG
-                    Debug.LogError(error);
-#endif
-                    useXml = ObjectNames.NicifyVariableName(userData.MethodInfo.Name);
-                }
-                else
-                {
-                    useXml = result;
-                }
-            }
-
-            if (useXml == "")
-            {
-                userData.RichTextChunksXml = useXml;
-                userData.RichTextChunks = Array.Empty<RichTextDrawer.RichTextChunk>();
-                return userData.RichTextChunks;
-            }
-
-            if (useXml is null)
-            {
-                useXml = ObjectNames.NicifyVariableName(userData.MethodInfo.Name);
-            }
-
-            if (userData.RichTextChunks != null && userData.RichTextChunksXml == useXml)
-            {
-                return userData.RichTextChunks;
-            }
-
-            userData.Xml = useXml;
-            userData.RichTextChunksXml = useXml;
-            userData.RichTextChunks = RichTextDrawer.ParseRichXmlWithProvider(useXml, this).ToArray();
-            return userData.RichTextChunks;
-        }
-
-        private void InvokeButtonIMGUI(ButtonUserDataIMGUI userData)
-        {
-            userData.ResultErrors.Clear();
-            userData.ShowReturnValue = false;
-            userData.ReturnType = null;
-            userData.ReturnValue = null;
-            userData.Enumerators.Clear();
-            userData.WaiterHasError = false;
-            userData.WaiterHasFinished = false;
-            userData.WaiterHasCancel = false;
-            userData.Progress = -1f;
-            userData.Status = ButtonStatusIMGUI.None;
-            userData.StatusHideAt = -1d;
-
-            SaintsContext.SerializedProperty = _serializedProperty;
-            int targetCount = FieldWithInfo.Targets.Count;
-            object[] returnValues = new object[targetCount];
-            Exception error = null;
-            bool isStruct = ReflectUtils.TypeIsStruct(FieldWithInfo.Targets[0].GetType());
-
-            for (int index = 0; index < targetCount; index++)
-            {
-                object eachTarget = FieldWithInfo.Targets[index];
-                (object rawMemberValue, object useTarget) = GetRefreshedTarget(FieldWithInfo, eachTarget);
-
-                object result;
-                try
-                {
-                    result = userData.MethodInfo.Invoke(useTarget, userData.ParameterValues);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                    error = e;
-                    break;
-                }
-
-                returnValues[index] = result;
-                if (isStruct)
-                {
-                    BackWriteCallback(rawMemberValue, useTarget);
-                }
-            }
-
-            if (error != null)
-            {
-                userData.ResultErrors.Add(error.InnerException?.Message ?? error.Message);
-                PlayStatusIMGUI(userData, ButtonStatusIMGUI.Error);
-                return;
-            }
-
-            if (HasReturnValueIMGUI(userData.MethodInfo))
-            {
-                userData.ReturnType = userData.MethodInfo.ReturnType;
-                userData.ReturnValue = returnValues[0];
-                userData.ShowReturnValue = true;
-            }
-
-            foreach (object returnValue in returnValues)
-            {
-                switch (returnValue)
-                {
-                    case IEnumerator enumerator:
-                        userData.Enumerators.Add(new Waiter(enumerator));
-                        break;
-                    case Task task:
-                        userData.Enumerators.Add(new Waiter(task));
-                        break;
-#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
-                    case UniTask uniTask:
-                        userData.Enumerators.Add(new Waiter(uniTask));
-                        break;
-#endif
-                    default:
-#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
-                        if (userData.ReturnIsUniTask && userData.ReturnUniTaskValueType != null)
-                        {
-                            userData.Enumerators.Add(Waiter.UniTaskWithValue(returnValue, userData.ReturnUniTaskValueType));
-                        }
-#endif
-                        break;
-                }
-            }
-
-            if (userData.Enumerators.Count == 0)
-            {
-                PlayStatusIMGUI(userData, ButtonStatusIMGUI.Ok);
-            }
-            else
-            {
-                PlayStatusIMGUI(userData, ButtonStatusIMGUI.Loading);
-            }
-        }
-
-        private void TickEnumeratorsIMGUI(ButtonUserDataIMGUI userData)
-        {
-            if (Event.current == null || Event.current.type != EventType.Repaint || userData.Enumerators.Count == 0)
-            {
-                return;
-            }
-
-            List<Waiter> finishedEnumerators = new List<Waiter>();
-            int oldCounter = userData.Enumerators.Count;
-            float progress = -1f;
-
-            foreach (Waiter waiter in userData.Enumerators)
-            {
-                waiter.Update();
-
-                if (!waiter.Done())
-                {
-                    float curProgress = waiter.GetProgress();
-                    if (curProgress >= 0)
-                    {
-                        progress = Mathf.Max(progress, curProgress);
-                    }
-
-                    continue;
-                }
-
-                Waiter.MoveNextResult moveNext = waiter.MoveNext();
-                if (moveNext.Exception != null)
-                {
-                    Debug.LogException(moveNext.Exception.InnerException ?? moveNext.Exception);
-                    userData.WaiterHasError = true;
-                    userData.ResultErrors.Add(moveNext.Exception.InnerException?.Message ?? moveNext.Exception.Message);
-                }
-
-                if (moveNext.Exception == null && moveNext.Status == Waiter.MoveNextStatus.Pending)
-                {
-                    waiter.CheckCurrentNeedWaiter();
-                }
-
-                if (!_buttonAttribute.HideReturnValue
-                    && moveNext.Status == Waiter.MoveNextStatus.Completed
-                    && moveNext.ReturnType != null
-                    && !userData.ShowReturnValue)
-                {
-                    userData.ReturnType = moveNext.ReturnType;
-                    userData.ReturnValue = moveNext.ReturnValue;
-                    userData.ShowReturnValue = true;
-                }
-
-                if (moveNext.Status != Waiter.MoveNextStatus.Pending)
-                {
-                    finishedEnumerators.Add(waiter);
-
-                    if (moveNext.Status == Waiter.MoveNextStatus.Completed)
-                    {
-                        userData.WaiterHasFinished = true;
-                    }
-                    else if (moveNext.Status == Waiter.MoveNextStatus.Cancelled)
-                    {
-                        userData.WaiterHasCancel = true;
-                    }
-                }
-            }
-
-            userData.Enumerators.RemoveAll(each => finishedEnumerators.Contains(each));
-
-            bool stillHaveRunner = userData.Enumerators.Count > 0;
-            if (stillHaveRunner)
-            {
-                userData.Status = ButtonStatusIMGUI.Loading;
-                userData.Progress = progress;
-                userData.StatusHideAt = -1d;
-                return;
-            }
-
-            userData.Progress = -1f;
-            if (oldCounter <= 0)
-            {
-                return;
-            }
-
-            if (userData.WaiterHasError)
-            {
-                PlayStatusIMGUI(userData,
-                    userData.WaiterHasFinished ? ButtonStatusIMGUI.Warning : ButtonStatusIMGUI.Error);
-            }
-            else if (userData.WaiterHasCancel)
-            {
-                PlayStatusIMGUI(userData, ButtonStatusIMGUI.Pause);
-            }
-            else
-            {
-                PlayStatusIMGUI(userData, ButtonStatusIMGUI.Ok);
-            }
-        }
-
-        private void CloseResultIMGUI(ButtonUserDataIMGUI userData)
-        {
-            bool hadRunner = userData.Enumerators.Count > 0;
-            userData.Enumerators.Clear();
-            userData.ResultErrors.Clear();
-            userData.ShowReturnValue = false;
-            userData.ReturnType = null;
-            userData.ReturnValue = null;
-            userData.Progress = -1f;
-
-            if (hadRunner)
-            {
-                PlayStatusIMGUI(userData, ButtonStatusIMGUI.Pause);
-            }
-        }
-
         private void SetParameterValueIMGUI(ButtonUserDataIMGUI userData, int index, object newValue)
         {
             userData.ParameterValues[index] = newValue;
@@ -670,18 +737,6 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
         }
 #endif
 
-        private bool HasReturnValueIMGUI(MethodInfo methodInfo)
-        {
-            return !_buttonAttribute.HideReturnValue
-                   && methodInfo.ReturnType != typeof(void)
-                   && !typeof(IEnumerator).IsAssignableFrom(methodInfo.ReturnType)
-                   && !typeof(Task).IsAssignableFrom(methodInfo.ReturnType)
-#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
-                   && !GetUniTaskReturnInfo(methodInfo.ReturnType).returnIsUniTask
-#endif
-                   ;
-        }
-
         private static void NoBeforeSetIMGUI(object _)
         {
         }
@@ -695,81 +750,18 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
                 : EditorApplication.timeSinceStartup + StatusDurationIMGUI;
         }
 
-        private void DrawStatusIMGUI(Rect position, ButtonUserDataIMGUI userData)
-        {
-            if (userData.Status == ButtonStatusIMGUI.None)
-            {
-                return;
-            }
-
-            if (userData.Status != ButtonStatusIMGUI.Loading
-                && userData.StatusHideAt > 0d
-                && EditorApplication.timeSinceStartup > userData.StatusHideAt)
-            {
-                userData.Status = ButtonStatusIMGUI.None;
-                userData.StatusHideAt = -1d;
-                return;
-            }
-
-            Rect statusRect = new Rect(position)
-            {
-                x = position.x + 4f,
-                y = position.y + (position.height - StatusSizeIMGUI) / 2f,
-                width = StatusSizeIMGUI,
-                height = StatusSizeIMGUI,
-            };
-
-            switch (userData.Status)
-            {
-                case ButtonStatusIMGUI.Loading:
-                    userData.Loading.Draw(statusRect);
-                    DrawProgressIMGUI(position, userData.Progress);
-                    break;
-                case ButtonStatusIMGUI.Ok:
-                    DrawStatusIconIMGUI(statusRect, StatusOkIconIMGUI, StatusOkColorIMGUI);
-                    break;
-                case ButtonStatusIMGUI.Error:
-                    DrawStatusIconIMGUI(statusRect, StatusErrorIconIMGUI, StatusErrorColorIMGUI);
-                    break;
-                case ButtonStatusIMGUI.Warning:
-                    DrawStatusIconIMGUI(statusRect, StatusWarningIconIMGUI, StatusWarningColorIMGUI);
-                    break;
-                case ButtonStatusIMGUI.Pause:
-                    DrawStatusIconIMGUI(statusRect, StatusPauseIconIMGUI, StatusPauseColorIMGUI);
-                    break;
-                case ButtonStatusIMGUI.None:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private static void DrawProgressIMGUI(Rect position, float progress)
-        {
-            if (progress < 0f)
-            {
-                return;
-            }
-
-            Rect progressBackRect = new Rect(position)
-            {
-                x = position.x + 2f,
-                y = position.yMax - 2f,
-                width = Mathf.Max(0f, position.width - 4f),
-                height = 1f,
-            };
-            EditorGUI.DrawRect(progressBackRect, new Color(0f, 0f, 0f, 0.25f));
-
-            Rect progressRect = new Rect(progressBackRect)
-            {
-                width = progressBackRect.width * Mathf.Clamp01(progress),
-            };
-            EditorGUI.DrawRect(progressRect, new Color(0f, 182f / 255f, 1f, 0.75f));
-        }
-
         private static void DrawStatusIconIMGUI(Rect texRect, string iconName, string iconColor)
         {
-            Texture2D texture = GetStatusIconIMGUI(iconName);
+            Texture2D texture;
+            if (!StatusIconCacheIMGUI.TryGetValue(iconName, out texture) || texture == null)
+            {
+                texture = Util.LoadResource<Texture2D>(iconName);
+                if (texture != null)
+                {
+                    StatusIconCacheIMGUI[iconName] = texture;
+                }
+            }
+
             if (texture == null)
             {
                 return;
@@ -779,22 +771,6 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
             {
                 GUI.DrawTexture(texRect, texture, ScaleMode.ScaleToFit, true);
             }
-        }
-
-        private static Texture2D GetStatusIconIMGUI(string iconName)
-        {
-            if (StatusIconCacheIMGUI.TryGetValue(iconName, out Texture2D texture) && texture != null)
-            {
-                return texture;
-            }
-
-            texture = Util.LoadResource<Texture2D>(iconName);
-            if (texture != null)
-            {
-                StatusIconCacheIMGUI[iconName] = texture;
-            }
-
-            return texture;
         }
     }
 }

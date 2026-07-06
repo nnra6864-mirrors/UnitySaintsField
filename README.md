@@ -113,10 +113,10 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.21.4**
+**5.21.5**
 
-1.  Add: Table rows now allow to fold/expand just like Unity's list [#402](https://github.com/TylerTemp/SaintsField/issues/402)
-2.  Fix: Table shown an empty row if the target Object has class attributes
+1.  Add: When collapsed, `Table` now displays text info of the target cell, instead of squeezing it.
+2.  Add: Clicking on a collapsed cell now expands `Table`.
 
 ## Usage ##
 

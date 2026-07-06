@@ -659,7 +659,7 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
             }
         }
 
-        public string GetField(string rawContent, string tagName, string tagValue)
+        public virtual string GetField(string rawContent, string tagName, string tagValue)
         {
             switch (FieldWithInfo.RenderType)
             {

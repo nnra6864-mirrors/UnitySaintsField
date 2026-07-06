@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.Playa.Renderer.BaseRenderer;
-using SaintsField.Editor.Utils;
 using SaintsField.Playa;
 using UnityEditor;
 using UnityEditor.Events;
-using UnityEngine;
 using UnityEngine.Events;
 
 namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
@@ -21,35 +19,6 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
         {
             _serializedObject = serializedObject;
             _buttonAttribute = buttonAttribute;
-        }
-
-        private static UnityEngine.UI.Button GetButton(string by, object target)
-        {
-            if (by == null)
-            {
-                return TryFindButton(target);
-            }
-
-            (string error, object value) = Util.GetOfNoParams<object>(target, by, null);
-            return error != ""
-                ? null
-                : TryFindButton(value);
-        }
-
-        private static UnityEngine.UI.Button TryFindButton(object target)
-        {
-            // ReSharper disable once ConvertSwitchStatementToSwitchExpression
-            switch (target)
-            {
-                case UnityEngine.UI.Button button:
-                    return button;
-                case GameObject gameObject:
-                    return gameObject.GetComponent<UnityEngine.UI.Button>();
-                case Component component:
-                    return component.GetComponent<UnityEngine.UI.Button>();
-                default:
-                    return null;
-            }
         }
 
 
@@ -85,6 +54,11 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
         public override string ToString()
         {
             return $"<{FieldWithInfo.RenderType} {FieldWithInfo.MethodInfo?.Name}/>";
+        }
+
+        public override string GetField(string rawContent, string tagName, string tagValue)
+        {
+            return ObjectNames.NicifyVariableName(FieldWithInfo.MethodInfo.Name);
         }
     }
 }

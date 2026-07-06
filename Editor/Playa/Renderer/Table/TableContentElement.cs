@@ -356,6 +356,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                     targetProp.serializedObject.ApplyModifiedProperties();
                                     multiColumnListView.Rebuild();
                                 });
+
+                                cellElement.BindButton(() => "Null");
                                 return;
                             }
 
@@ -386,6 +388,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             bool saintsRowInline = memberIds.Count == 1;
                             bool noLabel = serCount <= 1;
 
+                            List<AbsRenderer> allRenderers = new List<AbsRenderer>();
+
                             using(new SaintsRowAttributeDrawer.ForceInlineScoop(saintsRowInline? 1: 0))
                             {
                                 // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
@@ -393,6 +397,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                 {
                                     foreach (IReadOnlyList<AbsRenderer> renderers in SaintsEditor.HelperMakeRenderer(arrayProp.serializedObject, saintsFieldWithInfo))
                                     {
+                                        allRenderers.AddRange(renderers);
+
                                         // Debug.Log(renderer);
                                         // ReSharper disable once InvertIf
                                         foreach (AbsRenderer renderer in renderers)
@@ -409,6 +415,13 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                     }
                                 }
                             }
+
+                            cellElement.BindButton(() =>
+                            {
+                                return string.Join(", ", allRenderers
+                                    .Select(each => each.GetField("", "field", ""))
+                                    .Where(each => !string.IsNullOrEmpty(each)));
+                            });
                         };
 #if UNITY_6000_0_OR_NEWER
                         curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
@@ -569,6 +582,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             bool saintsRowInline = memberIds.Count == 1;
                             bool noLabel = serCount <= 1;
 
+                            List<AbsRenderer> allRenderers = new List<AbsRenderer>();
+
                             using(new SaintsRowAttributeDrawer.ForceInlineScoop(saintsRowInline? 1: 0))
                             {
                                 // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
@@ -576,6 +591,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                 {
                                     foreach (IReadOnlyList<AbsRenderer> renderers in SaintsEditor.HelperMakeRenderer(arrayProp.serializedObject, saintsFieldWithInfo))
                                     {
+                                        allRenderers.AddRange(renderers);
+
                                         foreach (AbsRenderer renderer in renderers)
                                         {
                                             renderer.NoLabel = noLabel;
@@ -599,6 +616,13 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                                     }
                                 }
                             }
+
+                            cellElement.BindButton(() =>
+                            {
+                                return string.Join(", ", allRenderers
+                                    .Select(each => each.GetField("", "field", ""))
+                                    .Where(each => !string.IsNullOrEmpty(each)));
+                            });
                         };
 #if UNITY_6000_0_OR_NEWER
                         curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
