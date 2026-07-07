@@ -4,6 +4,7 @@
 
 1.  Add: `PrefixToggle` to put a toggle field ahead of a field
 2.  Add: `InputEnableIf`/`InputDisableIf`/`InputReadOnly` to enable/disable the input field, rather than the whole field area.
+3.  Fix: `AboveButton`/`BelowButton`/`PostFieldButton` gave error for static method calling if using `:static.function.name`
 
 ## 5.21.5 ##
 
@@ -27,7 +28,7 @@
 1.  Add: `Button` and field buttons (`AboveButton`, `BelowButton`, `PostFieldButton`) now support:
     *   `async Task`, `async Task<T>` functions
     *   `async UniTask`, `async UniTask<T>` functions if you have `UniTask` installed
-2.  Improve: When first installed, avoid an error that SaintsFieldConfig is not correctly generated/loaded, and gives a warning instead 
+2.  Improve: When first installed, avoid an error that SaintsFieldConfig is not correctly generated/loaded, and gives a warning instead
 
 ## 5.21.0 ##
 

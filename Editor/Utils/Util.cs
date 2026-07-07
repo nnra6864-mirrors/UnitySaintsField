@@ -1286,6 +1286,7 @@ namespace SaintsField.Editor.Utils
                                           BindingFlags.DeclaredOnly | BindingFlags.FlattenHierarchy;
 
             FieldInfo fieldInfo = type.GetField(fieldOrMethod, bindAttr);
+            // Debug.Log($"fieldInfo={fieldInfo}");
             if (fieldInfo != null)
             {
                 object genResult;
@@ -1307,6 +1308,7 @@ namespace SaintsField.Editor.Utils
             }
 
             PropertyInfo propertyInfo = type.GetProperty(fieldOrMethod, bindAttr);
+            // Debug.Log($"propertyInfo={propertyInfo}");
             if (propertyInfo != null)
             {
                 object genResult;
@@ -1327,6 +1329,7 @@ namespace SaintsField.Editor.Utils
             }
 
             MethodInfo[] methodInfos = type.GetMethods(bindAttr);
+            // Debug.Log($"methodInfos={methodInfos.Length}");
             if (methodInfos.Length == 0)
             {
 #if SAINTSFIELD_DEBUG
@@ -1346,7 +1349,7 @@ namespace SaintsField.Editor.Utils
                     if (error == "")
                     {
                         (string error, T result) r = ConvertTo(returnValue, defaultValue);
-                        return (r.error, memberInfo, r.result);
+                        return (r.error, methodInfo, r.result);
                     }
 
                     foundMethodInfo = methodInfo;
