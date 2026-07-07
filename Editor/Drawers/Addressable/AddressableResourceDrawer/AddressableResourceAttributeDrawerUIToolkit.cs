@@ -75,6 +75,8 @@ namespace SaintsField.Editor.Drawers.Addressable.AddressableResourceDrawer
 #endif
                     paddingLeft = 8,
                     paddingRight = 8,
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
                 name = ToggleButtonName(property),
             };

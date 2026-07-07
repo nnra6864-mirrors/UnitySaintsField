@@ -51,6 +51,8 @@ namespace SaintsField.Editor.Drawers.SceneViewPickerDrawer
 #else
                     unityBackgroundScaleMode = ScaleMode.ScaleToFit,
 #endif
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
             };
         }

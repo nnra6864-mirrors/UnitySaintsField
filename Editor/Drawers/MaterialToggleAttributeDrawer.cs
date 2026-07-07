@@ -180,6 +180,8 @@ namespace SaintsField.Editor.Drawers
                     height = EditorGUIUtility.singleLineHeight,
                     paddingLeft = 1,
                     paddingRight = 1,
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
             };
 

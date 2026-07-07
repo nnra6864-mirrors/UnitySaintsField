@@ -175,6 +175,8 @@ namespace SaintsField.Editor.Drawers
                     paddingRight = 1,
                     marginLeft = 1,
                     marginRight = 1,
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
                 name = NameButton(property, index),
                 userData = new Payload

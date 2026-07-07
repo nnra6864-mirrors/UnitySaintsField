@@ -33,6 +33,11 @@ namespace SaintsField.Editor.Drawers.ParticlePlayDrawer
             ParticlePlayButtons element = new ParticlePlayButtons(result)
             {
                 name = NameContainer(property),
+                style =
+                {
+                    flexShrink = 0,
+                    flexGrow = 0,
+                },
             };
             element.AddToClassList(ClassAllowDisable);
             return element;

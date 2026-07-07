@@ -42,6 +42,8 @@ namespace SaintsField.Editor.Drawers.FolderDrawers.ResourcesFolderDrawer
                     paddingRight = 8,
                     borderTopLeftRadius = 0,
                     borderBottomLeftRadius = 0,
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
                 name = ButtonName(property),
             };

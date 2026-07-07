@@ -44,8 +44,8 @@ namespace SaintsField.Editor.Drawers.XPathDrawers.GetByXPathDrawer
                 style =
                 {
                     flexDirection = FlexDirection.Row,
+                    flexShrink = 0,
                     flexGrow = 0,
-                    flexShrink = 1,
                 },
                 name = NameContainer(property, index),
             };

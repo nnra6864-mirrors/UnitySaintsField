@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.22.0 ##
+
+1.  Add: `PrefixToggle` to put a toggle field ahead of a field
+2.  Add: `InputEnableIf`/`InputDisableIf`/`InputReadOnly` to enable/disable the input field, rather than the whole field area.
+
 ## 5.21.5 ##
 
 1.  Add: When collapsed, `Table` now displays text info of the target cell, instead of squeezing it.

@@ -53,6 +53,8 @@ namespace SaintsField.Editor.Drawers.Spine.SpineAnimationPickerDrawer
                     // paddingTop = 2,
                     // paddingBottom = 2,
                     // height = EditorGUIUtility.singleLineHeight,
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
                 name = DropdownButtonName(property),
             };

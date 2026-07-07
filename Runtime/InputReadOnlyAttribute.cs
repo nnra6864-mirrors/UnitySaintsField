@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,14 +10,14 @@ namespace SaintsField
 {
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true)]
-    public class FieldReadOnlyAttribute: PropertyAttribute, ISaintsAttribute, IConditions
+    public class InputReadOnlyAttribute: PropertyAttribute, ISaintsAttribute, IConditions
     {
         public SaintsAttributeType AttributeType => SaintsAttributeType.Other;
         public string GroupBy => "";
 
         public IReadOnlyList<ConditionInfo> ConditionInfos { get; }
 
-        public FieldReadOnlyAttribute(params object[] by)
+        public InputReadOnlyAttribute(params object[] by)
         {
             ConditionInfos = Parser.Parse(by).ToArray();
         }

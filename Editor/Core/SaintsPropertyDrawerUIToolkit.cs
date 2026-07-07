@@ -391,24 +391,45 @@ namespace SaintsField.Editor.Core
             };
             containerElement.Add(labelFieldContainer);
 
-            VisualElement overlayLabelContainer = new VisualElement
-            {
-                style =
-                {
-                    position = Position.Absolute,
-                    left = LabelLeftSpace,
-                    top = 0,
-                    height = EditorGUIUtility.singleLineHeight,
-                    width = LabelBaseWidth,
-                    flexDirection = FlexDirection.Row,
-                    flexWrap = Wrap.NoWrap,
-                    alignItems = Align.Center, // vertical
-                    overflow = Overflow.Hidden,
-                },
-                pickingMode = PickingMode.Ignore,
-            };
+            // VisualElement overlayLabelContainer = new VisualElement
+            // {
+            //     style =
+            //     {
+            //         position = Position.Absolute,
+            //         left = LabelLeftSpace,
+            //         top = 0,
+            //         height = EditorGUIUtility.singleLineHeight,
+            //         width = LabelBaseWidth,
+            //         flexDirection = FlexDirection.Row,
+            //         flexWrap = Wrap.NoWrap,
+            //         alignItems = Align.Center, // vertical
+            //         overflow = Overflow.Hidden,
+            //     },
+            //     pickingMode = PickingMode.Ignore,
+            // };
 
             #region label/field
+
+            #region pre field
+
+            foreach (SaintsPropertyInfo eachAttributeWithIndex in SaintsPropertyDrawers)
+            {
+                SaintsPropertyDrawer drawerInstance = eachAttributeWithIndex.Drawer;
+
+                VisualElement element =
+                    drawerInstance.CreatePreFieldUIToolkit(
+                        property,
+                        eachAttributeWithIndex.Attribute, eachAttributeWithIndex.Index, allAttributes,
+                        containerElement, fieldInfo, parent);
+                // ReSharper disable once InvertIf
+                if (element != null)
+                {
+                    labelFieldContainer.Add(element);
+                }
+            }
+
+            #endregion
+
             VisualElement fieldContainer = new VisualElement
             {
                 style =
@@ -421,6 +442,7 @@ namespace SaintsField.Editor.Core
                 userData = null,
             };
             fieldContainer.AddToClassList(ClassLabelFieldUIToolkit);
+            labelFieldContainer.Add(fieldContainer);
 
             #region Pre Overlay
 
@@ -486,8 +508,6 @@ namespace SaintsField.Editor.Core
                 onChangeManuallyWatch = fieldAttributeWithIndex.Drawer.CreateFieldUIToolKitOnChangeManuallyWatch();
             }
 
-            containerElement.Add(fieldContainer);
-
             #endregion
 
             #region post field
@@ -497,8 +517,7 @@ namespace SaintsField.Editor.Core
                 VisualElement postFieldElement = eachAttributeWithIndex.Drawer.CreatePostFieldUIToolkit(property, eachAttributeWithIndex.Attribute, eachAttributeWithIndex.Index, containerElement, fieldInfo, parent);
                 if (postFieldElement != null)
                 {
-                    postFieldElement.style.flexShrink = 0;
-                    fieldContainer.Add(postFieldElement);
+                    labelFieldContainer.Add(postFieldElement);
                 }
             }
 
@@ -521,7 +540,7 @@ namespace SaintsField.Editor.Core
 
             #endregion
 
-            containerElement.Add(overlayLabelContainer);
+            // fieldContainer.Add(overlayLabelContainer);
 
             #region below
 
@@ -1570,6 +1589,14 @@ namespace SaintsField.Editor.Core
         #region Callbacks
 
         protected virtual VisualElement CreateBelowUIToolkit(SerializedProperty property,
+            ISaintsAttribute saintsAttribute, int index, IReadOnlyList<PropertyAttribute> allAttributes,
+            VisualElement container, FieldInfo info, object parent)
+        {
+            return null;
+        }
+
+        protected virtual VisualElement CreatePreFieldUIToolkit(
+            SerializedProperty property,
             ISaintsAttribute saintsAttribute, int index, IReadOnlyList<PropertyAttribute> allAttributes,
             VisualElement container, FieldInfo info, object parent)
         {

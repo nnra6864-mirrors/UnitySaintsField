@@ -113,10 +113,10 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.21.5**
+**5.22.0**
 
-1.  Add: When collapsed, `Table` now displays text info of the target cell, instead of squeezing it.
-2.  Add: Clicking on a collapsed cell now expands `Table`.
+1.  Add: `PrefixToggle` to put a toggle field ahead of a field
+2.  Add: `InputEnableIf`/`InputDisableIf`/`InputReadOnly` to enable/disable the input field, rather than the whole field area.
 
 ## Usage ##
 
@@ -188,6 +188,7 @@ namespace: `SaintsField`
         *   [`OnArraySizeChanged`](https://saintsfield.comes.today/general-attributes/validate--restrict/onarraysizechanged)
         *   [`ReadOnly`/`DisableIf`/`EnableIf`](https://saintsfield.comes.today/general-attributes/validate--restrict/readonlydisableifenableif)
         *   [`FieldEnableIf`/`FieldDisableIf`/`FieldReadOnly`](https://saintsfield.comes.today/general-attributes/validate--restrict/fieldenableiffielddisableiffieldreadonly)
+        *   [`InputEnableIf`/`InputDisableIf`/`InputReadOnly`](https://saintsfield.comes.today/general-attributes/validate--restrict/inputenableifinputdisableifinputreadonly)
         *   [`ShowIf`/`HideIf`](https://saintsfield.comes.today/general-attributes/validate--restrict/showifhideif)
         *   [`FieldShowIf` / `FieldHideIf`](https://saintsfield.comes.today/general-attributes/validate--restrict/fieldshowif--fieldhideif)
         *   [`Required`](https://saintsfield.comes.today/general-attributes/validate--restrict/required)
@@ -210,6 +211,7 @@ namespace: `SaintsField`
         *   [`EnumToggleButtons`](https://saintsfield.comes.today/general-attributes/miscellaneous/enumtogglebuttons)
         *   [`ResizableTextArea`](https://saintsfield.comes.today/general-attributes/miscellaneous/resizabletextarea)
         *   [`LeftToggle`](https://saintsfield.comes.today/general-attributes/miscellaneous/lefttoggle)
+        *   [`PrefixToggle`](https://saintsfield.comes.today/general-attributes/miscellaneous/prefixtoggle)
         *   [`ResourcePath`](https://saintsfield.comes.today/general-attributes/miscellaneous/resourcepath)
         *   [`ResourceFolder`](https://saintsfield.comes.today/general-attributes/miscellaneous/resourcefolder)
         *   [`FieldDefaultExpand`](https://saintsfield.comes.today/general-attributes/miscellaneous/fielddefaultexpand)

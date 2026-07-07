@@ -142,7 +142,7 @@ namespace SaintsField.Editor.Drawers.OverlayRichLabelDrawer
             int index, IReadOnlyList<PropertyAttribute> allAttributes, VisualElement container,
             Action<object> onValueChangedCallback, FieldInfo info, object parent)
         {
-            container.Q<VisualElement>(name: NameLabelFieldUIToolkit(property)).style.position = Position.Relative;
+            // container.Q<VisualElement>(name: NameLabelFieldUIToolkit(property)).style.position = Position.Relative;
 
             OverlayTextAttribute overlayRichLabelAttribute = (OverlayTextAttribute)saintsAttribute;
             CalcOverlay(property, index, overlayRichLabelAttribute, container, info, parent);

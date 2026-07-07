@@ -1,17 +1,33 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using SaintsField.Editor.Utils;
 using SaintsField.Interfaces;
 using UnityEditor;
 using UnityEngine;
 
-namespace SaintsField.Editor.Drawers.DisabledDrawers.ReadOnlyDrawer
+namespace SaintsField.Editor.Drawers.FieldReadOnlyAttributeDrawer
 {
-    public partial class ReadOnlyAttributeDrawer
+    public partial class FieldReadOnlyAttributeDrawer
     {
+        private sealed class InfoIMGUI
+        {
+            public string Error = "";
+        }
 
-        private string _error = "";
+        private static readonly Dictionary<string, InfoIMGUI> InfoCacheIMGUI = new Dictionary<string, InfoIMGUI>();
+
+        private static InfoIMGUI EnsureKey(SerializedProperty property)
+        {
+            string key = SerializedUtils.GetUniqueId(property);
+            if (InfoCacheIMGUI.TryGetValue(key, out InfoIMGUI infoCache))
+            {
+                return infoCache;
+            }
+
+            InfoCacheIMGUI[key] = infoCache = new InfoIMGUI();
+            NoLongerInspectingWatch(property.serializedObject.targetObject, key, () => InfoCacheIMGUI.Remove(key));
+            return infoCache;
+        }
 
         protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
             FieldInfo info,
@@ -24,8 +40,8 @@ namespace SaintsField.Editor.Drawers.DisabledDrawers.ReadOnlyDrawer
             GUIContent label, ISaintsAttribute saintsAttribute, int index, FieldInfo info,
             object parent)
         {
-            (string error, bool disabled) = IsDisabled(property, info, parent);
-            _error = error;
+            (string error, bool disabled) = IsDisabledIMGUI(property, info, parent);
+            EnsureKey(property).Error = error;
             EditorGUI.BeginDisabledGroup(disabled);
             return position;
         }
@@ -43,7 +59,7 @@ namespace SaintsField.Editor.Drawers.DisabledDrawers.ReadOnlyDrawer
             FieldInfo info,
             object parent)
         {
-            return _error != "";
+            return EnsureKey(property).Error != "";
             // return true;
         }
 
@@ -53,14 +69,15 @@ namespace SaintsField.Editor.Drawers.DisabledDrawers.ReadOnlyDrawer
         {
             // EditorGUI.EndDisabledGroup();
 
-            if (_error == "")
+            string error = EnsureKey(property).Error;
+            if (error == "")
             {
                 return position;
             }
 
             (Rect errorRect, Rect leftRect) = RectUtils.SplitHeightRect(position,
-                ImGuiHelpBox.GetHeight(_error, position.width, MessageType.Error));
-            ImGuiHelpBox.Draw(errorRect, _error, MessageType.Error);
+                ImGuiHelpBox.GetHeight(error, position.width, MessageType.Error));
+            ImGuiHelpBox.Draw(errorRect, error, MessageType.Error);
             return leftRect;
         }
 
@@ -70,45 +87,26 @@ namespace SaintsField.Editor.Drawers.DisabledDrawers.ReadOnlyDrawer
             ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
         {
             // Debug.Log("check extra height!");
-            if (_error == "")
+            string error = EnsureKey(property).Error;
+            if (error == "")
             {
                 return 0;
             }
 
             // Debug.Log(HelpBox.GetHeight(_error));
-            return ImGuiHelpBox.GetHeight(_error, width, MessageType.Error);
+            return ImGuiHelpBox.GetHeight(error, width, MessageType.Error);
         }
 
-        protected virtual (string error, bool disabled) IsDisabled(SerializedProperty property, FieldInfo info,
-            object target)
+        private static (string error, bool disabled) IsDisabledIMGUI(SerializedProperty property, FieldInfo info, object parent)
         {
-            List<bool> allResults = new List<bool>();
-
             FieldReadOnlyAttribute[] targetAttributes =
                 SerializedUtils.GetAttributesAndDirectParent<FieldReadOnlyAttribute>(property).attributes;
-            foreach (FieldReadOnlyAttribute targetAttribute in targetAttributes)
-            {
-                (IReadOnlyList<string> errors, IReadOnlyList<bool> boolResults) =
-                    Util.ConditionChecker(targetAttribute.ConditionInfos, property, info, target);
-
-                if (errors.Count > 0)
-                {
-                    return (string.Join("\n\n", errors), false);
-                }
-
-                // And Mode
-                bool boolResultsOk = boolResults.All(each => each);
-                allResults.Add(boolResultsOk);
-            }
-
-            // Or Mode
-            bool truly = allResults.Any(each => each);
-
-#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_READ_ONLY
-            Debug.Log($"{property.name} final={truly}/ars={string.Join(",", allResults)}");
-#endif
-            return ("", truly);
+            return FieldReadOnlyUtils.IsDisabled(
+                targetAttributes,
+                property,
+                info,
+                parent
+            );
         }
-
     }
 }

@@ -1,4 +1,4 @@
-#if UNITY_2021_3_OR_NEWER && !SAINTSFIELD_UI_TOOLKIT_DISABLE
+#if UNITY_2021_3_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,18 +9,18 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace SaintsField.Editor.Drawers.DisabledDrawers.ReadOnlyDrawer
+namespace SaintsField.Editor.Drawers.FieldReadOnlyAttributeDrawer
 {
-    public partial class ReadOnlyAttributeDrawer
+    public partial class FieldReadOnlyAttributeDrawer
     {
 
         private static string NameReadOnly(SerializedProperty property, int index) =>
-            $"{property.propertyType}_{index}__ReadOnly";
+            $"{SerializedUtils.GetUniqueId(property)}_{index}__ReadOnly";
 
-        private static string ClassReadOnly(SerializedProperty property) => $"{property.propertyType}__ReadOnly";
+        private static string ClassReadOnly(SerializedProperty property) => $"{SerializedUtils.GetUniqueId(property)}__ReadOnly";
 
         private static string NameReadOnlyHelpBox(SerializedProperty property, int index) =>
-            $"{property.propertyType}_{index}__ReadOnly_HelpBox";
+            $"{SerializedUtils.GetUniqueId(property)}_{index}__ReadOnly_HelpBox";
 
         protected override VisualElement CreateAboveUIToolkit(SerializedProperty property,
             ISaintsAttribute saintsAttribute, int index,
@@ -77,24 +77,25 @@ namespace SaintsField.Editor.Drawers.DisabledDrawers.ReadOnlyDrawer
             Debug.Log($"curReadOnly={curReadOnly}");
 #endif
             object parent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
-            foreach ((string error, bool readOnly) in visibilityElements.Select(each =>
-                         IsDisabled(property, info, parent)))
+            (string error, bool readOnly) = FieldReadOnlyUtils.IsDisabled(
+                visibilityElements.Select(each => (FieldReadOnlyAttribute) each.userData).ToArray(),
+                property,
+                info,
+                parent);
+
+            if (error != "")
             {
-                if (error != "")
+                errors.Add(error);
+                // nowReadOnlyResult.Add(false);
+            }
+            else
+            {
+                if (readOnly)
                 {
-                    errors.Add(error);
-                    // nowReadOnlyResult.Add(false);
-                }
-                else
-                {
-                    if (readOnly)
-                    {
 #if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_READ_ONLY
-                        Debug.Log($"nowReadOnly=true");
+                    Debug.Log($"nowReadOnly=true");
 #endif
-                        nowReadOnly = true;
-                        break;
-                    }
+                    nowReadOnly = true;
                 }
             }
 

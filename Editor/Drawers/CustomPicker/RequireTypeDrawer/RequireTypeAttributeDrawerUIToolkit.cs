@@ -42,7 +42,6 @@ namespace SaintsField.Editor.Drawers.CustomPicker.RequireTypeDrawer
             Texture2D pickerImage = EditorGUIUtility.IconContent("d_pick_uielements").image as Texture2D;
             Button button = new Button
             {
-                // text = "â—?,
                 style =
                 {
                     // position = Position.Absolute,
@@ -62,6 +61,8 @@ namespace SaintsField.Editor.Drawers.CustomPicker.RequireTypeDrawer
 #else
                         unityBackgroundScaleMode = ScaleMode.ScaleToFit,
 #endif
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
                 name = NameSelectorButton(property),
             };

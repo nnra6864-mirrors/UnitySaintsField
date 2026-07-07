@@ -21,8 +21,8 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.PostFieldButtonDrawer
             ISaintsAttribute saintsAttribute, int index, VisualElement container, FieldInfo info, object parent)
         {
             VisualElement btn = DrawUIToolkit(property, saintsAttribute, index);
-            // btn.style.flexGrow = 1;
-            // btn.style.flexShrink = 1;
+            btn.style.flexGrow = 0;
+            btn.style.flexShrink = 0;
             return btn;
             // return element;
         }

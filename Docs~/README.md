@@ -3621,6 +3621,46 @@ public bool ShouldEnable(string input) => input.Length < 6;
 public bool ShouldEnableElement(string element, int index) => index % 2 == 0;
 ```
 
+
+#### `InputEnableIf`/`InputDisableIf`/`InputReadOnly` ####
+
+Like `EnableIf`/`DisableIf`, but it only disable the input fields.
+
+Useful if you want to combine it with `PrefixToggle`, `AboveButton`, `BeblowButton` so these control will not get disabled together.
+
+It shares exactly the same syntax as `EnableIf`/`DisableIf`
+
+Example of only disable the field
+
+```csharp
+using SaintsField;
+
+public bool disableMe;
+
+[InputDisableIf(nameof(disableMe))]
+[AboveButton(":Debug.Log")]
+[BelowButton(":Debug.Log")]
+[PostFieldButton(":Debug.Log", "L")]
+[PrefixToggle(nameof(useHp))]
+public int myField;
+```
+
+[![video](https://github.com/user-attachments/assets/e01f03d5-7f3e-4701-85bd-83f45c6ef9ce)](https://github.com/user-attachments/assets/45d313d0-280b-43b3-8c53-7e6967cb83e1)
+
+work with PrefixToggle:
+
+```csharp
+using SaintsField;
+
+// Example: useful with `InputEnableIf`, `InputDisableIf` to control field edit
+[HideIf(true)] public bool useHp;
+// only allow to edit if it's checked
+[PrefixToggle(nameof(useHp)), InputEnableIf(nameof(useHp)), Range(0, 100)] public int hpValue;
+```
+
+[![video](https://github.com/user-attachments/assets/773fb404-8a9a-4f7f-b89a-c39e30564426)](https://github.com/user-attachments/assets/40b23e99-9752-4244-8125-23cbd11edf43)
+
+
 #### `ShowIf`/`HideIf` ####
 
 > [!IMPORTANT]
@@ -5529,6 +5569,100 @@ using SaintsField;
 ```
 
 ![left_toggle](https://github.com/TylerTemp/SaintsField/assets/6391063/bb3de042-bfd8-4fb7-b8d6-7f0db070a761)
+
+#### `PrefixToggle` ####
+
+Put a toggle in front of the field
+
+**Parameters**:
+
+*   `string name`: toggle target. Either be the name of the serializable bool field, or a field/property of a non-serializable bool  
+*   `string showIf=""`: a callback/field/property to control if this prefix toggle need to show
+
+Allow Multiple: Yes
+
+```csharp
+using SaintsField;
+
+// Example: put a bool field as a prefix of another field
+// hide the toggle field itself
+[HideIf(true)] public bool myBool;
+// prefix it
+[PrefixToggle(nameof(myBool))] public int myValue;
+
+// Example: use a non-serialized field/property as a toggle prefix
+// this is a not serialized field
+private bool _nonSerBool;
+[PrefixToggle(nameof(_nonSerBool))] public GameObject myG;
+```
+
+![](https://github.com/user-attachments/assets/a29eedae-eb9d-49eb-a51d-1af2b956b850)
+
+Control field disable:
+
+```csharp
+using SaintsField;
+
+// Example: useful with `InputEnableIf`, `InputDisableIf` to control field edit
+[HideIf(true)] public bool useHp;
+// only allow to edit if it's checked
+[PrefixToggle(nameof(useHp)), InputEnableIf(nameof(useHp)), Range(0, 100)] public int hpValue;
+```
+
+[![video](https://github.com/user-attachments/assets/773fb404-8a9a-4f7f-b89a-c39e30564426)](https://github.com/user-attachments/assets/40b23e99-9752-4244-8125-23cbd11edf43)
+
+Control show/hide:
+
+```csharp
+ using SaintsField;
+
+// Example: you can use `ShowIf` to control if you want the toggle show/hide
+[Range(-10, 10)] public int range;
+public bool ShowIfPositive() => range > 0;
+
+[HideIf(true)] public bool overrideIfPositive;
+[PrefixToggle(nameof(overrideIfPositive), showIf: nameof(ShowIfPositive))] public int v;
+```
+
+[![video](https://github.com/user-attachments/assets/046cbfde-0b26-40b3-91f3-788e9f8484ac)](https://github.com/user-attachments/assets/638c2266-5423-4359-afbb-dcf74f8570aa)
+
+Mimic toggle group:
+
+```csharp
+// Example: you can use it to mimic a toggle group
+[HideIf(true), OnValueChanged(nameof(ChangedA))] public bool optionA = true;
+[PrefixToggle(nameof(optionA)), InputEnableIf(nameof(optionA))] public int valueA;
+[HideIf(true), OnValueChanged(nameof(ChangedB))] public bool optionB;
+[PrefixToggle(nameof(optionB)), InputEnableIf(nameof(optionB))] public GameObject valueB;
+[HideIf(true), OnValueChanged(nameof(ChangedC))] public bool optionC;
+[PrefixToggle(nameof(optionC)), InputEnableIf(nameof(optionC))] public Color valueC;
+
+private void ChangedA(bool on)
+{
+    if(on)
+    {
+        optionB = optionC = false;
+    }
+}
+
+private void ChangedB(bool on)
+{
+    if(on)
+    {
+        optionA = optionC = false;
+    }
+}
+
+private void ChangedC(bool on)
+{
+    if(on)
+    {
+        optionA = optionB = false;
+    }
+}
+```
+
+[![video](https://github.com/user-attachments/assets/0f53a95e-c329-4e80-a492-23d4f14f8197)](https://github.com/user-attachments/assets/368d65ad-f5f4-4065-a5b1-24dbd68734f2)
 
 #### `ResourcePath` ####
 

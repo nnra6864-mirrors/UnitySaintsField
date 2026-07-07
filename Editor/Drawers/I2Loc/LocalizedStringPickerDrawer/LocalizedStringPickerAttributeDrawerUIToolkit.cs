@@ -38,6 +38,8 @@ namespace SaintsField.Editor.Drawers.I2Loc.LocalizedStringPickerDrawer
 #else
                     unityBackgroundScaleMode = ScaleMode.ScaleToFit,
 #endif
+                    flexShrink = 0,
+                    flexGrow = 0,
                 },
                 name = NameSelectorButton(property),
             };
