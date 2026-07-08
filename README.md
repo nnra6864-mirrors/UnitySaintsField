@@ -117,6 +117,7 @@ namespace: `SaintsField`
 
 1.  Add: `PrefixToggle` to put a toggle field ahead of a field
 2.  Add: `InputEnableIf`/`InputDisableIf`/`InputReadOnly` to enable/disable the input field, rather than the whole field area.
+3.  Fix: `AboveButton`/`BelowButton`/`PostFieldButton` gave error for static method calling if using `:static.function.name`
 
 ## Usage ##
 

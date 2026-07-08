@@ -82,7 +82,7 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
                 foreach ((string eachError, MemberInfo memberInfo, object buttonResult) in CallButtonFunc(property,
                              ((DecButtonAttribute)saintsAttribute).FuncName, info, parent))
                 {
-                    // Debug.Log($"{eachError}/{buttonResult}");
+                    // Debug.Log($"{eachError}/{buttonResult}/{memberInfo.Name}");
                     if (eachError == "")
                     {
                         results.Add(((MethodInfo)memberInfo, buttonResult));
