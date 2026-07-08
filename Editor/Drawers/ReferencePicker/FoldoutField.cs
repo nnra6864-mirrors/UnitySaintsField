@@ -11,6 +11,8 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
 
     public class FoldoutField: FoldoutPrefabOverrideElement
     {
+        public readonly UIToolkitUtils.DropdownButtonField DropdownButton;
+
         public FoldoutField(SerializedProperty property, string getPreferredLabel): base(property)
         {
             Toggle toggle = this.Q<Toggle>();
@@ -24,11 +26,11 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
             VisualElement firstChild = toggle.Children().First();
             firstChild.style.width = Length.Percent(100);
 
-            UIToolkitUtils.DropdownButtonField dropdownBtn = UIToolkitUtils.ReferenceDropdownButtonField(getPreferredLabel, property, this, () => ReferencePickerAttributeDrawer.GetTypes(property));
-            firstChild.Add(dropdownBtn);
+            DropdownButton = UIToolkitUtils.ReferenceDropdownButtonField(getPreferredLabel, property, this, () => ReferencePickerAttributeDrawer.GetTypes(property));
+            firstChild.Add(DropdownButton);
 
-            dropdownBtn.style.marginLeft = 0;
-            dropdownBtn.labelElement.style.marginLeft = 0;
+            DropdownButton.style.marginLeft = 0;
+            DropdownButton.labelElement.style.marginLeft = 0;
             return;
 
             void RefreshFoldoutCheck()

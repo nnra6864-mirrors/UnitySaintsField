@@ -711,7 +711,7 @@ namespace SaintsField.Editor.Core
             return element;
         }
 
-        private static VisualElement DrawUsingDrawerInstance(string passedLabel, Type drawerType, PropertyDrawer drawerInstance, SerializedProperty property,
+        protected static VisualElement DrawUsingDrawerInstance(string passedLabel, Type drawerType, PropertyDrawer drawerInstance, SerializedProperty property,
             // ReSharper disable once UnusedParameter.Local
             FieldInfo info,
             // ReSharper disable once UnusedParameter.Local
@@ -729,7 +729,7 @@ namespace SaintsField.Editor.Core
 
             if(uiToolkitMethod == null || uiToolkitMethod.DeclaringType == typeof(PropertyDrawer))  // null: old Unity || did not override
             {
-#if UNITY_6000_0_OR_NEWER
+#if UNITY_6000_0_OR_NEWER && false
                 return PropertyFieldFallbackUIToolkit(property, passedLabel);
 #else
 

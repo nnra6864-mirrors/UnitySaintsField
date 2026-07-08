@@ -1,4 +1,4 @@
-#if UNITY_2021_3_OR_NEWER && !SAINTSFIELD_UI_TOOLKIT_DISABLE && !SAINTSFIELD_UI_TOOLKIT_DISABLE
+#if UNITY_2021_3_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,27 +37,90 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
             };
             if (!string.IsNullOrEmpty(property.tooltip))
             {
-                UIToolkitUtils.DropdownButtonField dropdownButton = foldout.Q<UIToolkitUtils.DropdownButtonField>();
-                if (dropdownButton != null && dropdownButton.labelElement != null)
+                UIToolkitUtils.DropdownButtonField dropdownButton = foldout.DropdownButton;
+                if (dropdownButton.labelElement != null)
                 {
                     dropdownButton.labelElement.tooltip = property.tooltip;
                 }
             }
-            foldout.Add(
-                SaintsRowAttributeDrawer.CreateElement(
-                    property,
-                    GetPreferredLabel(property),
-                    info,
-                    InHorizontalLayout,
-                    new SaintsRowAttribute(inline: true),
-                    this,
-                    this,
-                    parent,
-                    this
-                )
+
+            // Type fieldType = SerializedUtils.PropertyPathIndex(property.propertyPath) >= 0
+            //     ? ReflectUtils.GetElementType(info.FieldType)
+            //     : info.FieldType;
+            // Type drawer = FindTypeDrawerAny(fieldType);
+            // Debug.Log($"{fieldType.Name}: {drawer}");
+            object value = null;
+            if (property.propertyType == SerializedPropertyType.ManagedReference)
+            {
+                value = property.managedReferenceValue;
+            }
+            else
+            {
+                object parentValue = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
+                (string getValueError, int _, object getValue) = Util.GetValue(property, info, parentValue);
+                if (getValueError != "")
+                {
+                    value = getValue;
+                }
+            }
+
+            if (value == null)
+            {
+                foldout.Add(
+                    SaintsRowAttributeDrawer.CreateElement(
+                        property,
+                        GetPreferredLabel(property),
+                        info,
+                        InHorizontalLayout,
+                        new SaintsRowAttribute(inline: true),
+                        this,
+                        this,
+                        parent,
+                        this
+                    )
+                );
+
+                return foldout;
+            }
+
+            Type valueType = value.GetType();
+            Type drawerType = FindTypeDrawerAny(valueType);
+            // Debug.Log(drawer);
+            if (drawerType == null)
+            {
+                foldout.Add(
+                    SaintsRowAttributeDrawer.CreateElement(
+                        property,
+                        GetPreferredLabel(property),
+                        info,
+                        InHorizontalLayout,
+                        new SaintsRowAttribute(inline: true),
+                        this,
+                        this,
+                        parent,
+                        this
+                    )
+                );
+
+                return foldout;
+            }
+
+            PropertyDrawer drawer = MakePropertyDrawer(drawerType, info, null, GetPreferredLabel(property));
+
+            VisualElement drawerResult = DrawUsingDrawerInstance(
+                GetPreferredLabel(property),
+                drawerType,
+                drawer,
+                property,
+                info,
+                Array.Empty<SaintsPropertyInfo>(),
+                foldout.contentContainer
             );
+            foldout.Add(drawerResult);
 
             return foldout;
+            // foldout.Add(new InspectorElement(value));
+
         }
         protected override void OnAwakeUIToolkit(SerializedProperty property, ISaintsAttribute saintsAttribute,
             int index, IReadOnlyList<PropertyAttribute> allAttributes, VisualElement container,

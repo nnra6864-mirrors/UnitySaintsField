@@ -3933,7 +3933,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Samples.Scripts.InputDisableIfExample
   disableMe: 0
-  myField: 
+  myField: 0
   useHp: 0
   hpValue: 0
 --- !u!1 &373466610
@@ -5657,6 +5657,59 @@ MonoBehaviour:
   e: {fileID: 528893600}
   eArr:
   - {fileID: 528893600}
+--- !u!1 &529246928
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 529246929}
+  - component: {fileID: 529246930}
+  m_Layer: 0
+  m_Name: ReferencePickerCustomDrawer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &529246929
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529246928}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1486592967}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &529246930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529246928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d9096a15506d0b4c87a2e04ef1d782e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Samples.Scripts.IssueAndTesting.Testing.ReferencePickerCustomDrawerTest.ReferencePickerCustomDrawer
+  myInterface:
+    rid: 773219647564021873
+  references:
+    version: 2
+    RefIds:
+    - rid: 773219647564021873
+      type: {class: ReferencePickerCustomDrawer/ClassDirect, ns: SaintsField.Samples.Scripts.IssueAndTesting.Testing.ReferencePickerCustomDrawerTest, asm: SaintsField.Samples}
+      data:
+        <TheInt>k__BackingField: 0
 --- !u!1 &529722622
 GameObject:
   m_ObjectHideFlags: 0
@@ -28951,6 +29004,7 @@ Transform:
   - {fileID: 161033870}
   - {fileID: 146474441}
   - {fileID: 22412935}
+  - {fileID: 529246929}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1487457131

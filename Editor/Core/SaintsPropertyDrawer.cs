@@ -569,13 +569,17 @@ namespace SaintsField.Editor.Core
 
             field.SetValue(propertyDrawer, fieldInfo);
 
-            FieldInfo mAttributeField = foundDrawer.GetField("m_Attribute", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (mAttributeField == null)
+            if(attribute != null)
             {
-                return null;
-            }
+                FieldInfo mAttributeField =
+                    foundDrawer.GetField("m_Attribute", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (mAttributeField == null)
+                {
+                    return null;
+                }
 
-            mAttributeField.SetValue(propertyDrawer, attribute);
+                mAttributeField.SetValue(propertyDrawer, attribute);
+            }
 
             FieldInfo preferredLabelField = foundDrawer.GetField("m_PreferredLabel", BindingFlags.NonPublic | BindingFlags.Instance);
             if (preferredLabelField != null)
