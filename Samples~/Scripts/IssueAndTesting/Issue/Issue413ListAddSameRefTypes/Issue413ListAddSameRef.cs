@@ -1,9 +1,9 @@
 using System;
-using UnityEngine;
+using SaintsField.Playa;
 
-namespace SaintsField.Samples.Scripts.IssueAndTesting.Issue
+namespace SaintsField.Samples.Scripts.IssueAndTesting.Issue.Issue413ListAddSameRefTypes
 {
-    public class Issue413ListAddSameRef : SaintsMonoBehaviour
+    public partial class Issue413ListAddSameRef : SaintsMonoBehaviour
     {
         [Serializable]
         public enum MyEnum
@@ -37,7 +37,7 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Issue
             // Other irrelevant code here.
         }
 
-        [FieldDefaultExpand]
-        public SaintsInterface<MyInterface>[] interfaces;
+        [SaintsSerialized, FieldDefaultExpand]
+        public MyInterface[] interfaces;
     }
 }

@@ -1018,6 +1018,50 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Mask
   m_ShowMaskGraphic: 0
+--- !u!1 &109676647
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 109676648}
+  - component: {fileID: 109676649}
+  m_Layer: 0
+  m_Name: M2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &109676648
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 109676647}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 132117596}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &109676649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 109676647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d3e8f5290095e244a0135b0ecd202c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Issue413Mono2
 --- !u!1 &111474056
 GameObject:
   m_ObjectHideFlags: 0
@@ -1488,7 +1532,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1360296421}
+  - {fileID: 109676648}
   m_Father: {fileID: 785898368}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &132117597
@@ -1503,23 +1549,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614122623511acf47b7391c810320251, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Samples.Scripts.IssueAndTesting.Issue.Issue413ListAddSameRef
-  interfaces:
-  - <V>k__BackingField: {fileID: 0}
-    <VRef>k__BackingField:
-      rid: 773219663924691072
-    <IsVRef>k__BackingField: 1
-  - <V>k__BackingField: {fileID: 0}
-    <VRef>k__BackingField:
-      rid: 773219663924691072
-    <IsVRef>k__BackingField: 1
+  interfaces__SaintsSerialized__:
+  - propertyType: 4
+    longValue: 0
+    uLongValue: 0
+    stringValue: 
+    intValues: 
+    V: {fileID: 0}
+    VRef:
+      rid: 773219663924691092
+    IsVRef: 1
+  - propertyType: 4
+    longValue: 0
+    uLongValue: 0
+    stringValue: 
+    intValues: 
+    V: {fileID: 0}
+    VRef:
+      rid: 773219663924691093
+    IsVRef: 1
   references:
     version: 2
     RefIds:
-    - rid: 773219663924691072
-      type: {class: Issue413ListAddSameRef/MyClass, ns: SaintsField.Samples.Scripts.IssueAndTesting.Issue, asm: SaintsField.Samples}
+    - rid: 773219663924691092
+      type: {class: Issue413ListAddSameRef/MyClass, ns: SaintsField.Samples.Scripts.IssueAndTesting.Issue.Issue413ListAddSameRefTypes, asm: SaintsField.Samples}
+      data:
+        MyEnum: 0
+        Number: 0
+    - rid: 773219663924691093
+      type: {class: Issue413ListAddSameRef/MyClass, ns: SaintsField.Samples.Scripts.IssueAndTesting.Issue.Issue413ListAddSameRefTypes, asm: SaintsField.Samples}
       data:
         MyEnum: 1
-        Number: 0
+        Number: 2
 --- !u!1 &139880710
 GameObject:
   m_ObjectHideFlags: 0
@@ -11945,6 +12006,50 @@ MonoBehaviour:
   - 
   myTable:
   - MyStructString: 
+--- !u!1 &1360296420
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1360296421}
+  - component: {fileID: 1360296422}
+  m_Layer: 0
+  m_Name: M1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1360296421
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360296420}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 132117596}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1360296422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360296420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56e5f6253f9073c44b2ead28400b373e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Samples.Scripts.IssueAndTesting.Issue.Issue413ListAddSameRefTypes.Issue413Mono1
 --- !u!1 &1369791364
 GameObject:
   m_ObjectHideFlags: 0

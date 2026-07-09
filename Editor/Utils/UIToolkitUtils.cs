@@ -946,17 +946,17 @@ namespace SaintsField.Editor.Utils
                                 SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke();
                             }).Every(100);
 
-                            Debug.Log($"list rawType={rawType}");
-                            // After Unity/default controller add:
-                            listView.itemsAdded += indices =>
+                            if(!rawType.IsAssignableFrom(typeof(UnityEngine.Object)))  // UnityObject can be safely ignored
                             {
-                                foreach (var index in indices)
+                                listView.itemsAdded += indices =>
                                 {
-                                    var item = property.GetArrayElementAtIndex(index);
-                                    Debug.Log(item.propertyType);
-                                    Debug.Log(item.propertyPath);
-                                }
-                            };
+                                    HashSet<int> addedIndices = new HashSet<int>(indices);
+                                    foreach (int index in addedIndices)
+                                    {
+                                        UnlinkAddedArrayElementManagedReferences(property, index, addedIndices);
+                                    }
+                                };
+                            }
 
 #if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                             {
@@ -2747,6 +2747,152 @@ namespace SaintsField.Editor.Utils
                 });
 
             }));
+        }
+
+        private static void UnlinkAddedArrayElementManagedReferences(
+            SerializedProperty arrayProperty,
+            int addedIndex,
+            HashSet<int> addedIndices)
+        {
+            if (!SerializedUtils.IsOk(arrayProperty) ||
+                addedIndex < 0 || addedIndex >= arrayProperty.arraySize)
+            {
+                return;
+            }
+
+            SerializedProperty addedItem = arrayProperty.GetArrayElementAtIndex(addedIndex);
+            List<string> propertiesToClone = new List<string>();
+
+            foreach (SerializedProperty managedReferenceProperty in EachManagedReferenceProperty(addedItem))
+            {
+                object value = managedReferenceProperty.managedReferenceValue;
+                if (value != null && ArraySiblingHasManagedReference(arrayProperty, addedIndices, value))
+                {
+                    propertiesToClone.Add(managedReferenceProperty.propertyPath);
+                }
+            }
+
+            if (propertiesToClone.Count == 0)
+            {
+                return;
+            }
+
+            Undo.RecordObjects(arrayProperty.serializedObject.targetObjects, "SaintsField Add Array Element");
+
+            bool changed = false;
+            foreach (string propertyPath in propertiesToClone)
+            {
+                SerializedProperty managedReferenceProperty = arrayProperty.serializedObject.FindProperty(propertyPath);
+                if (managedReferenceProperty == null ||
+                    managedReferenceProperty.propertyType != SerializedPropertyType.ManagedReference)
+                {
+                    continue;
+                }
+
+                (bool cloned, object clonedValue) = CloneManagedReferenceValue(managedReferenceProperty.managedReferenceValue);
+                if (cloned)
+                {
+                    managedReferenceProperty.managedReferenceValue = clonedValue;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                arrayProperty.serializedObject.ApplyModifiedProperties();
+                arrayProperty.serializedObject.Update();
+            }
+        }
+
+        private static bool ArraySiblingHasManagedReference(
+            SerializedProperty arrayProperty,
+            HashSet<int> excludedIndices,
+            object value)
+        {
+            for (int index = 0; index < arrayProperty.arraySize; index++)
+            {
+                if (excludedIndices.Contains(index))
+                {
+                    continue;
+                }
+
+                bool found = false;
+                SerializedProperty item = arrayProperty.GetArrayElementAtIndex(index);
+                foreach (SerializedProperty managedReferenceProperty in EachManagedReferenceProperty(item))
+                {
+                    if (ReferenceEquals(managedReferenceProperty.managedReferenceValue, value))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<SerializedProperty> EachManagedReferenceProperty(SerializedProperty property)
+        {
+            if (property.propertyType == SerializedPropertyType.ManagedReference)
+            {
+                yield return property.Copy();
+            }
+
+            if (!property.hasVisibleChildren)
+            {
+                yield break;
+            }
+
+            SerializedProperty iterator = property.Copy();
+            SerializedProperty endProperty = property.GetEndProperty();
+            bool enterChildren = true;
+            while (iterator.NextVisible(enterChildren) &&
+                   !SerializedProperty.EqualContents(iterator, endProperty))
+            {
+                enterChildren = true;
+                if (iterator.propertyType == SerializedPropertyType.ManagedReference)
+                {
+                    yield return iterator.Copy();
+                }
+            }
+        }
+
+        private static (bool cloned, object value) CloneManagedReferenceValue(object value)
+        {
+            if (value == null)
+            {
+                return (false, null);
+            }
+
+            Type type = value.GetType();
+            try
+            {
+                return (true, JsonUtility.FromJson(JsonUtility.ToJson(value), type));
+            }
+            catch (Exception e)
+            {
+#if SAINTSFIELD_DEBUG
+                Debug.LogException(e);
+#endif
+                try
+                {
+                    return (true, ReferencePickerAttributeDrawer.CopyObj(value, Activator.CreateInstance(type, true)));
+                }
+#pragma warning disable CS0168 // Variable is declared but never used
+                catch (Exception activatorException)
+#pragma warning restore CS0168 // Variable is declared but never used
+                {
+#if SAINTSFIELD_DEBUG
+                    Debug.LogException(activatorException);
+#endif
+                    return (false, value);
+                }
+            }
         }
 
         // Populate context menu using unity's own fill function
