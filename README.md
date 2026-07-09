@@ -113,11 +113,13 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.22.0**
+**5.22.1**
 
-1.  Add: `PrefixToggle` to put a toggle field ahead of a field
-2.  Add: `InputEnableIf`/`InputDisableIf`/`InputReadOnly` to enable/disable the input field, rather than the whole field area.
-3.  Fix: `AboveButton`/`BelowButton`/`PostFieldButton` gave error for static method calling if using `:static.function.name`
+1.  Add: `ReferencePicker` now can use the custom drawer if the target type has one
+2.  Fix: Old unity (<= 6k.0) did not have default context menu for some type of fields
+3.  Fix: an error when editing a `char` type field
+4.  Fix: a warning when using `string` for `[AnimatorState]`
+5.  Unity Fix: Fix a Unity's issue that when a list of class which contains SerializeReference field, the `+` button of list will reference the same SerializeReference field value instead of clone a new one [#413](https://github.com/TylerTemp/SaintsField/issues/413)
 
 ## Usage ##
 
