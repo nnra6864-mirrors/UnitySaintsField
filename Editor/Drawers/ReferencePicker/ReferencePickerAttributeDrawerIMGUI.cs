@@ -24,6 +24,8 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
             public AdvancedDropdownMetaInfo MetaInfo;
             public SaintsRowAttributeDrawer.ManagedReferenceBodyInfo BodyInfo =
                 new SaintsRowAttributeDrawer.ManagedReferenceBodyInfo();
+            public Type CustomDrawerValueType;
+            public PropertyDrawer CustomDrawer;
             public bool ExpandStateInitialized;
         }
 
@@ -76,6 +78,8 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
             SaintsRowAttributeDrawer.ClearManagedReferenceBody(cache.BodyInfo);
             cache.ManagedReferenceValue = null;
             cache.MetaInfo = default;
+            cache.CustomDrawerValueType = null;
+            cache.CustomDrawer = null;
             cache.DisplayLabel = "";
             cache.Error = "";
             cache.ExpandStateInitialized = false;
@@ -122,6 +126,11 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
             if (cache.ManagedReferenceValue == null || !property.isExpanded)
             {
                 return height;
+            }
+
+            if (cache.CustomDrawer != null)
+            {
+                return height + cache.CustomDrawer.GetPropertyHeight(property, label);
             }
 
             return height + SaintsRowAttributeDrawer.GetManagedReferenceBodyHeight(cache.BodyInfo, width - IndentWidth);
@@ -247,6 +256,13 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
                 width = position.width - IndentWidth,
                 height = position.height - SingleLineHeight,
             };
+            if (cache.CustomDrawer != null)
+            {
+                cache.CustomDrawer.OnGUI(childRect, property, label);
+                DrawOverrideRichText(childRect, label, overrideRichTextChunks);
+                return;
+            }
+
             SaintsRowAttributeDrawer.DrawManagedReferenceBody(childRect, cache.BodyInfo);
         }
 
@@ -295,6 +311,22 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
 
             if (managedReferenceValue != null)
             {
+                Type managedReferenceType = managedReferenceValue.GetType();
+                if (cache.CustomDrawerValueType != managedReferenceType)
+                {
+                    cache.CustomDrawerValueType = managedReferenceType;
+                    Type drawerType = FindTypeDrawerAny(managedReferenceType);
+                    cache.CustomDrawer = drawerType == null
+                        ? null
+                        : MakePropertyDrawer(drawerType, info, null, GetPreferredLabel(property));
+                }
+
+                if (cache.CustomDrawer != null)
+                {
+                    cache.Error = "";
+                    return;
+                }
+
                 long lastManagedReferenceId = cache.BodyInfo.ManagedReferenceId;
                 SaintsRowAttributeDrawer.SyncManagedReferenceBody(cache.BodyInfo, property, info, parent,
                     managedReferenceValue, this);
@@ -302,6 +334,11 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
                 {
                     cache.ExpandStateInitialized = false;
                 }
+            }
+            else
+            {
+                cache.CustomDrawerValueType = null;
+                cache.CustomDrawer = null;
             }
 
             cache.Error = "";

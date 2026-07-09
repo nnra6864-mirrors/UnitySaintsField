@@ -86,7 +86,9 @@ namespace SaintsField.Samples.Scripts.SaintsEditor.Issues.Issue379
             public int InputRangeMin = 0;
             public int InputRangeMax = 100;
 
+#if UNITY_2021_3_OR_NEWER
             [SerializeReference, ReferencePicker]
+#endif
             public IAnyInterfece upgradeCostStackAsInput2;
 
             public bool ShouldShowUpgradeCostBalanceAsInput2()

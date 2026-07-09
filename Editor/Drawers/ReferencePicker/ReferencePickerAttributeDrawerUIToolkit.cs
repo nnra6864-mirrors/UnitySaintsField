@@ -49,21 +49,7 @@ namespace SaintsField.Editor.Drawers.ReferencePicker
             //     : info.FieldType;
             // Type drawer = FindTypeDrawerAny(fieldType);
             // Debug.Log($"{fieldType.Name}: {drawer}");
-            object value = null;
-            if (property.propertyType == SerializedPropertyType.ManagedReference)
-            {
-                value = property.managedReferenceValue;
-            }
-            else
-            {
-                object parentValue = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
-                (string getValueError, int _, object getValue) = Util.GetValue(property, info, parentValue);
-                if (getValueError != "")
-                {
-                    value = getValue;
-                }
-            }
-
+            object value = property.managedReferenceValue;
             if (value == null)
             {
                 foldout.Add(

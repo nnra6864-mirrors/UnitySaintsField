@@ -16,6 +16,7 @@ using SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsTreeDropdownDrawer;
 using SaintsField.Editor.Drawers.ReferencePicker;
 using SaintsField.Editor.Drawers.SaintsWrapTypeDrawer;
 using SaintsField.Editor.Playa;
+using SaintsField.Editor.UIToolkitElements.CharacterDrawer;
 using SaintsField.Editor.UIToolkitElements.QuaternionType;
 using SaintsField.Playa;
 using SaintsField.Utils;
@@ -945,17 +946,27 @@ namespace SaintsField.Editor.Utils
                                 SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke();
                             }).Every(100);
 
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
-                            UIToolkitUtils.AddContextualMenuManipulator(listViewToggle, property, () => { });
-#endif
-                            AddContextualMenuReset(listViewToggle, property, fieldInfo, parent);
+                            Debug.Log($"list rawType={rawType}");
+                            // After Unity/default controller add:
+                            listView.itemsAdded += indices =>
+                            {
+                                foreach (var index in indices)
+                                {
+                                    var item = property.GetArrayElementAtIndex(index);
+                                    Debug.Log(item.propertyType);
+                                    Debug.Log(item.propertyPath);
+                                }
+                            };
 
-#if !UNITY_6000_0_OR_NEWER
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                             {
                                 Toggle toggle = listView.Q<Toggle>(className: "unity-toggle");
                                 AddContextualMenuManipulator(toggle, property, () => { });
                             }
 #endif
+                            AddContextualMenuReset(listViewToggle, property, fieldInfo, parent);
+
+
                         }
 
                         listView.AddToClassList(SaintsPropertyDrawer.ClassLabelFieldUIToolkit);
@@ -1054,7 +1065,7 @@ namespace SaintsField.Editor.Utils
                         longField.BindProperty(property);
                         longField.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(longField, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(longField, property, () => { });
 #endif
                         AddContextualMenuReset(longField, property, fieldInfo, parent);
@@ -1084,7 +1095,7 @@ namespace SaintsField.Editor.Utils
                         unsignedLongField.BindProperty(property);
                         unsignedLongField.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(unsignedLongField, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(unsignedLongField, property, () => { });
 #endif
                         AddContextualMenuReset(unsignedLongField, property, fieldInfo, parent);
@@ -1134,7 +1145,7 @@ namespace SaintsField.Editor.Utils
                         integerField.BindProperty(property);
                         integerField.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(integerField, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(integerField, property, () => { });
 #endif
                         AddContextualMenuReset(integerField, property, fieldInfo, parent);
@@ -1165,7 +1176,7 @@ namespace SaintsField.Editor.Utils
                         unsignedIntegerField.BindProperty(property);
                         unsignedIntegerField.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(unsignedIntegerField, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(unsignedIntegerField, property, () => { });
 #endif
                         AddContextualMenuReset(unsignedIntegerField, property, fieldInfo, parent);
@@ -1216,7 +1227,7 @@ namespace SaintsField.Editor.Utils
                         element.BindProperty(property);
                         element.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(element, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(element, property, () => { });
 #endif
                         AddContextualMenuReset(element, property, fieldInfo, parent);
@@ -1246,7 +1257,7 @@ namespace SaintsField.Editor.Utils
                         element.BindProperty(property);
                         element.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(element, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(element, property, () => { });
 #endif
                         AddContextualMenuReset(element, property, fieldInfo, parent);
@@ -1276,7 +1287,7 @@ namespace SaintsField.Editor.Utils
                         element.BindProperty(property);
                         element.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(element, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(element, property, () => { });
 #endif
                         AddContextualMenuReset(element, property, fieldInfo, parent);
@@ -1306,7 +1317,7 @@ namespace SaintsField.Editor.Utils
                         element.BindProperty(property);
                         element.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                         ApplyBasicStyles(element, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(element, property, () => { });
 #endif
                         AddContextualMenuReset(element, property, fieldInfo, parent);
@@ -1364,7 +1375,7 @@ namespace SaintsField.Editor.Utils
                     {
                         toggle.AddToClassList(Toggle.alignedFieldUssClassName);
                     }
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                     UIToolkitUtils.AddContextualMenuManipulator(toggle, property, () => { });
 #endif
                     AddContextualMenuReset(toggle, property, fieldInfo, parent);
@@ -1417,7 +1428,7 @@ namespace SaintsField.Editor.Utils
                     {
                         ApplyBasicStyles(floatField, inHorizontalLayout);
                     }
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                     UIToolkitUtils.AddContextualMenuManipulator(floatField, property, () => { });
 #endif
                     AddContextualMenuReset(floatField, property, fieldInfo, parent);
@@ -1448,7 +1459,7 @@ namespace SaintsField.Editor.Utils
                     ApplyBasicStyles(textField, inHorizontalLayout);
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(textField, property, () => { });
 #endif
                         AddContextualMenuReset(textField, property, fieldInfo, parent);
@@ -1478,7 +1489,7 @@ namespace SaintsField.Editor.Utils
                     ApplyBasicStyles(colorField, inHorizontalLayout);
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(colorField, property, () => { });
 #endif
                         AddContextualMenuReset(colorField, property, fieldInfo, parent);
@@ -1522,7 +1533,7 @@ namespace SaintsField.Editor.Utils
                     }
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(objectField, property, () => { });
 #endif
                         AddContextualMenuReset(objectField, property, fieldInfo, parent);
@@ -1552,7 +1563,7 @@ namespace SaintsField.Editor.Utils
                     ApplyBasicStyles(layerMaskField, inHorizontalLayout);
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(layerMaskField, property, () => { });
 #endif
                         AddContextualMenuReset(layerMaskField, property, fieldInfo, parent);
@@ -1630,7 +1641,7 @@ namespace SaintsField.Editor.Utils
                     }
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(vector2Field, property, () => { });
 #endif
                         AddContextualMenuReset(vector2Field, property, fieldInfo, parent);
@@ -1678,7 +1689,7 @@ namespace SaintsField.Editor.Utils
 
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(vector3Field, property, () => { });
 #endif
                         AddContextualMenuReset(vector3Field, property, fieldInfo, parent);
@@ -1725,7 +1736,7 @@ namespace SaintsField.Editor.Utils
                     }
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(vector4Field, property, () => { });
 #endif
                         AddContextualMenuReset(vector4Field, property, fieldInfo, parent);
@@ -1772,7 +1783,7 @@ namespace SaintsField.Editor.Utils
                     }
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(rectField, property, () => { });
 #endif
                         AddContextualMenuReset(rectField, property, fieldInfo, parent);
@@ -1802,7 +1813,7 @@ namespace SaintsField.Editor.Utils
                     ApplyBasicStyles(integerField, inHorizontalLayout);
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(integerField, property, () => { });
 #endif
                         AddContextualMenuReset(integerField, property, fieldInfo, parent);
@@ -1811,33 +1822,32 @@ namespace SaintsField.Editor.Utils
                 }
                 case SerializedPropertyType.Character:
                 {
-                    if (originalField is TextField textField)
+                    if (originalField is CharacterField characterField)
                     {
-                        textField.SetValueWithoutNotify(string.IsNullOrEmpty(property.stringValue)? '\0'.ToString(): property.stringValue[..1]);
+                        characterField.SetValueWithoutNotify((char)property.intValue);
                         return null;
                     }
 
-                    textField = new TextField(label)
+                    characterField = new CharacterField(label)
                     {
-                        value = string.IsNullOrEmpty(property.stringValue)? '\0'.ToString(): property.stringValue[..1],
-                        maxLength = 1,
+                        value = (char)property.intValue,
                         style =
                         {
                             flexGrow = 1,
                             flexShrink = 1,
                         },
                     };
-                    textField.BindProperty(property);
-                    textField.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
-                    ApplyBasicStyles(textField, inHorizontalLayout);
+                    characterField.BindProperty(property);
+                    characterField.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
+                    ApplyBasicStyles(characterField, inHorizontalLayout);
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+                    UIToolkitUtils.AddContextualMenuManipulator(characterField, property, () => { });
+#endif
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
-                        UIToolkitUtils.AddContextualMenuManipulator(textField, property, () => { });
-#endif
-                        AddContextualMenuReset(textField, property, fieldInfo, parent);
+                        AddContextualMenuReset(characterField, property, fieldInfo, parent);
                     }
-                    return textField;
+                    return characterField;
                 }
                 case SerializedPropertyType.AnimationCurve:
                 {
@@ -1861,7 +1871,7 @@ namespace SaintsField.Editor.Utils
                     ApplyBasicStyles(curveField, inHorizontalLayout);
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(originalField, property, () => { });
 #endif
                         AddContextualMenuReset(originalField, property, fieldInfo, parent);
@@ -1908,7 +1918,7 @@ namespace SaintsField.Editor.Utils
                     }
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(boundsField, property, () => { });
 #endif
                         AddContextualMenuReset(boundsField, property, fieldInfo, parent);
@@ -1951,7 +1961,7 @@ namespace SaintsField.Editor.Utils
                     ApplyBasicStyles(gradientField, inHorizontalLayout);
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(gradientField, property, () => { });
 #endif
                         AddContextualMenuReset(gradientField, property, fieldInfo, parent);
@@ -1997,7 +2007,7 @@ namespace SaintsField.Editor.Utils
                     }
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(quaternionField, property, () => { });
 #endif
                         AddContextualMenuReset(quaternionField, property, fieldInfo, parent);
@@ -2028,7 +2038,7 @@ namespace SaintsField.Editor.Utils
                     ApplyBasicStyles(integerField, inHorizontalLayout);
                     if(canAddContextReset)
                     {
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                         UIToolkitUtils.AddContextualMenuManipulator(integerField, property, () => { });
 #endif
                         AddContextualMenuReset(integerField, property, fieldInfo, parent);
@@ -2073,7 +2083,7 @@ namespace SaintsField.Editor.Utils
                     {
                         vector2IntField.AddToClassList(Vector2IntField.alignedFieldUssClassName);
                     }
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                     UIToolkitUtils.AddContextualMenuManipulator(vector2IntField, property, () => { });
 #endif
                     AddContextualMenuReset(vector2IntField, property, fieldInfo, parent);
@@ -2117,7 +2127,7 @@ namespace SaintsField.Editor.Utils
                     {
                         vector3IntField.AddToClassList(Vector3IntField.alignedFieldUssClassName);
                     }
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                     UIToolkitUtils.AddContextualMenuManipulator(vector3IntField, property, () => { });
 #endif
                     AddContextualMenuReset(vector3IntField, property, fieldInfo, parent);
@@ -2161,7 +2171,7 @@ namespace SaintsField.Editor.Utils
                     {
                         rectIntField.AddToClassList(RectIntField.alignedFieldUssClassName);
                     }
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                     UIToolkitUtils.AddContextualMenuManipulator(rectIntField, property, () => { });
 #endif
                     AddContextualMenuReset(rectIntField, property, fieldInfo, parent);
@@ -2205,7 +2215,7 @@ namespace SaintsField.Editor.Utils
                     {
                         boundsIntField.AddToClassList(BoundsIntField.alignedFieldUssClassName);
                     }
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                     UIToolkitUtils.AddContextualMenuManipulator(boundsIntField, property, () => { });
 #endif
                     AddContextualMenuReset(boundsIntField, property, fieldInfo, parent);
@@ -2231,7 +2241,7 @@ namespace SaintsField.Editor.Utils
                     hash128Field.BindProperty(property);
                     hash128Field.RegisterValueChangedCallback(_ => SaintsEditorApplicationChanged.OnSaintsFieldChangedEvent.Invoke());
                     ApplyBasicStyles(hash128Field, inHorizontalLayout);
-#if !UNITY_6000_3_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
+#if !UNITY_6000_0_OR_NEWER  // when < 6k, default context menu will be lost if we add menu here...
                     UIToolkitUtils.AddContextualMenuManipulator(hash128Field, property, () => { });
 #endif
                     AddContextualMenuReset(hash128Field, property, fieldInfo, parent);

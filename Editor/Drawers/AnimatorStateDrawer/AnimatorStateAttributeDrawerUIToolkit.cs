@@ -217,7 +217,7 @@ namespace SaintsField.Editor.Drawers.AnimatorStateDrawer
 
             AnimatorStateDetailPanel detailPanel = new AnimatorStateDetailPanel
             {
-                bindingPath = property.propertyPath,
+                // bindingPath = property.propertyPath,
             };
             root.Add(detailPanel);
             detailPanel.AddToClassList(ClassAllowDisable);

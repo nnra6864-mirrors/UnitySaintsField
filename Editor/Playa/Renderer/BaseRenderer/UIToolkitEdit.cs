@@ -30,6 +30,7 @@ using SaintsField.Editor.Drawers.TreeDropdownDrawer;
 using SaintsField.Editor.Drawers.ValueButtonsDrawer;
 using SaintsField.Editor.Playa.Renderer.ListDrawerSettings;
 using SaintsField.Editor.UIToolkitElements;
+using SaintsField.Editor.UIToolkitElements.CharacterDrawer;
 using SaintsField.Editor.UIToolkitElements.EditWrapper;
 #if SAINTSFIELD_UNITY_MATHEMATICS && !SAINTSFIELD_UNITY_MATHEMATICS_DISABLE
 using SaintsField.Editor.UIToolkitElements.MathematicsHalfUShort;
@@ -1234,17 +1235,15 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
             #region char
             if (valueType == typeof(char) || value is char)
             {
-                if (oldElement is TextField oldTextField)
+                if (oldElement is CharacterField oldCharacterField)
                 {
-                    oldTextField.maxLength = 1;
-                    oldTextField.SetValueWithoutNotify($"{value}");
+                    oldCharacterField.SetValueWithoutNotify((char)value);
                     return (null, false);
                 }
 
-                TextField element = new TextField(label)
+                CharacterField element = new CharacterField(label)
                 {
-                    value = $"{value}",
-                    maxLength = 1,
+                    value = (char)value,
                 };
                 if (labelGrayColor)
                 {
@@ -1254,17 +1253,10 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                 if (inHorizontalLayout)
                 {
                     element.style.flexDirection = FlexDirection.Column;
-                    // a bug in Unity 6000.0.41f1
-                    // TextInput but not such element, at all...
-                    TextElement te = element.Q<VisualElement>("unity-text-input")?.Q<TextElement>();
-                    if (te != null)
-                    {
-                        te.style.minHeight = 15;
-                    }
                 }
                 else
                 {
-                    element.AddToClassList(TextField.alignedFieldUssClassName);
+                    element.AddToClassList(CharacterField.alignedFieldUssClassName);
                 }
                 if (setterOrNull == null)
                 {
@@ -1275,24 +1267,8 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                 {
                     element.RegisterValueChangedCallback(evt =>
                     {
-                        string newValue = evt.newValue;
-
-                        if (string.IsNullOrEmpty(newValue))
-                        {
-                            return;
-                        }
-
-                        if (newValue.Length > 1)
-                        {
-                            // ReSharper disable once ReplaceSubstringWithRangeIndexer
-                            newValue = newValue.Substring(0, 1);
-                            element.SetValueWithoutNotify(newValue);
-                        }
-
                         beforeSet?.Invoke(value);
-
-                        char newChar = newValue[0];
-                        setterOrNull(newChar);
+                        setterOrNull((char)evt.newValue);
                     });
                 }
 

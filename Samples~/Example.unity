@@ -4016,27 +4016,24 @@ MonoBehaviour:
   <MyAnimator>k__BackingField: {fileID: 380193380}
   animatorState:
     <layerIndex>k__BackingField: 0
-    <stateNameHash>k__BackingField: -1075812047
-    <stateName>k__BackingField: SubNewState
-    <stateSpeed>k__BackingField: 2.42
+    <stateNameHash>k__BackingField: 0
+    <stateName>k__BackingField: 
+    <stateSpeed>k__BackingField: 0
     <stateTag>k__BackingField: 
-    <animationClip>k__BackingField: {fileID: 7400000, guid: 0ec4adcc82cdaa8408d6d75139028914, type: 2}
-    <subStateMachineNameChain>k__BackingField:
-    - SubStateMachine2
+    <animationClip>k__BackingField: {fileID: 0}
+    <subStateMachineNameChain>k__BackingField: []
   animatorStateBase:
     <layerIndex>k__BackingField: 0
-    <stateNameHash>k__BackingField: -1198717087
-    <stateName>k__BackingField: Sub2State
-    <stateSpeed>k__BackingField: 1
+    <stateNameHash>k__BackingField: 0
+    <stateName>k__BackingField: 
+    <stateSpeed>k__BackingField: 0
     <stateTag>k__BackingField: 
-    <subStateMachineNameChain>k__BackingField:
-    - SubStateMachine2
-    - Sub2-2
-  animStateName: Sub2State
+    <subStateMachineNameChain>k__BackingField: []
+  animStateName: 
   animStateDisabled: 
-  animParamName: Some Bool
-  animParamHash: -1473725520
-  animParamHashes: b0bb28a8
+  animParamName: 
+  animParamHash: 0
+  animParamHashes: 
   animParamNameDisable: 
 --- !u!95 &380193380
 Animator:
@@ -5702,14 +5699,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Samples.Scripts.IssueAndTesting.Testing.ReferencePickerCustomDrawerTest.ReferencePickerCustomDrawer
   myInterface:
-    rid: 773219647564021873
+    rid: -2
   references:
     version: 2
     RefIds:
-    - rid: 773219647564021873
-      type: {class: ReferencePickerCustomDrawer/ClassDirect, ns: SaintsField.Samples.Scripts.IssueAndTesting.Testing.ReferencePickerCustomDrawerTest, asm: SaintsField.Samples}
-      data:
-        <TheInt>k__BackingField: 0
+    - rid: -2
+      type: {class: , ns: , asm: }
 --- !u!1 &529722622
 GameObject:
   m_ObjectHideFlags: 0
@@ -22197,7 +22192,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1e27e407be47be4ebcf71d13ce7ecec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  data: []
+  data:
+  - rid: 773219663924691075
+  - rid: 773219663924691076
   dataSingle:
     rid: -2
   references:
@@ -22205,6 +22202,14 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
+    - rid: 773219663924691075
+      type: {class: Issue237ReferencePicker/Data2, ns: SaintsField.Samples.Scripts.IssueAndTesting.Issue, asm: SaintsField.Samples}
+      data:
+        Value1: {fileID: 1648914609}
+    - rid: 773219663924691076
+      type: {class: Issue237ReferencePicker/Data1, ns: SaintsField.Samples.Scripts.IssueAndTesting.Issue, asm: SaintsField.Samples}
+      data:
+        Value1: {fileID: 993807257}
 --- !u!1 &994092473
 GameObject:
   m_ObjectHideFlags: 0

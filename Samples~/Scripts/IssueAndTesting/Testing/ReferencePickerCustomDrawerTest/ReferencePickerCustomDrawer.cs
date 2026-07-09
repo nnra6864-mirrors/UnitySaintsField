@@ -11,7 +11,7 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing.ReferencePickerCus
         }
 
         [Serializable]
-        public struct StructImpl : IRefInterface
+        public struct TypeWithCustomDrawer : IRefInterface
         {
             [field: SerializeField]
             public int TheInt { get; set; }
@@ -19,13 +19,15 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing.ReferencePickerCus
         }
 
         [Serializable]
-        public class ClassDirect: IRefInterface
+        public class TypeWithDefaultDrawer: IRefInterface
         {
             [field: SerializeField, Range(0, 10)]
             public int TheInt { get; set; }
         }
 
+#if UNITY_2021_3_OR_NEWER
         [SerializeReference, ReferencePicker]
+#endif
         public IRefInterface myInterface;
 
     }

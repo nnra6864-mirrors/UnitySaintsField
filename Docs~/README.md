@@ -1693,7 +1693,7 @@ using SaintsField;
 
 A dropdown to pick a referenced value for Unity's [`SerializeReference`](https://docs.unity3d.com/ScriptReference/SerializeReference.html).
 
-You can use this to pick non UnityObject object like `interface` or polymorphism `class`.
+You can use this to pick non UnityObject object like `interface` or polymorphism `class`. If the target has custom drawer, the drawer will be used.
 
 Limitation:
 1.  The target must have a public constructor with no required arguments.
@@ -1703,7 +1703,7 @@ Parameters:
 
 *   `bool hideLabel=false`: true to hide the label of picked type
 
-*   Allow Multiple: No
+Allow Multiple: No
 
 ```csharp
 using SaintsField;
@@ -1782,6 +1782,10 @@ public IRefInterface myInterface;
 ```
 
 ![reference_picker](https://github.com/TylerTemp/SaintsField/assets/6391063/06b1a8f6-806e-49c3-b491-a810bc885595)
+
+If you have custom drawer of that type, the drawer will be used:
+
+[![video](https://github.com/user-attachments/assets/7befcee8-aaeb-44f9-b2c9-59c74e2f2e5b)](https://github.com/user-attachments/assets/358b187d-030a-4162-8bcc-9c1c9fe47de2)
 
 #### `SaintsRow` ####
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.22.1 ##
+
+1.  Add: `ReferencePicker` now can use the custom drawer if the target type has one
+2.  Fix: Old unity (<= 6k.0) did not have default context menu for some type of fields
+3.  Fix: an error when editing a `char` type field
+4.  Fix: a warning when using `string` for `[AnimatorState]`
+
 ## 5.22.0 ##
 
 1.  Add: `PrefixToggle` to put a toggle field ahead of a field

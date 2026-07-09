@@ -1459,6 +1459,67 @@ MonoBehaviour:
   g23:
   - 112233
   - sfdsfds
+--- !u!1 &132117595
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 132117596}
+  - component: {fileID: 132117597}
+  m_Layer: 0
+  m_Name: Issue413ListAddSameRef
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &132117596
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132117595}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 785898368}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &132117597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132117595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 614122623511acf47b7391c810320251, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Samples.Scripts.IssueAndTesting.Issue.Issue413ListAddSameRef
+  interfaces:
+  - <V>k__BackingField: {fileID: 0}
+    <VRef>k__BackingField:
+      rid: 773219663924691072
+    <IsVRef>k__BackingField: 1
+  - <V>k__BackingField: {fileID: 0}
+    <VRef>k__BackingField:
+      rid: 773219663924691072
+    <IsVRef>k__BackingField: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 773219663924691072
+      type: {class: Issue413ListAddSameRef/MyClass, ns: SaintsField.Samples.Scripts.IssueAndTesting.Issue, asm: SaintsField.Samples}
+      data:
+        MyEnum: 1
+        Number: 0
 --- !u!1 &139880710
 GameObject:
   m_ObjectHideFlags: 0
@@ -5604,7 +5665,7 @@ MonoBehaviour:
     Hash: 00000000000000000000000000000000
   exposedRef:
     exposedName: 
-    defaultValue: {fileID: 2100000, guid: 4f1ef37ae953c484bbc5d5e4049147e5, type: 2}
+    defaultValue: {fileID: 0}
   references:
     version: 2
     RefIds:
@@ -6501,6 +6562,7 @@ Transform:
   - {fileID: 1500470750}
   - {fileID: 1312160703}
   - {fileID: 717313589}
+  - {fileID: 132117596}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &786619284
