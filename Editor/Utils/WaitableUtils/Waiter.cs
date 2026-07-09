@@ -34,6 +34,18 @@ namespace SaintsField.Editor.Utils.WaitableUtils
             _task = task;
 
             Type taskType = task.GetType();
+            _taskReturnType = GetTaskReturnType(taskType);
+        }
+        public Waiter(Task task, Type taskReturnType)
+        {
+            _task = task;
+            _taskReturnType = taskReturnType;
+        }
+
+        public static Type GetTaskReturnType(Type type)
+        {
+            Type taskType = type;
+
             while (taskType != null)
             {
                 if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
@@ -43,18 +55,17 @@ namespace SaintsField.Editor.Utils.WaitableUtils
                     if (taskReturnType.FullName == "System.Threading.Tasks.VoidTaskResult"
                         && taskReturnType.Assembly.GetName().Name == "mscorlib")
                     {
-                        _taskReturnType = null;
+                        return null;
                     }
-                    else
-                    {
-                        _taskReturnType = taskReturnType;
-                    }
+
+                    return taskReturnType;
                     // Debug.Log($"{task.GetType().FullName}/{_taskReturnType.FullName}");
-                    break;
                 }
 
                 taskType = taskType.BaseType;
             }
+
+            return null;
         }
 
 #if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
@@ -221,7 +232,7 @@ namespace SaintsField.Editor.Utils.WaitableUtils
 
                 return new MoveNextResult(MoveNextStatus.Completed,
                     taskReturnType: _taskReturnType,
-                    taskReturnValue: _overrideReturnValue);
+                    taskReturnValue: _overrideReturnValue ?? _enumerator.Current);
             }
             catch (Exception e)
             {

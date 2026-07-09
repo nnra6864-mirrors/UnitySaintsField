@@ -8,6 +8,7 @@ using SaintsField.Condition;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.Linq;
 using SaintsField.Editor.Playa.Renderer.BaseRenderer;
+using SaintsField.Editor.Utils.WaitableUtils;
 using SaintsField.Interfaces;
 using SaintsField.Playa;
 using SaintsField.SaintsSerialization;
@@ -24,6 +25,11 @@ namespace SaintsField.Editor.Utils
 {
     public static class Util
     {
+        public interface ITicker
+        {
+            void StartTrack(Waiter waiter, Action<object> succeedCallback);
+        }
+
         // public const string SerializedFieldName = "_saintsSerializedProperties";
         public const string SaintsSerializedLabelSuffix = "__Saints Serialized__";
         public const string SaintsSerializedVarSuffix = "__SaintsSerialized__";

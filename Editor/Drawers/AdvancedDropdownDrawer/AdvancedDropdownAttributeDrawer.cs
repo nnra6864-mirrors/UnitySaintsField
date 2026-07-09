@@ -3,14 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using SaintsField.DropdownBase;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.Utils;
-using SaintsField.SaintsSerialization;
+using SaintsField.Editor.Utils.WaitableUtils;
 using SaintsField.Utils;
 using UnityEditor;
 using UnityEngine;
+
+#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
+using Cysharp.Threading.Tasks;
+#endif
 
 namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
 {
@@ -288,6 +292,457 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
             };
         }
 
+        private static AdvancedDropdownMetaInfo GetMetaInfoWithDropdown(IDropdown dropdownListValue, SerializedProperty property, PathedDropdownAttribute advancedDropdownAttribute, MemberInfo field, object parentObj)
+        {
+            if(dropdownListValue == null)
+            {
+                return new AdvancedDropdownMetaInfo
+                {
+                    Error = "dropdownList is null",
+                    CurDisplay = "[Error]",
+                    CurValues = Array.Empty<object>(),
+                    DropdownListValue = null,
+                    SelectStacks = Array.Empty<SelectStack>(),
+                };
+            }
+
+            #region Get Cur Value
+
+            (string curError, int _, object curValue)  = Util.GetValue(property, field, parentObj);
+#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_ADVANCED_DROPDOWN
+            Debug.Log($"get cur value {curValue}, {parentObj}->{field}");
+#endif
+            if (curError != "")
+            {
+                return new AdvancedDropdownMetaInfo
+                {
+                    Error = curError,
+                    CurDisplay = "[Error]",
+                    CurValues = Array.Empty<object>(),
+                    DropdownListValue = null,
+                    SelectStacks = Array.Empty<SelectStack>(),
+                };
+            }
+            if (curValue is IWrapProp wrapProp)
+            {
+                curValue = Util.GetWrapValue(wrapProp);
+            }
+
+            // process the unique options
+            (string uniqueError, IDropdown dropdownListValueUnique) = GetUniqueList(dropdownListValue, advancedDropdownAttribute.EUnique, curValue, property, field, parentObj);
+
+            if (uniqueError != "")
+            {
+                return new AdvancedDropdownMetaInfo
+                {
+                    Error = curError,
+                    CurDisplay = "[Error]",
+                    CurValues = Array.Empty<object>(),
+                    DropdownListValue = null,
+                    SelectStacks = Array.Empty<SelectStack>(),
+                };
+            }
+
+            // string curDisplay = "";
+            (IReadOnlyList<SelectStack> curSelected, string display) = AdvancedDropdownUtil.GetSelected(curValue, Array.Empty<SelectStack>(), dropdownListValueUnique);
+            #endregion
+
+            return new AdvancedDropdownMetaInfo
+            {
+                Error = "",
+                // FieldInfo = field,
+                CurDisplay = display,
+                CurValues = new[]{curValue},
+                DropdownListValue = dropdownListValueUnique,
+                SelectStacks = curSelected,
+            };
+        }
+
+        public static void GetMetaInfoAsync(Util.ITicker ticker, Action<AdvancedDropdownMetaInfo> callback, SerializedProperty property, PathedDropdownAttribute advancedDropdownAttribute, MemberInfo field, object parentObj, bool isImGui, bool flat=false)
+        {
+            string funcName = advancedDropdownAttribute.FuncName;
+
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (advancedDropdownAttribute.BehaveMode == PathedDropdownAttribute.Mode.Options)
+            {
+                Dropdown<object> optionsDropdown = new Dropdown<object>(isImGui? "Pick an Option": "");
+                foreach (object value in advancedDropdownAttribute.Options)
+                {
+                    optionsDropdown.Add(RuntimeUtil.IsNull(value)? "[Null]": value.ToString(), value);
+                }
+
+                callback.Invoke(GetMetaInfoWithDropdown(optionsDropdown, property, advancedDropdownAttribute, field, parentObj));
+                return;
+            }
+
+            if (advancedDropdownAttribute.BehaveMode == PathedDropdownAttribute.Mode.Tuples)
+            {
+                Dropdown<object> tuplesDropdown = new Dropdown<object>(isImGui? "Pick an Option": "");
+                foreach ((string path, object value) in advancedDropdownAttribute.Tuples)
+                {
+                    tuplesDropdown.Add(path, value);
+                }
+
+                callback.Invoke(GetMetaInfoWithDropdown(tuplesDropdown, property, advancedDropdownAttribute, field, parentObj));
+                return;
+            }
+
+            if (funcName is null)
+            {
+                Type memberInfoType = field is FieldInfo fInfo
+                    ? fInfo.FieldType
+                    : ((PropertyInfo)field).PropertyType;
+
+                Type elementType = SerializedUtils.IsArrayOrDirectlyInsideArray(property)
+                    ? ReflectUtils.GetElementType(memberInfoType)
+                    : memberInfoType;
+
+                // Debug.Log(elementType);
+                if (elementType == typeof(bool))
+                {
+                    Dropdown<object> boolDropdown = new Dropdown<object>(isImGui? "Pick an Enum": "")
+                    {
+                        {"True", true },
+                        {"False", false },
+                    };
+
+                    callback.Invoke(GetMetaInfoWithDropdown(boolDropdown, property, advancedDropdownAttribute, field, parentObj));
+                    return;
+                }
+
+                if(elementType.IsEnum)
+                {
+                    Dropdown<object> enumDropdown = new Dropdown<object>(isImGui? "Pick an Enum": "");
+                    foreach ((object enumValue, string enumLabel, string enumRichLabel)  in Util.GetEnumValues(elementType))
+                    {
+                        // Debug.Log($"enum={enumLabel}, rich={enumRichLabel}");
+                        HashSet<string> extraSearches = enumRichLabel == enumLabel
+                            ? new HashSet<string>
+                            {
+                                enumValue.ToString(),
+                            }
+                            : new HashSet<string>();
+                        if (flat)
+                        {
+                            enumDropdown.Add(new Dropdown<object>(enumRichLabel ?? enumLabel, enumValue)
+                            {
+                                ExtraSearches = extraSearches,
+                            });
+                        }
+                        else {
+                            enumDropdown.Add(enumRichLabel ?? enumLabel, enumValue, extraSearches: extraSearches);
+                        }
+                    }
+
+                    callback.Invoke(GetMetaInfoWithDropdown(enumDropdown, property, advancedDropdownAttribute, field, parentObj));
+                    return;
+                }
+
+                Dropdown<object> staticDropdown = new Dropdown<object>(isImGui? $"Pick a {elementType.Name}": "");
+
+                Dictionary<object, List<string>> valueToNames = new Dictionary<object, List<string>>();
+
+                // Get static fields
+                FieldInfo[] staticFields = elementType.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                foreach (FieldInfo eachField in staticFields)
+                {
+                    object value = eachField.GetValue(null);
+                    // ReSharper disable once InvertIf
+                    if (value != null && elementType.IsAssignableFrom(value.GetType()))
+                    {
+                        if (!valueToNames.TryGetValue(value, out List<string> names))
+                        {
+                            valueToNames[value] = names = new List<string>();
+                        }
+                        names.Add(eachField.Name);
+                    }
+                }
+
+                // Get static properties
+                PropertyInfo[] staticProperties = elementType.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                foreach (PropertyInfo eachProp in staticProperties)
+                {
+                    object value = eachProp.GetValue(null);
+                    if (elementType.IsAssignableFrom(value.GetType()))
+                    {
+                        if (!valueToNames.TryGetValue(value, out List<string> names))
+                        {
+                            valueToNames[value] = names = new List<string>();
+                        }
+                        names.Add(eachProp.Name);
+                    }
+                }
+
+                // ReSharper disable once UseDeconstruction
+                foreach (KeyValuePair<object, List<string>> kv in valueToNames)
+                {
+                    object value = kv.Key;
+                    List<string> names = kv.Value;
+                    names.Sort();
+                    string displayName;
+                    if (isImGui)
+                    {
+                        displayName = names[0] + (names.Count <= 1? "": $" ({string.Join(",", names.Skip(1))})");
+                    }
+                    else
+                    {
+                        displayName = names[0] + (names.Count <= 1? "": $" <color=#808080ff>({string.Join(",", names.Skip(1))})</color>");
+                    }
+
+                    staticDropdown.Add(new Dropdown<object>(displayName, value));
+                }
+
+                callback.Invoke(GetMetaInfoWithDropdown(staticDropdown, property, advancedDropdownAttribute, field, parentObj));
+                return;
+                // error = $"{property.displayName}({elementType}) is not a enum";
+            }
+
+            (string getOfError, MemberInfo _, object obj) =
+                Util.GetOf<object>(funcName, null, property, field, parentObj, null);
+            if (getOfError != "")
+            {
+                callback.Invoke(new AdvancedDropdownMetaInfo
+                {
+                    Error = getOfError,
+                    CurDisplay = "[Error]",
+                    CurValues = Array.Empty<object>(),
+                    DropdownListValue = null,
+                    SelectStacks = Array.Empty<SelectStack>(),
+                });
+                return;
+            }
+
+            if (RuntimeUtil.IsNull(obj))
+            {
+                callback.Invoke(new AdvancedDropdownMetaInfo
+                {
+                    Error = $"value from {funcName} is null",
+                    CurDisplay = "[Error]",
+                    CurValues = Array.Empty<object>(),
+                    DropdownListValue = null,
+                    SelectStacks = Array.Empty<SelectStack>(),
+                });
+                return;
+            }
+
+            string propPath = property.propertyPath;
+            UnityEngine.Object[] targetObjects = property.serializedObject.targetObjects;
+
+            if (obj is Task dropdownTask)
+            {
+                Type returnType = Waiter.GetTaskReturnType(dropdownTask.GetType());
+                if (returnType == null)
+                {
+                    callback.Invoke(new AdvancedDropdownMetaInfo
+                    {
+                        Error =
+                            $"Unsupported type {dropdownTask.GetType()}, requires Task<Dropdown<T>> type for task",
+                    });
+                    return;
+                }
+
+                Debug.Assert(ticker != null);
+                Waiter waiter = new Waiter(dropdownTask, returnType);
+                ticker.StartTrack(waiter, taskResult =>
+                    {
+                        if (taskResult is IDropdown dropdown)
+                        {
+                            SerializedObject serObj = null;
+                            if (!SerializedUtils.IsOk(property))
+                            {
+                                // https://github.com/TylerTemp/SaintsField/issues/367
+                                // Also happens in async...
+                                UnityEngine.Object[] inspecting = targetObjects
+                                    .Where(each => each != null).ToArray();
+                                if (inspecting.Length == 0)
+                                {
+#if SAINTSFIELD_DEBUG
+                                    Debug.Log("No inspecting");
+#endif
+                                    return;
+                                }
+
+                                serObj = new SerializedObject(inspecting);
+                                property = serObj.FindProperty(propPath);
+                            }
+                            callback.Invoke(GetMetaInfoWithDropdown(dropdown, property, advancedDropdownAttribute, field, parentObj));
+                            serObj?.Dispose();
+                        }
+                        else
+                        {
+                            callback.Invoke(new AdvancedDropdownMetaInfo
+                            {
+                                Error = $"Return value {taskResult} is not a Dropdown<T> type",
+                                CurDisplay = "[Error]",
+                                CurValues = Array.Empty<object>(),
+                                DropdownListValue = null,
+                                SelectStacks = Array.Empty<SelectStack>(),
+                            });
+                        }
+                    });
+                return;
+            }
+
+#if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
+            {
+                bool returnIsUniTask = false;
+                Type returnUniTaskValueType = null;
+                foreach (Type genBaseType in ReflectUtils.GetGenBaseTypes(obj.GetType()))
+                {
+                    if (genBaseType.GetGenericTypeDefinition() == typeof(UniTask<>))
+                    {
+                        returnIsUniTask = true;
+                        returnUniTaskValueType = genBaseType.GetGenericArguments()[0];
+                    }
+                }
+
+                if (returnIsUniTask)
+                {
+                    if (!typeof(IDropdown).IsAssignableFrom(returnUniTaskValueType))
+                    {
+                        callback.Invoke(new AdvancedDropdownMetaInfo
+                        {
+                            Error = $"UniTask<{returnUniTaskValueType.FullName}> is not supported, please use UniTask<Dropdown<T>>",
+                            CurDisplay = "[Error]",
+                            CurValues = Array.Empty<object>(),
+                            DropdownListValue = null,
+                            SelectStacks = Array.Empty<SelectStack>(),
+                        });
+                        return;
+                    }
+
+                    Debug.Assert(ticker != null);
+                    Waiter waiter = Waiter.UniTaskWithValue(obj, returnUniTaskValueType);
+                    ticker.StartTrack(waiter, taskResult =>
+                    {
+                        if (taskResult is IDropdown dropdown)
+                        {
+                            SerializedObject serObj = null;
+                            if (!SerializedUtils.IsOk(property))
+                            {
+                                // https://github.com/TylerTemp/SaintsField/issues/367
+                                // Also happens in async...
+                                UnityEngine.Object[] inspecting = targetObjects
+                                    .Where(each => each != null).ToArray();
+                                if (inspecting.Length == 0)
+                                {
+#if SAINTSFIELD_DEBUG
+                                    Debug.Log("No inspecting");
+#endif
+                                    return;
+                                }
+
+                                serObj = new SerializedObject(inspecting);
+                                property = serObj.FindProperty(propPath);
+                            }
+                            callback.Invoke(GetMetaInfoWithDropdown(dropdown, property, advancedDropdownAttribute, field, parentObj));
+                            serObj?.Dispose();
+                        }
+                        else
+                        {
+                            callback.Invoke(new AdvancedDropdownMetaInfo
+                            {
+                                Error = $"Return value {taskResult} is not a Dropdown<T> type",
+                                CurDisplay = "[Error]",
+                                CurValues = Array.Empty<object>(),
+                                DropdownListValue = null,
+                                SelectStacks = Array.Empty<SelectStack>(),
+                            });
+                        }
+                    });
+                    return;
+                }
+            }
+#endif
+
+            if (obj is IDropdown getOfDropdownListValue)
+            {
+                getOfDropdownListValue.SelfCompact();
+                callback.Invoke(GetMetaInfoWithDropdown(getOfDropdownListValue, property, advancedDropdownAttribute, field, parentObj));
+                return;
+            }
+
+            if (obj is IMenuDropdown md)
+            {
+                Debug.LogWarning($"{obj.GetType()} is deprecated. Use `Dropdown<>` instead");
+                Dropdown<object> menuDropdown = ConvertDeprecatedMenuDropdown(md, isImGui);
+                callback.Invoke(GetMetaInfoWithDropdown(menuDropdown, property, advancedDropdownAttribute, field, parentObj));
+                return;
+            }
+
+            if (obj is IEnumerable ieObj)
+            {
+                Dropdown<object> list = new Dropdown<object>(isImGui? "Pick an item": "");
+                foreach (object each in ieObj)
+                {
+                    if (flat)
+                    {
+                        list.Add(new Dropdown<object>($"{each}", each));
+                    }
+                    else
+                    {
+                        list.Add($"{each}", each);
+                    }
+                }
+
+                callback.Invoke(GetMetaInfoWithDropdown(list, property, advancedDropdownAttribute, field, parentObj));
+                return;
+            }
+
+            if (obj is IEnumerator ie)
+            {
+                Debug.Assert(ticker != null);
+                Waiter waiter = new Waiter(ie);
+                ticker.StartTrack(waiter, taskResult =>
+                    {
+                        if (taskResult is IDropdown dropdown)
+                        {
+                            SerializedObject serObj = null;
+                            if (!SerializedUtils.IsOk(property))
+                            {
+                                // https://github.com/TylerTemp/SaintsField/issues/367
+                                // Also happens in async...
+                                UnityEngine.Object[] inspecting = targetObjects
+                                    .Where(each => each != null).ToArray();
+                                if (inspecting.Length == 0)
+                                {
+#if SAINTSFIELD_DEBUG
+                                    Debug.Log("No inspecting");
+#endif
+                                    return;
+                                }
+
+                                serObj = new SerializedObject(inspecting);
+                                property = serObj.FindProperty(propPath);
+                            }
+                            callback.Invoke(GetMetaInfoWithDropdown(dropdown, property, advancedDropdownAttribute, field, parentObj));
+                            serObj?.Dispose();
+                        }
+                        else
+                        {
+                            callback.Invoke(new AdvancedDropdownMetaInfo
+                            {
+                                Error = $"Return value {taskResult} is not a Dropdown<T> type",
+                                CurDisplay = "[Error]",
+                                CurValues = Array.Empty<object>(),
+                                DropdownListValue = null,
+                                SelectStacks = Array.Empty<SelectStack>(),
+                            });
+                        }
+                    });
+                return;
+            }
+
+            callback.Invoke(new AdvancedDropdownMetaInfo
+            {
+                Error = $"{funcName} return value is not a AdvancedDropdownList",
+                CurDisplay = "[Error]",
+                CurValues = Array.Empty<object>(),
+                DropdownListValue = null,
+                SelectStacks = Array.Empty<SelectStack>(),
+            });
+        }
+
         private static (string error, IDropdown dropdownList) GetUniqueList(IDropdown dropdownListValue, EUnique eUnique, object curValue, SerializedProperty property, MemberInfo info, object parent)
         {
             if(eUnique == EUnique.None)
@@ -487,7 +942,7 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
                 }
                 else
                 {
-                    error = $"{funcName} return value is not a AdvancedDropdownList";
+                    error = $"{funcName} return value is not a Dropdown<T>";
                 }
             }
             if(dropdownListValue == null || error != "")

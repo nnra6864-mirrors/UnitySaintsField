@@ -16,8 +16,10 @@ using SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsTreeDropdownDrawer;
 using SaintsField.Editor.Drawers.ReferencePicker;
 using SaintsField.Editor.Drawers.SaintsWrapTypeDrawer;
 using SaintsField.Editor.Playa;
+using SaintsField.Editor.UIToolkitElements;
 using SaintsField.Editor.UIToolkitElements.CharacterDrawer;
 using SaintsField.Editor.UIToolkitElements.QuaternionType;
+using SaintsField.Editor.Utils.WaitableUtils;
 using SaintsField.Playa;
 using SaintsField.Utils;
 using UnityEngine;
@@ -2264,6 +2266,127 @@ namespace SaintsField.Editor.Utils
                 ButtonLabelElement = buttonLabel;
 
                 // AlignLabel = typeof(BaseField<string>).GetMethod("AlignLabel", BindingFlags.NonPublic | BindingFlags.Instance);
+            }
+        }
+
+        public class FancyButtonField : BaseField<object>, Util.ITicker
+        {
+            public readonly FancyButton FancyButton;
+
+            private FancyButtonField(string label, FancyButton visualInput) : base(label, visualInput)
+            {
+                FancyButton = visualInput;
+
+                FancyButton.CloseButton.clicked += () =>
+                {
+                    FancyButton.StatusIndicator.EnsureLoading(false, 0);
+
+                    if (_waiter != null)
+                    {
+                        FancyButton.StatusIndicator.PlayPause();
+                    }
+
+                    FancyButton.ShowCloseButton(false);
+                    FancyButton.ShowResult(false);
+                    ResetTrack();
+                };
+            }
+
+            public FancyButtonField(string label) : this(label, new FancyButton())
+            {
+            }
+
+            private Waiter _waiter;
+            private IVisualElementScheduledItem _scheduler;
+
+            public void StartTrack(Waiter waiter, Action<object> succeedCallback)
+            {
+                ResetTrack();
+                FancyButton.ShowResult(false);
+                FancyButton.ShowCloseButton(true);
+                FancyButton.StatusIndicator.PlayLoading();
+
+                _waiter = waiter;
+                _scheduler = schedule.Execute(() =>
+                {
+                    Waiter.MoveNextResult moveNext = waiter.MoveNext();
+
+                    if (moveNext.Exception != null)
+                    {
+                        // Debug.LogException(moveNext.Exception.InnerException ?? moveNext.Exception);
+
+                        VisualElement result = FancyButton.ShowResult(true);
+                        result.Clear();
+                        result.Add(MakeErrorBox(moveNext.Exception));
+                        FancyButton.StatusIndicator.PlayError();
+                        ResetTrack();
+                        return;
+                    }
+
+                    switch (moveNext.Status)
+                    {
+                        case Waiter.MoveNextStatus.Pending:
+                        {
+                            waiter.CheckCurrentNeedWaiter();
+
+                            float process = waiter.GetProgress();
+                            if (process > 0)
+                            {
+                                FancyButton.StatusIndicator.EnsureLoading(true, process);
+                            }
+                        }
+                            return;
+                        case Waiter.MoveNextStatus.Completed:
+                            succeedCallback.Invoke(moveNext.ReturnValue);
+                            FancyButton.StatusIndicator.EnsureLoading(false, 0);
+                            FancyButton.ShowCloseButton(false);
+                            ResetTrack();
+                            // FancyButton.StatusIndicator.PlayOk();
+                            return;
+                        case Waiter.MoveNextStatus.Cancelled:
+                        {
+                            FancyButton.ShowResult(false);
+                            FancyButton.StatusIndicator.PlayPause();
+                            FancyButton.StatusIndicator.EnsureLoading(false, 0);
+                            FancyButton.ShowCloseButton(false);
+                            ResetTrack();
+                        }
+                            return;
+                        case Waiter.MoveNextStatus.Faulted:
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+
+
+                }).Every(150);
+            }
+
+            public void ResetTrack()
+            {
+                _waiter = null;
+                _scheduler?.Pause();
+                _scheduler = null;
+            }
+
+            private static VisualElement MakeErrorBox(Exception error)
+            {
+                return new HelpBox(error.InnerException?.Message ?? error.Message, HelpBoxMessageType.Error)
+                {
+                    style =
+                    {
+                        borderLeftWidth = 0,
+                        borderRightWidth = 0,
+                        // borderTopWidth = 0,
+                        borderTopLeftRadius = 0,
+                        borderTopRightRadius = 0,
+                        borderBottomWidth = 0,
+                        backgroundColor = Color.clear,
+                        marginTop = 0,
+                        marginBottom = 0,
+                        marginLeft = 0,
+                        marginRight = 0,
+                    },
+                };
             }
         }
 

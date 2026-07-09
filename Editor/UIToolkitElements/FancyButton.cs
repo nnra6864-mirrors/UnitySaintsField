@@ -18,7 +18,8 @@ namespace SaintsField.Editor.UIToolkitElements
         private readonly VisualElement _parameters;
 
         public readonly Button MainButton;
-        public readonly VisualElement MainLabel;
+        public readonly Label MainLabel;
+        private readonly Image _dropdownIcon;
         public readonly StatusIndicatorElement StatusIndicator;
         public readonly Button CloseButton;
 
@@ -37,7 +38,8 @@ namespace SaintsField.Editor.UIToolkitElements
             _parameters = root.Q<VisualElement>("parameters");
 
             MainButton = root.Q<Button>("mainButton");
-            MainLabel = MainButton.Q<VisualElement>("mainLabel");
+            MainLabel = MainButton.Q<Label>("mainLabel");
+            _dropdownIcon = MainButton.Q<Image>("dropdownIcon");
 
             CloseButton = root.Q<Button>("closeButton");
 
@@ -48,6 +50,13 @@ namespace SaintsField.Editor.UIToolkitElements
             _result = root.Q<VisualElement>("result");
 
             ShowResult(false);
+        }
+
+        public void DisplayDropdown()
+        {
+            _dropdownIcon.style.display = DisplayStyle.Flex;
+            MainLabel.AddToClassList("mainLabelAsDropdown");  // this is override by inline style... where?
+            MainLabel.style.justifyContent = Justify.FlexStart;
         }
 
         public void ShowCloseButton(bool show)

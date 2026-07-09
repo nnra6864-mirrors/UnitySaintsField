@@ -16,7 +16,7 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
     {
         // private static string NameContainer(SerializedProperty property) => $"{property.propertyPath}__AdvancedDropdown";
         private static string NameButton(SerializedProperty property) => $"{property.propertyPath}__AdvancedDropdown_Button";
-        private static string NameHelpBox(SerializedProperty property) => $"{property.propertyPath}__AdvancedDropdown_HelpBox";
+        // private static string NameHelpBox(SerializedProperty property) => $"{property.propertyPath}__AdvancedDropdown_HelpBox";
 
         private readonly RichTextDrawer _richTextDrawer = new RichTextDrawer();
 
@@ -27,21 +27,19 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
             FieldInfo info,
             object parent)
         {
-            AdvancedDropdownMetaInfo initMetaInfo = GetMetaInfo(property, (AdvancedDropdownAttribute)saintsAttribute, info, parent, false);
+            UIToolkitUtils.FancyButtonField dropdownButton = new UIToolkitUtils.FancyButtonField(GetPreferredLabel(property))
+            {
+                name = NameButton(property),
+            };
+            dropdownButton.FancyButton.DisplayDropdown();
 
-            UIToolkitUtils.DropdownButtonField dropdownButton = UIToolkitUtils.MakeDropdownButtonUIToolkit(GetPreferredLabel(property));
-            dropdownButton.style.flexGrow = 1;
-            dropdownButton.name = NameButton(property);
-            dropdownButton.userData = initMetaInfo.CurValues;
-            string display = GetMetaStackDisplay(initMetaInfo);
-            UIToolkitUtils.SetLabel(dropdownButton.ButtonLabelElement, RichTextDrawer.ParseRichXmlWithProvider(GetMetaStackDisplay(initMetaInfo), this), _richTextDrawer);
-            dropdownButton.ButtonLabelElement.userData = display;
             if (!string.IsNullOrEmpty(property.tooltip) && dropdownButton.labelElement != null)
             {
                 dropdownButton.labelElement.tooltip = property.tooltip;
             }
 
             dropdownButton.AddToClassList(ClassAllowDisable);
+            dropdownButton.AddToClassList(UIToolkitUtils.FancyButtonField.alignedFieldUssClassName);
 
             EmptyPrefabOverrideElement emptyPrefabOverrideElement = new EmptyPrefabOverrideElement(property);
             emptyPrefabOverrideElement.Add(dropdownButton);
@@ -49,22 +47,22 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
             return emptyPrefabOverrideElement;
         }
 
-        protected override VisualElement CreateBelowUIToolkit(SerializedProperty property,
-            ISaintsAttribute saintsAttribute, int index,
-            IReadOnlyList<PropertyAttribute> allAttributes,
-            VisualElement container, FieldInfo info, object parent)
-        {
-            HelpBox helpBox = new HelpBox("", HelpBoxMessageType.Error)
-            {
-                style =
-                {
-                    display = DisplayStyle.None,
-                },
-                name = NameHelpBox(property),
-            };
-
-            return helpBox;
-        }
+        // protected override VisualElement CreateBelowUIToolkit(SerializedProperty property,
+        //     ISaintsAttribute saintsAttribute, int index,
+        //     IReadOnlyList<PropertyAttribute> allAttributes,
+        //     VisualElement container, FieldInfo info, object parent)
+        // {
+        //     HelpBox helpBox = new HelpBox("", HelpBoxMessageType.Error)
+        //     {
+        //         style =
+        //         {
+        //             display = DisplayStyle.None,
+        //         },
+        //         name = NameHelpBox(property),
+        //     };
+        //
+        //     return helpBox;
+        // }
 
         // public class DebugPopupExample : EditorWindow
         // {
@@ -89,56 +87,72 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
             int index, IReadOnlyList<PropertyAttribute> allAttributes, VisualElement container,
             Action<object> onValueChangedCallback, FieldInfo info, object parent)
         {
-            UIToolkitUtils.DropdownButtonField dropdownButton = container.Q<UIToolkitUtils.DropdownButtonField>(NameButton(property));
+            UIToolkitUtils.FancyButtonField dropdownButton = container.Q<UIToolkitUtils.FancyButtonField>(NameButton(property));
 
-            UIToolkitUtils.AddContextualMenuManipulator(dropdownButton.labelElement, property, () => Util.PropertyChangedCallback(property, info, onValueChangedCallback));
+            UIToolkitUtils.AddContextualMenuManipulator(dropdownButton, property, () => Util.PropertyChangedCallback(property, info, onValueChangedCallback));
 
-            VisualElement root = container.Q<VisualElement>(NameLabelFieldUIToolkit(property));
-            dropdownButton.ButtonElement.clicked += () =>
+            dropdownButton.FancyButton.MainButton.clicked += () =>
             {
-                AdvancedDropdownMetaInfo metaInfo = GetMetaInfo(property, (PathedDropdownAttribute)saintsAttribute, info, parent, false);
-
-                (Rect worldBound, float maxHeight) = SaintsAdvancedDropdownUIToolkit.GetProperPos(root.worldBound);
-
-                // Debug.Log(metaInfo.DropdownListValue.Count);
-                // Debug.Log(metaInfo.DropdownListValue.displayName);
-                // Debug.Log(metaInfo.DropdownListValue.value);
-                // Debug.Log(metaInfo.DropdownListValue.ChildCount());
-
-                SaintsAdvancedDropdownUIToolkit sa = new SaintsAdvancedDropdownUIToolkit(
-                    metaInfo,
-                    root.worldBound.width,
-                    maxHeight,
-                    false,
-                    (newDisplay, curItem) =>
+                GetMetaInfoAsync(
+                    dropdownButton,
+                    metaInfo =>
                     {
-                        ReflectUtils.SetValue(property.propertyPath, property.serializedObject.targetObject, info,
-                            parent, curItem);
-                        Util.SignPropertyValue(property, info, parent, curItem);
-                        property.serializedObject.ApplyModifiedProperties();
+                        if (!SerializedUtils.IsOk(property))
+                        {
+                            return;
+                        }
 
-                        dropdownButton.Q<UIToolkitUtils.DropdownButtonField>(NameButton(property)).ButtonLabelElement
-                            .text = newDisplay;
-                        dropdownButton.userData = curItem;
-                        onValueChangedCallback(curItem);
-                        // dropdownButton.buttonLabelElement.text = newDisplay;
-                    }
+                        if (metaInfo.Error != "")
+                        {
+                            VisualElement result = dropdownButton.FancyButton.ShowResult(true);
+                            result.Clear();
+                            result.Add(new HelpBox(metaInfo.Error, HelpBoxMessageType.Error));
+                            return;
+                        }
+
+                        dropdownButton.FancyButton.ShowResult(false);
+
+                        (Rect worldBound, float maxHeight) =
+                            SaintsAdvancedDropdownUIToolkit.GetProperPos(dropdownButton.worldBound);
+
+                        // Debug.Log(metaInfo.DropdownListValue.Count);
+                        // Debug.Log(metaInfo.DropdownListValue.displayName);
+                        // Debug.Log(metaInfo.DropdownListValue.value);
+                        // Debug.Log(metaInfo.DropdownListValue.ChildCount());
+
+                        SaintsAdvancedDropdownUIToolkit sa = new SaintsAdvancedDropdownUIToolkit(
+                            metaInfo,
+                            dropdownButton.worldBound.width,
+                            maxHeight,
+                            false,
+                            (newDisplay, curItem) =>
+                            {
+                                ReflectUtils.SetValue(property.propertyPath, property.serializedObject.targetObject, info,
+                                    parent, curItem);
+                                Util.SignPropertyValue(property, info, parent, curItem);
+                                property.serializedObject.ApplyModifiedProperties();
+
+                                dropdownButton.FancyButton.MainLabel.userData = newDisplay;
+                                UIToolkitUtils.SetLabel(dropdownButton.FancyButton.MainLabel,
+                                    RichTextDrawer.ParseRichXmlWithProvider(newDisplay, new RichTextDrawer.EmptyRichTextTagProvider()),
+                                    _richTextDrawer);
+                                dropdownButton.userData = curItem;
+                                onValueChangedCallback(curItem);
+                            }
+                        );
+
+                        // DebugPopupExample.SaintsAdvancedDropdownUIToolkit = sa;
+                        // var editorWindow = EditorWindow.GetWindow<DebugPopupExample>();
+                        // editorWindow.Show();
+
+                        UnityEditor.PopupWindow.Show(worldBound, sa);
+                    },
+                    property,
+                    (PathedDropdownAttribute)saintsAttribute,
+                    info,
+                    parent,
+                    false
                 );
-
-                // DebugPopupExample.SaintsAdvancedDropdownUIToolkit = sa;
-                // var editorWindow = EditorWindow.GetWindow<DebugPopupExample>();
-                // editorWindow.Show();
-
-                UnityEditor.PopupWindow.Show(worldBound, sa);
-
-                string curError = metaInfo.Error;
-                HelpBox helpBox = container.Q<HelpBox>(NameHelpBox(property));
-                // ReSharper disable once InvertIf
-                if (helpBox.text != curError)
-                {
-                    helpBox.text = curError;
-                    helpBox.style.display = curError == ""? DisplayStyle.None : DisplayStyle.Flex;
-                }
             };
         }
 
@@ -147,35 +161,41 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
             IReadOnlyList<PropertyAttribute> allAttributes,
             VisualElement container, Action<object> onValueChanged, FieldInfo info)
         {
-            UIToolkitUtils.DropdownButtonField dropdownButton = container.Q<UIToolkitUtils.DropdownButtonField>(NameButton(property));
+            UIToolkitUtils.FancyButtonField dropdownButton = container.Q<UIToolkitUtils.FancyButtonField>(NameButton(property));
             object parent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
             if (parent == null)
             {
                 return;
             }
 
-            string display =
-                GetMetaStackDisplay(GetMetaInfo(property, (AdvancedDropdownAttribute)saintsAttribute, info, parent, false));
-            // ReSharper disable once InvertIf
-            if((string)dropdownButton.ButtonLabelElement.userData != display)
-            {
-                dropdownButton.ButtonLabelElement.userData = display;
-                UIToolkitUtils.SetLabel(dropdownButton.ButtonLabelElement, RichTextDrawer.ParseRichXmlWithProvider(display, new RichTextDrawer.EmptyRichTextTagProvider()), _richTextDrawer);
-            }
+            GetMetaInfoAsync(dropdownButton,
+                metaInfo =>
+                {
+                    string display = GetMetaStackDisplay(metaInfo);
+                    // ReSharper disable once InvertIf
+                    if((string)dropdownButton.FancyButton.MainLabel.userData != display)
+                    {
+                        dropdownButton.FancyButton.MainLabel.userData = display;
+                        UIToolkitUtils.SetLabel(dropdownButton.FancyButton.MainLabel, RichTextDrawer.ParseRichXmlWithProvider(display, new RichTextDrawer.EmptyRichTextTagProvider()), _richTextDrawer);
+                    }
+                }, property, (AdvancedDropdownAttribute)saintsAttribute, info, parent, false);
         }
 
         protected override void OnValueChanged(SerializedProperty property, ISaintsAttribute saintsAttribute, int index, VisualElement container,
             FieldInfo info, object parent, Action<object> onValueChangedCallback, object newValue)
         {
-            UIToolkitUtils.DropdownButtonField dropdownButton = container.Q<UIToolkitUtils.DropdownButtonField>(NameButton(property));
-            string display =
-                GetMetaStackDisplay(GetMetaInfo(property, (AdvancedDropdownAttribute)saintsAttribute, info, parent, false));
-            // ReSharper disable once InvertIf
-            if((string)dropdownButton.ButtonLabelElement.userData != display)
-            {
-                dropdownButton.ButtonLabelElement.userData = display;
-                UIToolkitUtils.SetLabel(dropdownButton.ButtonLabelElement, RichTextDrawer.ParseRichXmlWithProvider(display, new RichTextDrawer.EmptyRichTextTagProvider()), _richTextDrawer);
-            }
+            UIToolkitUtils.FancyButtonField dropdownButton = container.Q<UIToolkitUtils.FancyButtonField>(NameButton(property));
+            GetMetaInfoAsync(dropdownButton,
+                metaInfo =>
+                {
+                    string display = GetMetaStackDisplay(metaInfo);
+                    // ReSharper disable once InvertIf
+                    if((string)dropdownButton.FancyButton.MainLabel.userData != display)
+                    {
+                        dropdownButton.FancyButton.MainLabel.userData = display;
+                        UIToolkitUtils.SetLabel(dropdownButton.FancyButton.MainLabel, RichTextDrawer.ParseRichXmlWithProvider(display, new RichTextDrawer.EmptyRichTextTagProvider()), _richTextDrawer);
+                    }
+                }, property, (AdvancedDropdownAttribute)saintsAttribute, info, parent, false);
         }
     }
 }
