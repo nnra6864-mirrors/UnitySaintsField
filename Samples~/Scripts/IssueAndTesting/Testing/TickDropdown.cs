@@ -77,5 +77,20 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing
             return result;
         }
 #endif
+
+        private async Task<Dropdown<int>> GetTransAdvanced()
+        {
+            await Task.Delay(500);
+
+            Dropdown<int> list = new Dropdown<int>();
+            for (int number = 0; number < 10; number++)
+            {
+                list.Add($"{number}", number);
+            }
+
+            return list;
+        }
+
+        [ValueButtons(nameof(GetTransAdvanced))] public int transformAdvanced;
     }
 }

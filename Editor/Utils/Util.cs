@@ -25,9 +25,15 @@ namespace SaintsField.Editor.Utils
 {
     public static class Util
     {
+        public enum TickerStop
+        {
+            Exception,
+            Pause,
+        }
+
         public interface ITicker
         {
-            void StartTrack(Waiter waiter, Action<object> succeedCallback);
+            void StartTrack(Waiter waiter, Action<object> succeedCallback, Action<TickerStop, Exception> stopCallback);
         }
 
         // public const string SerializedFieldName = "_saintsSerializedProperties";

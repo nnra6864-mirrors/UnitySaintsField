@@ -5,13 +5,15 @@ using System.Linq;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.Drawers.ValueButtonsDrawer;
 using SaintsField.Editor.Utils;
+using SaintsField.Editor.Utils.WaitableUtils;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UIElements;
 
 namespace SaintsField.Editor.UIToolkitElements.ValueButtons
 {
-    public abstract class AbsValueButtonsArrangeElement<T>: VisualElement where T: AbsValueButton
+    public abstract class AbsValueButtonsArrangeElement<T>: VisualElement, Util.ITicker
+        where T: AbsValueButton
     {
         private readonly AbsValueButtonsCalcElement _valueButtonsCalcElement;
         private readonly AbsValueButtonsRow<T> _mainRow;
@@ -483,6 +485,49 @@ namespace SaintsField.Editor.UIToolkitElements.ValueButtons
             {
                 valueButtonsRow.RefreshCurValue(curValue);
             }
+        }
+
+        private IVisualElementScheduledItem _scheduler;
+
+        public void StartTrack(Waiter waiter, Action<object> succeedCallback, Action<Util.TickerStop, Exception> stopCallback)
+        {
+            _scheduler?.Pause();
+
+            _scheduler = schedule.Execute(() =>
+            {
+                Waiter.MoveNextResult moveNext = waiter.MoveNext();
+
+                if (moveNext.Exception != null)
+                {
+                    stopCallback.Invoke(Util.TickerStop.Exception, moveNext.Exception);
+                    _scheduler.Pause();
+                    return;
+                }
+
+                switch (moveNext.Status)
+                {
+                    case Waiter.MoveNextStatus.Pending:
+                    {
+                        waiter.CheckCurrentNeedWaiter();
+                    }
+                        return;
+                    case Waiter.MoveNextStatus.Completed:
+                    {
+                        succeedCallback.Invoke(moveNext.ReturnValue);
+                        _scheduler.Pause();
+                    }
+                        return;
+                    case Waiter.MoveNextStatus.Cancelled:
+                    {
+                        stopCallback.Invoke(Util.TickerStop.Pause, null);
+                        _scheduler.Pause();
+                    }
+                        return;
+                    case Waiter.MoveNextStatus.Faulted:
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }).Every(150);
         }
     }
 }

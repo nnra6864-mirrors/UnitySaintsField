@@ -2299,7 +2299,7 @@ namespace SaintsField.Editor.Utils
             private Waiter _waiter;
             private IVisualElementScheduledItem _scheduler;
 
-            public void StartTrack(Waiter waiter, Action<object> succeedCallback)
+            public void StartTrack(Waiter waiter, Action<object> succeedCallback, Action<Util.TickerStop, Exception> _)
             {
                 ResetTrack();
                 FancyButton.ShowResult(false);

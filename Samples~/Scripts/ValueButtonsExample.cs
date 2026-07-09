@@ -27,9 +27,9 @@ namespace SaintsField.Samples.Scripts
         [ValueButtons(nameof(GetTransOpts))] public Transform transformCallback;
 
         // Use OptionList for a bit more control
-        private AdvancedDropdownList<Transform> GetTransAdvanced()
+        private Dropdown<Transform> GetTransAdvanced()
         {
-            AdvancedDropdownList<Transform> result = new AdvancedDropdownList<Transform>
+            Dropdown<Transform> result = new Dropdown<Transform>
             {
                 {transOpts[0].name, transOpts[0]},  // inline add
             };

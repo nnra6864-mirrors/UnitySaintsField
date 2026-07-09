@@ -245,22 +245,24 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
 
             void RefreshButtons()
             {
-                AdvancedDropdownMetaInfo initMetaInfo = AdvancedDropdownAttributeDrawer.GetMetaInfo(property, valueButtonsAttribute, info, parent, false, true);
-                UIToolkitUtils.SetHelpBox(helpBox, initMetaInfo.Error);
-                // ReSharper disable once InvertIf
-                if(initMetaInfo.Error == "")
+                AdvancedDropdownAttributeDrawer.GetMetaInfoAsync(valueButtonsArrangeElement, initMetaInfo =>
                 {
-                    valueButtonsArrangeElement.UpdateButtons(
-                        initMetaInfo.DropdownListValue
-                            .Select(each =>
-                                new ValueButtonRawInfo(
-                                    RichTextDrawer.ParseRichXmlWithProvider(each.displayName, richTextTagProvider).ToArray(),
-                                    each.disabled,
-                                    each.value))
-                            .ToArray()
-                    );
-                    RefreshCurValue();
-                }
+                    UIToolkitUtils.SetHelpBox(helpBox, initMetaInfo.Error);
+                    // ReSharper disable once InvertIf
+                    if(initMetaInfo.Error == "")
+                    {
+                        valueButtonsArrangeElement.UpdateButtons(
+                            initMetaInfo.DropdownListValue
+                                .Select(each =>
+                                    new ValueButtonRawInfo(
+                                        RichTextDrawer.ParseRichXmlWithProvider(each.displayName, richTextTagProvider).ToArray(),
+                                        each.disabled,
+                                        each.value))
+                                .ToArray()
+                        );
+                        RefreshCurValue();
+                    }
+                }, property, valueButtonsAttribute, info, parent, false, true);
             }
         }
     }
