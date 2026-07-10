@@ -113,7 +113,7 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.22.2**
+**5.22.3**
 
 Support async callback (`ienumerator`, `Task<Dropdown<T>>`, `UniTask<Dropdown<T>>`) for Dropdown & ValueButtons for options that need time to load
 
