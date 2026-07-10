@@ -2299,9 +2299,10 @@ namespace SaintsField.Editor.Utils
             private Waiter _waiter;
             private IVisualElementScheduledItem _scheduler;
 
-            public void StartTrack(Waiter waiter, Action<object> succeedCallback, Action<Util.TickerStop, Exception> _)
+            public void StartTrack(Waiter waiter, Action<object> succeedCallback)
             {
                 ResetTrack();
+                FancyButton.MainButton.SetEnabled(false);
                 FancyButton.ShowResult(false);
                 FancyButton.ShowCloseButton(true);
                 FancyButton.StatusIndicator.PlayLoading();
@@ -2309,6 +2310,18 @@ namespace SaintsField.Editor.Utils
                 _waiter = waiter;
                 _scheduler = schedule.Execute(() =>
                 {
+                    waiter.Update();
+                    if (!waiter.SubWaiterDone())
+                    {
+                        float process = waiter.GetProgress();
+                        if (process > 0)
+                        {
+                            FancyButton.StatusIndicator.EnsureLoading(true, process);
+                        }
+
+                        return;
+                    }
+
                     Waiter.MoveNextResult moveNext = waiter.MoveNext();
 
                     if (moveNext.Exception != null)
@@ -2326,15 +2339,7 @@ namespace SaintsField.Editor.Utils
                     switch (moveNext.Status)
                     {
                         case Waiter.MoveNextStatus.Pending:
-                        {
                             waiter.CheckCurrentNeedWaiter();
-
-                            float process = waiter.GetProgress();
-                            if (process > 0)
-                            {
-                                FancyButton.StatusIndicator.EnsureLoading(true, process);
-                            }
-                        }
                             return;
                         case Waiter.MoveNextStatus.Completed:
                             succeedCallback.Invoke(moveNext.ReturnValue);
@@ -2366,6 +2371,8 @@ namespace SaintsField.Editor.Utils
                 _waiter = null;
                 _scheduler?.Pause();
                 _scheduler = null;
+
+                FancyButton.MainButton.SetEnabled(true);
             }
 
             private static VisualElement MakeErrorBox(Exception error)

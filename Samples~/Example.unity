@@ -1400,11 +1400,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0077bda2d84e2bf439b8d4299ab41693, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: SaintsField.Samples::SaintsField.TickDropdown
-  showError: 0
-  bookName: The Mythical Man-Month, Vol 1
-  ieDrop: 3
-  percent: 1
+  m_EditorClassIdentifier: SaintsField.Samples::SaintsField.Samples.Scripts.IssueAndTesting.Testing.TickDropdown
+  showError: 1
+  bookName: 
+  ieDrop: 0
+  percent: 0
+  transformAdvanced: 0
 --- !u!1 &111810125
 GameObject:
   m_ObjectHideFlags: 0

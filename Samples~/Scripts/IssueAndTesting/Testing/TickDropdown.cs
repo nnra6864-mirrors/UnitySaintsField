@@ -11,7 +11,7 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing
 {
     public class TickDropdown : MonoBehaviour
     {
-        public bool showError;
+        public bool showError = true;
 
         [Dropdown(nameof(BookDrop))] public string bookName;
 
@@ -46,7 +46,7 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing
 
         private IEnumerator IEDrop()
         {
-            yield return new WaitForSeconds(1);
+            yield return new WaitForSeconds(3);
             yield return new Dropdown<int>
             {
                 { "One", 1 },
@@ -62,7 +62,7 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing
         {
             await UniTask.Delay(600);
 
-            AdvancedDropdownList<float> result = new AdvancedDropdownList<float>
+            Dropdown<float> result = new Dropdown<float>
             {
                 { "20%", 0.2f },
                 { "40%", 0.4f },
@@ -78,6 +78,9 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing
         }
 #endif
 
+        // [Space(150)]
+        [ValueButtons(nameof(GetTransAdvanced), noFold: true)] public int transformAdvanced;
+
         private async Task<Dropdown<int>> GetTransAdvanced()
         {
             await Task.Delay(500);
@@ -90,7 +93,5 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing
 
             return list;
         }
-
-        [ValueButtons(nameof(GetTransAdvanced))] public int transformAdvanced;
     }
 }

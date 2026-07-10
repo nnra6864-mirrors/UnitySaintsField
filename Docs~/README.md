@@ -4452,14 +4452,17 @@ This is the recommended way to make a searchable dropdown.
 
 **Arguments**
 
-*   `string funcName=null` callback function. Must return either a `Dropdown<T>` or a `IEnumerable<object>` (list/array etc.).
+*   `string funcName=null` callback function. Must return a `Dropdown<T>`, a `IEnumerable<object>` (list/array etc.), a `Task<Dropdown<T>>`, a `UniTask<Dropdown<T>>`, or a `IEnumerator` that yield `Dropdown<T>` at last.
     When using on an `enum`, you can omit this parameter, and the dropdown will use the enum values as the dropdown items.
     When omitted, it will try to find all the static values from the field type.
-    You can use `../` to get upward callback/property for a callback
+    You can use `../` to get upward callback/property for a callback.
+
+    When returning a task/ienumerator type, it'll wait the task then show the dropdown. Useful if your option targets needs time to load.
+
 *   `EUnique unique=EUnique.None`: When using on a list/array, a duplicated option can be removed if `Enique.Remove`, or disabled if `EUnique.Disable`. No use for non-list/array.
 *   Allow Multiple: No
 
-First, it can make a quick searchable dropdown:
+It can make a quick searchable dropdown:
 
 ```csharp
 [Dropdown(nameof(BookDrop))] public string bookName;
@@ -4478,7 +4481,7 @@ private IEnumerable<string> BookDrop()
 }
 ```
 
-Second, it can set labels for these items with rich text support
+It can set labels for these items with rich text support
 
 ```csharp
 [Dropdown(nameof(QuickDrop))] public float percent;
@@ -4503,7 +4506,7 @@ private Dropdown<float> QuickDrop()
 
 ![](https://github.com/user-attachments/assets/27bc0d84-a268-41d4-ad06-72bd8ba84976)
 
-Finally, it support nested items
+It supports nested items
 
 ```csharp
 using SaintsField;
@@ -4566,6 +4569,80 @@ public MyStruct myStruct;
 ```
 
 ![](https://github.com/user-attachments/assets/c9f42bf2-632a-496a-8ffc-74b2abbaceb9)
+
+It supports async wait:
+
+```csharp
+using SaintsField;
+
+// Task support
+[Dropdown(nameof(BookDrop))] public string bookName;
+
+private async Task<Dropdown<string>> BookDrop()
+{
+    await Task.Delay(600);
+
+    if (showError)
+    {
+        throw new Exception("Some error happened here");
+    }
+
+    Dropdown<string> result = new Dropdown<string>();
+
+    foreach (string item in new[]
+             {
+                 "Hackers & Painters, Vol 1",
+                 "Hackers & Painters, Vol 2",
+                 "The Art of Unix Programming, Vol 1",
+                 "The Art of Unix Programming, Vol 2",
+                 "The Mythical Man-Month, Vol 1",
+                 "The Mythical Man-Month, Vol 2",
+             })
+    {
+        result.Add(item, item);
+    }
+
+    return result;
+}
+
+// IEnumerator support
+[Dropdown(nameof(IEDrop))] public int ieDrop;
+
+private IEnumerator IEDrop()
+{
+    yield return new WaitForSeconds(5);
+    yield return new Dropdown<int>
+    {
+        { "One", 1 },
+        { "Two", 2 },
+        { "Three", 3 },
+    };
+}
+
+// UniTask support
+[Dropdown(nameof(QuickDrop))] public float percent;
+
+private async UniTask<Dropdown<float>> QuickDrop()
+{
+    await UniTask.Delay(600);
+
+    Dropdown<float> result = new Dropdown<float>
+    {
+        { "20%", 0.2f },
+        { "40%", 0.4f },
+        { "60%", 0.6f },
+    };
+    // `Add` is supported
+    result.Add("80%", 0.8f);
+    // rich tag is supported
+    result.Add($"<color={EColor.GoldenRod}>100%<icon=lightMeter/redLight/>", 1f);
+    // disable is supported
+    result.Add("120%", 1.2f, true);
+    return result;
+}
+```
+
+[![video](https://github.com/user-attachments/assets/3c78d9fe-aec8-4053-b671-4d78214a2fa3)](https://github.com/user-attachments/assets/9f7e5257-f7e3-4d1a-8adc-547e9836e516)
 
 It can work with `ShowInInspector`
 
@@ -5241,13 +5318,13 @@ Like tree dropdown, but this will list all options as buttons
 
 Parameters:
 
-*   `string funcName=null` callback function. Must return either a `OptionDropdownList<T>` or a `IEnumerable` (list/array etc.).
+*   `string funcName=null` callback function. Must return a `Dropdown<T>`, a `IEnumerable<object>` (list/array etc.), a `Task<Dropdown<T>>`, a `UniTask<Dropdown<T>>`, or a `IEnumerator` that yield `Dropdown<T>` at last.
 
     When using on an `enum`, you can omit this parameter, and the dropdown will use the enum values as the dropdown items.
 
     When using on a `bool`, you can omit thiss parameter, and a `True`, a `False` button will show.
 
-    When omitted, it will try to find all the static values from the field type.
+    When returning a task/ienumerator type, it'll wait the task then show the buttons.
 
 *   `EUnique unique=EUnique.None`: When using on a list/array, a duplicated option can be removed if `Enique.Remove`, or disabled if `EUnique.Disable`. No use for non-list/array.
 *   `bool noFold=false`: when `True`, always expand the buttons
@@ -5339,6 +5416,29 @@ using SaintsField;
 ```
 
 ![](https://github.com/user-attachments/assets/4b76bb2b-f2fd-4efb-a879-71eef57c7444)
+
+If your target need some time to load, Task<Dropdown<T>>/UniTask<Dropdown<T>>/ienumerator is supported:
+
+```csharp
+using SaintsField;
+
+[ValueButtons(nameof(GetTransAdvanced), noFold: true)] public int transformAdvanced;
+
+private async Task<Dropdown<int>> GetTransAdvanced()
+{
+    await Task.Delay(500);
+
+    Dropdown<int> list = new Dropdown<int>();
+    for (int number = 0; number < 10; number++)
+    {
+        list.Add($"{number}", number);
+    }
+
+    return list;  // for ienumerator, use `yield return Dropdown<T>` here;
+}
+```
+
+It'll show nothing until the task/ienumerator is finished
 
 This can works with `ShowInInspector`
 

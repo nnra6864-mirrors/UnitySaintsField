@@ -42,6 +42,12 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
             dropdownButton.AddToClassList(ClassAllowDisable);
             dropdownButton.AddToClassList(UIToolkitUtils.FancyButtonField.alignedFieldUssClassName);
 
+            (string error, int _, object value) = Util.GetValue(property, info, parent);
+            if (error == "")
+            {
+                dropdownButton.FancyButton.MainLabel.text = $"{value}";
+            }
+
             EmptyPrefabOverrideElement emptyPrefabOverrideElement = new EmptyPrefabOverrideElement(property);
             emptyPrefabOverrideElement.Add(dropdownButton);
 

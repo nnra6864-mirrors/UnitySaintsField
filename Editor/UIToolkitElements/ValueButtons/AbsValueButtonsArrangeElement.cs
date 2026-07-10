@@ -489,17 +489,22 @@ namespace SaintsField.Editor.UIToolkitElements.ValueButtons
 
         private IVisualElementScheduledItem _scheduler;
 
-        public void StartTrack(Waiter waiter, Action<object> succeedCallback, Action<Util.TickerStop, Exception> stopCallback)
+        public void StartTrack(Waiter waiter, Action<object> succeedCallback)
         {
             _scheduler?.Pause();
 
             _scheduler = schedule.Execute(() =>
             {
+                waiter.Update();
+                if (!waiter.SubWaiterDone())
+                {
+                    return;
+                }
+
                 Waiter.MoveNextResult moveNext = waiter.MoveNext();
 
                 if (moveNext.Exception != null)
                 {
-                    stopCallback.Invoke(Util.TickerStop.Exception, moveNext.Exception);
                     _scheduler.Pause();
                     return;
                 }
@@ -519,7 +524,6 @@ namespace SaintsField.Editor.UIToolkitElements.ValueButtons
                         return;
                     case Waiter.MoveNextStatus.Cancelled:
                     {
-                        stopCallback.Invoke(Util.TickerStop.Pause, null);
                         _scheduler.Pause();
                     }
                         return;

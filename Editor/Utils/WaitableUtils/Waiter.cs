@@ -133,13 +133,13 @@ namespace SaintsField.Editor.Utils.WaitableUtils
 
         public void Update()
         {
-            if (_waitable != null && !Done())
+            if (_waitable != null && !SubWaiterDone())
             {
                 _waitable.Update();
             }
         }
 
-        public bool Done()
+        public bool SubWaiterDone()
         {
             if (_task != null)
             {

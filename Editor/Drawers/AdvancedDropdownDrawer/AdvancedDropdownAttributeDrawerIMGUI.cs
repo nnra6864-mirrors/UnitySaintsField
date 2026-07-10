@@ -13,6 +13,9 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
         private class InfoIMGUI
         {
             public string Error = "";
+            public readonly IMGUIUtils.IMGUITicker Ticker = new IMGUIUtils.IMGUITicker();
+            public AdvancedDropdownMetaInfo MetaInfo;
+            public bool Clicked;
         }
 
         private static readonly Dictionary<string, InfoIMGUI> InfoCacheIMGUI = new Dictionary<string, InfoIMGUI>();
@@ -56,8 +59,14 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
         {
             InfoIMGUI cachedInfo = EnsureKey(property);
             AdvancedDropdownAttribute advancedDropdownAttribute = (AdvancedDropdownAttribute)saintsAttribute;
-            AdvancedDropdownMetaInfo metaInfo = GetMetaInfo(property, advancedDropdownAttribute, info, parent, true);
-            cachedInfo.Error = metaInfo.Error;
+            cachedInfo.Ticker.Tick();
+            if (cachedInfo.Ticker.TickWaiterResult.Exception != null)
+            {
+                cachedInfo.Error = cachedInfo.Ticker.TickWaiterResult.Exception?.InnerException?.Message
+                                   ?? cachedInfo.Ticker.TickWaiterResult.Exception?.Message
+                                   ?? "";
+                cachedInfo.Clicked = false;
+            }
 
             #region Dropdown
 
@@ -68,42 +77,63 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
             };
             DrawOverrideRichText(labelRect, label, overrideRichTextChunks);
 
+            AdvancedDropdownMetaInfo metaInfo = cachedInfo.MetaInfo;
+            bool hasMetaInfo = metaInfo.SelectStacks != null;
+
             GUI.SetNextControlName(FieldControlName);
-            string display = GetMetaStackDisplay(metaInfo);
+            string display = hasMetaInfo ? GetMetaStackDisplay(metaInfo) : "";
             // Debug.Assert(false, "Here");
             // ReSharper disable once InvertIf
-            if (EditorGUI.DropdownButton(leftRect, new GUIContent(display), FocusType.Keyboard))
+            if (cachedInfo.Ticker.DropdownButton(leftRect, new GUIContent(display), EditorStyles.popup))
             {
-                // float minHeight = AdvancedDropdownAttribute.MinHeight;
-                // float itemHeight = AdvancedDropdownAttribute.ItemHeight > 0
-                //     ? AdvancedDropdownAttribute.ItemHeight
-                //     : EditorGUIUtility.singleLineHeight;
-                // float titleHeight = AdvancedDropdownAttribute.TitleHeight;
-                // Vector2 size;
-                // if (minHeight < 0)
-                // {
-                //     if(AdvancedDropdownAttribute.UseTotalItemCount)
-                //     {
-                //         float totalItemCount = GetValueItemCounts(metaInfo.DropdownListValue);
-                //         // Debug.Log(totalItemCount);
-                //         size = new Vector2(position.width, totalItemCount * itemHeight + titleHeight);
-                //     }
-                //     else
-                //     {
-                //         float maxChildCount = AdvancedDropdownUtil.GetDropdownPageHeight(metaInfo.DropdownListValue, itemHeight, AdvancedDropdownAttribute.SepHeight).Max();
-                //         size = new Vector2(position.width, maxChildCount + titleHeight);
-                //     }
-                // }
-                // else
-                // {
-                //     size = new Vector2(position.width, minHeight);
-                // }
+                cachedInfo.Error = "";
+                cachedInfo.Clicked = true;
+                cachedInfo.Ticker.ResetResolved();
+            }
 
-                Vector2 size = AdvancedDropdownUtil.GetSizeIMGUI(metaInfo.DropdownListValue, position.width);
+            bool isRunning = cachedInfo.Ticker.IsRunning();
+            if (!cachedInfo.Ticker.Resolved && !isRunning)
+            {
+                GetMetaInfoAsync(cachedInfo.Ticker,
+                    asyncMetaInfo =>
+                    {
+                        cachedInfo.MetaInfo = asyncMetaInfo;
+                        cachedInfo.Error = asyncMetaInfo.Error;
+                        if (asyncMetaInfo.Error != "")
+                        {
+                            cachedInfo.Clicked = false;
+                            return;
+                        }
 
-                // OnGUIPayload targetPayload = onGUIPayload;
+                        if (cachedInfo.Clicked)
+                        {
+                            cachedInfo.Clicked = false;
+                            ShowDropdown(asyncMetaInfo);
+                        }
+                    },
+                    property,
+                    advancedDropdownAttribute,
+                    info,
+                    parent,
+                    true);
+            }
+
+            #endregion
+
+            return;
+
+            void ShowDropdown(AdvancedDropdownMetaInfo dropdownMetaInfo)
+            {
+                if (dropdownMetaInfo.DropdownListValue == null)
+                {
+                    cachedInfo.Clicked = false;
+                    return;
+                }
+
+                Vector2 size = AdvancedDropdownUtil.GetSizeIMGUI(dropdownMetaInfo.DropdownListValue, position.width);
+
                 SaintsAdvancedDropdownIMGUI dropdown = new SaintsAdvancedDropdownIMGUI(
-                    metaInfo.DropdownListValue,
+                    dropdownMetaInfo.DropdownListValue,
                     size,
                     position,
                     new AdvancedDropdownState(),
@@ -112,22 +142,15 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
                         ReflectUtils.SetValue(property.propertyPath, property.serializedObject.targetObject, info, parent, curItem);
                         Util.SignPropertyValue(property, info, parent, curItem);
                         property.serializedObject.ApplyModifiedProperties();
-
                         TriggerChangedIMGUI(property, curItem);
-
-                        // AsyncChangedCache[key] = curItem;
-                        // Debug.Log($"Advanced Changed: {AsyncChangedCache[key].changed}/{AsyncChangedCache[key].GetHashCode()}");
-                        // if(ExpandableIMGUIScoop.IsInScoop)
-                        // {
-                        //     property.serializedObject.ApplyModifiedProperties();
-                        // }
+                        cachedInfo.MetaInfo = default;
+                        cachedInfo.Ticker.ResetResolved();
                     },
                     GetIcon);
+                cachedInfo.Clicked = false;
                 dropdown.Show(position);
                 dropdown.BindWindowPosition();
             }
-
-            #endregion
         }
 
         private Texture2D GetIcon(string icon)

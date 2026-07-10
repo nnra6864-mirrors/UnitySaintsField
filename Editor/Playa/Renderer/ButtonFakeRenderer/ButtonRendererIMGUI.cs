@@ -154,7 +154,7 @@ namespace SaintsField.Editor.Playa.Renderer.ButtonFakeRenderer
                 {
                     waiter.Update();
 
-                    if (!waiter.Done())
+                    if (!waiter.SubWaiterDone())
                     {
                         float curProgress = waiter.GetProgress();
                         if (curProgress >= 0)

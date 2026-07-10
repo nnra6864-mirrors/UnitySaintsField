@@ -17,6 +17,14 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
         {
             public string Error = "";
             public readonly RichTextDrawer RichTextDrawer = new RichTextDrawer();
+            public readonly IMGUIUtils.IMGUITicker Ticker = new IMGUIUtils.IMGUITicker();
+            public AdvancedDropdownMetaInfo MetaInfo = new AdvancedDropdownMetaInfo
+            {
+                Error = "",
+                CurValues = Array.Empty<object>(),
+                SelectStacks = Array.Empty<AdvancedDropdownAttributeDrawer.SelectStack>(),
+            };
+            public ValueButtonRawInfo[] RawInfos = Array.Empty<ValueButtonRawInfo>();
         }
 
         internal sealed class ImGuiButtonInfo
@@ -265,11 +273,27 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
             IRichTextTagProvider richTextTagProvider, out InfoIMGUI cache, out ValueButtonRawInfo[] rawInfos)
         {
             cache = EnsureKey(property);
-            AdvancedDropdownMetaInfo metaInfo =
-                AdvancedDropdownAttributeDrawer.GetMetaInfo(property, valueButtonsAttribute, info, parent, true, true);
-            cache.Error = metaInfo.Error;
-            rawInfos = UtilMakeButtonRawInfos(metaInfo, richTextTagProvider);
-            return metaInfo;
+            cache.Ticker.Tick();
+            if (cache.Ticker.TickWaiterResult.Exception != null)
+            {
+                cache.Error = cache.Ticker.TickWaiterResult.Exception?.InnerException?.Message
+                              ?? cache.Ticker.TickWaiterResult.Exception?.Message
+                              ?? "";
+            }
+
+            if (!cache.Ticker.Resolved && !cache.Ticker.IsRunning())
+            {
+                InfoIMGUI useCache = cache;
+                AdvancedDropdownAttributeDrawer.GetMetaInfoAsync(useCache.Ticker, metaInfo =>
+                {
+                    useCache.MetaInfo = metaInfo;
+                    useCache.Error = metaInfo.Error;
+                    useCache.RawInfos = UtilMakeButtonRawInfos(metaInfo, richTextTagProvider);
+                }, property, valueButtonsAttribute, info, parent, true, true);
+            }
+
+            rawInfos = cache.RawInfos;
+            return cache.MetaInfo;
         }
 
         private static List<List<ImGuiButtonInfo>> SplitRowsBalanced(IReadOnlyList<ImGuiButtonInfo> buttonInfos,
@@ -436,6 +460,7 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
 
             if (layout.Rows.Count == 0)
             {
+                cache.Ticker.DrawLoading(buttonsRect);
                 return;
             }
 
@@ -448,7 +473,10 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
                     Util.SignPropertyValue(property, info, parent, buttonInfo.Value);
                     property.serializedObject.ApplyModifiedProperties();
                     TriggerChangedIMGUI(property, buttonInfo.Value);
+                    cache.Ticker.ResetResolved();
                 });
+
+            cache.Ticker.DrawLoading(buttonsRect);
         }
 
         protected override bool WillDrawBelow(SerializedProperty property,
@@ -498,6 +526,7 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
                     Util.SignPropertyValue(property, info, parent, buttonInfo.Value);
                     property.serializedObject.ApplyModifiedProperties();
                     TriggerChangedIMGUI(property, buttonInfo.Value);
+                    cache.Ticker.ResetResolved();
                 });
         }
     }

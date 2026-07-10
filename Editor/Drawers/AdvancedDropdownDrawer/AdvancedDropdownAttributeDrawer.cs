@@ -579,8 +579,7 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
                                 SelectStacks = Array.Empty<SelectStack>(),
                             });
                         }
-                    },
-                    null);
+                    });
                 return;
             }
 
@@ -650,8 +649,7 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
                                 SelectStacks = Array.Empty<SelectStack>(),
                             });
                         }
-                    },
-                    null);
+                    });
                     return;
                 }
             }
@@ -731,8 +729,7 @@ namespace SaintsField.Editor.Drawers.AdvancedDropdownDrawer
                                 SelectStacks = Array.Empty<SelectStack>(),
                             });
                         }
-                    },
-                    null);
+                    });
                 return;
             }
 

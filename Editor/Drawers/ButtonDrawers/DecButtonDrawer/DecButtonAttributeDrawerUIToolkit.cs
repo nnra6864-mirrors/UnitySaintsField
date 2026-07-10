@@ -174,7 +174,7 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
                     {
                         waiter.Update();
 
-                        if (!waiter.Done())
+                        if (!waiter.SubWaiterDone())
                         {
                             float curProcess = waiter.GetProgress();
                             if (curProcess >= 0)

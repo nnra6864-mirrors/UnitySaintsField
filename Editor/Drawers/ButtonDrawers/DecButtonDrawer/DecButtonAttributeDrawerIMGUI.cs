@@ -469,7 +469,7 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
             {
                 waiter.Update();
 
-                if (!waiter.Done())
+                if (!waiter.SubWaiterDone())
                 {
                     float curProgress = waiter.GetProgress();
                     if (curProgress >= 0)
