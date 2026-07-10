@@ -113,13 +113,9 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.22.1**
+**5.22.2**
 
-1.  Add: `ReferencePicker` now can use the custom drawer if the target type has one
-2.  Fix: Old unity (<= 6k.0) did not have default context menu for some type of fields
-3.  Fix: an error when editing a `char` type field
-4.  Fix: a warning when using `string` for `[AnimatorState]`
-5.  Unity Fix: Fix a Unity's issue that when a list of class which contains SerializeReference field, the `+` button of list will reference the same SerializeReference field value instead of clone a new one [#413](https://github.com/TylerTemp/SaintsField/issues/413)
+Support async callback (`ienumerator`, `Task<Dropdown<T>>`, `UniTask<Dropdown<T>>`) for Dropdown & ValueButtons for options that need time to load
 
 ## Usage ##
 

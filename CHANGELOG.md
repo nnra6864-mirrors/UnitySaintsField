@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.22.2 ##
+
+Support async callback (`ienumerator`, `Task<Dropdown<T>>`, `UniTask<Dropdown<T>>`) for Dropdown & ValueButtons for options that need time to load
+
 ## 5.22.1 ##
 
 1.  Add: `ReferencePicker` now can use the custom drawer if the target type has one
