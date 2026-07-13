@@ -6,6 +6,7 @@ using SaintsField.Editor.Core;
 using SaintsField.Editor.Linq;
 using SaintsField.Editor.Utils;
 using SaintsField.Editor.Utils.SaintsObjectPickerWindow;
+using SaintsField.Utils;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -126,24 +127,20 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
                 vRefMemberInfo);
         }
 
-        internal static bool TryGetMatchedInterfaceValue(Object candidate, Type valueType, Type interfaceType,
-            out Object matchedValue)
+        internal static (bool isMatch, Object macthedValue) TryGetMatchedInterfaceValue(Object candidate,
+            Type valueType, Type interfaceType)
         {
-            if (!candidate)
+            if (RuntimeUtil.IsNull(candidate))
             {
-                matchedValue = null;
-                return true;
+                return (true, null);
             }
 
             if (interfaceType.IsInstanceOfType(candidate))
             {
-                matchedValue = candidate;
-                return true;
+                return (true, candidate);
             }
 
-            (bool isMatch, Object result) = GetSerializedObject(candidate, valueType, interfaceType);
-            matchedValue = result;
-            return isMatch;
+            return GetSerializedObject(candidate, valueType, interfaceType);
         }
 
         internal static bool SyncInterfaceModeSideEffectsWithoutApply(SerializedProperty valueProp,
@@ -334,7 +331,7 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
 
             private bool FetchFilter(ItemInfo itemInfo)  // gameObject, Sprite, Texture2D, ...
             {
-                return TryGetMatchedInterfaceValue(itemInfo.Object, _fieldType, _interfaceType, out _);
+                return TryGetMatchedInterfaceValue(itemInfo.Object, _fieldType, _interfaceType).isMatch;
             }
         }
 
@@ -347,7 +344,7 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
             {
                 case GameObject go:
                 {
-                    // Debug.Log($"go={go}, fieldType={_fieldType}, interfaceType={_interfaceType}");
+                    // Debug.Log($"go={go}, fieldType={fieldType.Name}, interfaceType={interfaceType.Name}; fieldTypeIsComponent={fieldTypeIsComponent}");
                     if (fieldTypeIsComponent)
                     {
                         Component compResult = go.GetComponents(fieldType)
@@ -357,6 +354,7 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
                             : (true, compResult);
                     }
 
+                    // Debug.Log($"fieldType.IsInstanceOfType(go)={fieldType.IsInstanceOfType(go)}");
                     if (!fieldType.IsInstanceOfType(go))
                     {
                         return (false, null);
@@ -384,18 +382,18 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
                         return (false, null);
                     }
 
-                    Component result = comp.GetComponents(typeof(Component))
-                        .FirstOrDefault(interfaceType.IsInstanceOfType);
+                    Component result = comp.GetComponents<Component>()
+                        .FirstOrDefault(each => each != null && interfaceType.IsAssignableFrom(each.GetType()));
                     return result == null
                         ? (false, null)
                         : (true, result);
                 }
                 case ScriptableObject so:
                     // Debug.Log(fieldType);
-                    return (fieldType == typeof(ScriptableObject) || fieldType.IsSubclassOf(typeof(ScriptableObject)) || typeof(ScriptableObject).IsSubclassOf(fieldType))
+                    return fieldType.IsAssignableFrom(so.GetType())
                            && interfaceType.IsInstanceOfType(so)
-                           ? (true, so)
-                           : (false, null);
+                        ? (true, so)
+                        : (false, null);
                 default:
                     return new[]
                     {

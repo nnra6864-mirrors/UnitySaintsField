@@ -490,7 +490,7 @@ namespace SaintsField.Utils
             // ReSharper disable once RedundantCheckBeforeAssignment
             if (wrapType == WrapType.Undefined)
             {
-#if SAINTSFIELD_DEBUG
+#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_WRAP
                 Debug.Log($"SaintsWrap reset wrapType {wrapType} -> {wrapT} for {t}");
 #endif
                 wrapType = wrapT;

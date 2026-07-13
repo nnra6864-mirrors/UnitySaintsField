@@ -263,8 +263,9 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
                 true);
             if (EditorGUI.EndChangeCheck())
             {
-                if (!TryGetMatchedInterfaceValue(newValue, cache.FieldInfo.ValueType, cache.FieldInfo.InterfaceType,
-                        out Object matchedValue))
+                (bool isMatch, Object matchedValue) = TryGetMatchedInterfaceValue(newValue,
+                    cache.FieldInfo.ValueType, cache.FieldInfo.InterfaceType);
+                if (!isMatch)
                 {
                     matchedValue = oldValue;
                 }

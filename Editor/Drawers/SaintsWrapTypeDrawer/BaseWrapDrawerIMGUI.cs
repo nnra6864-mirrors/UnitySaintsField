@@ -277,8 +277,9 @@ namespace SaintsField.Editor.Drawers.SaintsWrapTypeDrawer
                 return;
             }
 
-            if (!SaintsInterfaceDrawer.TryGetMatchedInterfaceValue(newValue, typeof(Object), cache.WrappedType,
-                    out Object matchedValue))
+            (bool isMatch, Object matchedValue) = SaintsInterfaceDrawer.TryGetMatchedInterfaceValue(newValue,
+                typeof(Object), cache.WrappedType);
+            if (!isMatch)
             {
                 matchedValue = oldValue;
             }

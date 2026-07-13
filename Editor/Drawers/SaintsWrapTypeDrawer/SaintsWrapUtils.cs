@@ -558,6 +558,7 @@ namespace SaintsField.Editor.Drawers.SaintsWrapTypeDrawer
                 Debug.Log($"CreateCellElement rendering with {propertyDrawer} {serializedProperty.propertyPath}->{serializedBaseProperty.propertyPath}, allAttributes={string.Join(", ", allAttributes)}");
 #endif
                 VisualElement r = propertyDrawer.CreatePropertyGUI(propertyDrawer is BaseWrapDrawer? serializedProperty: serializedBaseProperty);
+                r.Bind(serializedProperty.serializedObject);
                 VisualElement merged = UIToolkitCache.MergeWithDec(r, allPropertyAttributes);
                 UIToolkitUtils.CheckOutOfScoopFoldout(merged, new HashSet<Toggle>());
                 VisualElement mergedFinal = renderer == null ? merged : renderer.GetElementAndInit(merged);

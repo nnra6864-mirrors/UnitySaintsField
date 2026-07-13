@@ -91,15 +91,22 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
                     return;
                 }
 
-                if (!SaintsInterfaceDrawer.TryGetMatchedInterfaceValue(v.newValue, uObjectType, serializableType,
-                        out Object matchedValue))
+                (bool isMatch, Object matchedValue) = SaintsInterfaceDrawer.TryGetMatchedInterfaceValue(v.newValue,
+                    uObjectType, serializableType);
+                if (!isMatch)
                 {
-                    // Debug.Log($"_objectField reset={value}");
-                    _objectField.SetValueWithoutNotify(value);
+                    // Debug.Log($"_objectField reset={value}/{v.previousValue}");
+                    Object restoreValue = SaintsInterfaceDrawer.TryGetMatchedInterfaceValue(v.previousValue,
+                        uObjectType, serializableType).macthedValue;
+                    // Debug.Log($"restore to {restoreValue} from {v.previousValue}");
+                    // _objectField.SetValueWithoutNotify(restoreValue);
+                    value = restoreValue;
+                    Debug.LogWarning($"Target {v.newValue} can not be assigned to {uObjectType}/{serializableType}");
                 }
                 else
                 {
                     value = matchedValue;
+                    // Debug.Log($"set value to {matchedValue}");
                 }
             });
 
@@ -453,19 +460,17 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
         public Object value
         {
             get => _objectField.value;
-            set
-            {
-                Object previous = _objectField.value;
-                if (previous == value)
-                {
-                    return;
-                }
-
-                SetValueWithoutNotify(value);
-                using ChangeEvent<Object> evt = ChangeEvent<Object>.GetPooled(previous, value);
-                evt.target = this;
-                SendEvent(evt);
-            }
+            set => _objectField.value = value;
+            // Object previous = _objectField.value;
+            // if (previous == value)
+            // {
+            //     return;
+            // }
+            //
+            // SetValueWithoutNotify(value);
+            // using ChangeEvent<Object> evt = ChangeEvent<Object>.GetPooled(previous, value);
+            // evt.target = this;
+            // SendEvent(evt);
         }
     }
 }

@@ -58,6 +58,7 @@ namespace SaintsField.Editor.Drawers.SaintsInterfacePropertyDrawer
                         // bindingPath = valueProp.propertyPath,
                         // value = valueProp.objectReferenceValue,
                     };
+            // _objectContainer.Bind(valueProp.serializedObject);
 
             columnContainer.Add(_objectContainer);
 
