@@ -761,10 +761,11 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             {
                 cell.ToggleDisplay(false);
 
-                // if (!(cell.userData is RowData rowData) || !ReferenceEquals(rowData.Owner, multiColumnListView))
-                // {
-                //     continue;
-                // }
+                if (cell.userData is null)
+                {
+                    continue;
+                }
+
                 RowData rowData = (RowData)cell.userData;
 
                 int rowIndex = rowData.RowIndex;
