@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.22.4 ##
+
+1.  Fix: `Table` dragging gave an error and failed [#417](https://github.com/TylerTemp/SaintsField/issues/417)
+2.  Fix: When falling back to UI Toolkit drawer, the element is not get `Bind()` to serialized object and failed to write serialized data to disk [#416](https://github.com/TylerTemp/SaintsField/issues/416)
+3.  Fix: `SaintsInterface` did not correctly reset value if you drag a GameObject that does not fit in.
+4.  Add: `SaintsInterface` now gives a warning to consle if the dragged target does not fit in.
+
 ## 5.22.3 ##
 
 Support async callback (`ienumerator`, `Task<Dropdown<T>>`, `UniTask<Dropdown<T>>`) for Dropdown & ValueButtons for options that need time to load
