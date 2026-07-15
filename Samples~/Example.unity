@@ -5556,10 +5556,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ab45109167a42a49a02633e4f9f8b7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _errorOut: 1
-  _labelByField: 'dynamic <color=green>label which is very long  long  long  long
-    long  long  long  long  long  long  long  long  long  long '
-  _someInt: 0
+  showHidePostF: 1
+  f: 
 --- !u!1 &461860295
 GameObject:
   m_ObjectHideFlags: 0

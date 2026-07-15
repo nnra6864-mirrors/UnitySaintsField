@@ -23,8 +23,8 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
 {
     public partial class DecButtonAttributeDrawer
     {
-        private static string ClassLabelError(SerializedProperty property, int index) => $"{property.propertyPath}__{index}__LabelError";
-        private static string ClassExecError(SerializedProperty property, int index) => $"{property.propertyPath}__{index}__ExecError";
+        // private static string ClassLabelError(SerializedProperty property, int index) => $"{property.propertyPath}__{index}__LabelError";
+        // private static string ClassExecError(SerializedProperty property, int index) => $"{property.propertyPath}__{index}__ExecError";
         protected static string NameButton(SerializedProperty property, int index) => $"{property.propertyPath}__{index}__Button";
 
         protected abstract void CleanResult(VisualElement container, SerializedProperty property, int index);
@@ -285,42 +285,64 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
 
         protected abstract bool HasResult(VisualElement container, SerializedProperty property, int index);
 
-        protected static HelpBox DrawLabelError(SerializedProperty property, int index) => DrawError(ClassLabelError(property, index));
+        // protected static HelpBox DrawLabelError(SerializedProperty property, int index) => DrawError(ClassLabelError(property, index));
+        //
+        // protected static HelpBox DrawExecError(SerializedProperty property, int index) => DrawError(ClassExecError(property, index));
 
-        protected static HelpBox DrawExecError(SerializedProperty property, int index) => DrawError(ClassExecError(property, index));
-
-        private static HelpBox DrawError(string className)
-        {
-            HelpBox helpBox = new HelpBox("", HelpBoxMessageType.Error)
-            {
-                style =
-                {
-                    display = DisplayStyle.None,
-                },
-            };
-            helpBox.AddToClassList(className);
-            helpBox.AddToClassList(ClassAllowDisable);
-            return helpBox;
-        }
+        // private static HelpBox DrawError(string className)
+        // {
+        //     HelpBox helpBox = new HelpBox("", HelpBoxMessageType.Error)
+        //     {
+        //         style =
+        //         {
+        //             display = DisplayStyle.None,
+        //         },
+        //     };
+        //     helpBox.AddToClassList(className);
+        //     helpBox.AddToClassList(ClassAllowDisable);
+        //     return helpBox;
+        // }
 
         protected override void OnUpdateUIToolkit(SerializedProperty property, ISaintsAttribute saintsAttribute,
             int index,
             IReadOnlyList<PropertyAttribute> allAttributes,
             VisualElement container, Action<object> onValueChangedCallback, FieldInfo info)
         {
+            if (!SerializedUtils.IsOk(property))
+            {
+                return;
+            }
+
+            object reParent = null;
+
             DecButtonAttribute decButtonAttribute = (DecButtonAttribute) saintsAttribute;
 
             FancyButton fancyButton = container.Q<FancyButton>(NameButton(property, index));
             ButtonRenderer.ButtonUserData buttonUserData = (ButtonRenderer.ButtonUserData)fancyButton.userData;
 
+            (string error, bool show, object reParent) showResult = GetShowUIToolkit(property, saintsAttribute, allAttributes, info);
+            if (showResult.error != string.Empty)  // TODO: error handling in UI
+            {
+                Debug.LogError(showResult.error);
+                UIToolkitUtils.SetDisplayStyle(fancyButton, DisplayStyle.Flex);
+                return;
+            }
+
+            if (showResult.reParent != null)
+            {
+                reParent = showResult.reParent;
+            }
+
+            UIToolkitUtils.SetDisplayStyle(fancyButton, showResult.show? DisplayStyle.Flex: DisplayStyle.None);
+
             string labelCallback = buttonUserData.Callback;
             bool noNeedUpdate = true;
             string useXml = buttonUserData.Xml;
-            object parent = null;
             if(!string.IsNullOrEmpty(labelCallback))
             {
-                parent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
-                (string xmlError, string newXml) = RichTextDrawer.GetLabelXml(property, decButtonAttribute.ButtonLabel, decButtonAttribute.IsCallback, info, parent);
+                reParent ??= SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
+
+                (string xmlError, string newXml) = RichTextDrawer.GetLabelXml(property, decButtonAttribute.ButtonLabel, decButtonAttribute.IsCallback, info, reParent);
                 if (!string.IsNullOrEmpty(xmlError))
                 {
                     Debug.LogError(xmlError);
@@ -367,49 +389,30 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
             buttonUserData.Xml = useXml;
 
             fancyButton.MainLabel.Clear();
-            parent ??= SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
+            // parent ??= SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
             IEnumerable<RichTextDrawer.RichTextChunk> richChunks = RichTextDrawer.ParseRichXmlWithProvider(useXml, this);
             foreach (VisualElement visualElement in RichTextDrawer.DrawChunksUIToolKit(richChunks))
             {
                 fancyButton.MainLabel.Add(visualElement);
             }
+        }
 
-            // if (parent == null)
-            // {
-            //     return;
-            // }
+        private (string error, bool show, object reParent) GetShowUIToolkit(SerializedProperty property, ISaintsAttribute saintsAttribute,
+            IReadOnlyList<PropertyAttribute> allAttributes, FieldInfo info)
+        {
+            IReadOnlyList<DecButtonShowIfAttribute> showIf = GetCurrentShowHide(
+                allAttributes,
+                saintsAttribute
+            );
+            // Debug.Log($"found={string.Join(", ", showIf)} in {string.Join(", ", allAttributes)}");
+            if (showIf.Count == 0)
+            {
+                return ("", true, null);
+            }
 
-            // VisualElement labelContainer = container.Query<VisualElement>(className: ClassLabelContainer(property, index)).First();
-            // string oldXml = (string)labelContainer.userData;
-            // DecButtonAttribute decButtonAttribute = (DecButtonAttribute) saintsAttribute;
-            //
-            // object parent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
-            // (string xmlError, string newXml) = RichTextDrawer.GetLabelXml(property, decButtonAttribute.ButtonLabel, decButtonAttribute.IsCallback, info, parent);
-            //
-            // // ReSharper disable once ConvertIfStatementToNullCoalescingAssignment
-            // if (newXml == null)
-            // {
-            //     newXml = ObjectNames.NicifyVariableName(decButtonAttribute.FuncName);
-            // }
-            //
-            // HelpBox helpBox = container.Query<HelpBox>(className: ClassLabelError(property, index)).First();
-            // helpBox.style.display = xmlError == ""? DisplayStyle.None: DisplayStyle.Flex;
-            // helpBox.text = xmlError;
-            //
-            // if (oldXml == newXml)
-            // {
-            //     return;
-            // }
-            //
-            // // Debug.Log($"update xml={newXml}");
-            //
-            // labelContainer.userData = newXml;
-            // labelContainer.Clear();
-            // IEnumerable<RichTextDrawer.RichTextChunk> richChunks = RichTextDrawer.ParseRichXml(newXml, property.displayName, property, info, parent);
-            // foreach (VisualElement visualElement in RichTextDrawer.DrawChunksUIToolKit(richChunks))
-            // {
-            //     labelContainer.Add(visualElement);
-            // }
+            object reParent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
+            (string error, bool show) result = GetShow(property, showIf, info, reParent);
+            return (result.error, result.show, reParent);
         }
 
         protected static VisualElement MakeErrorBox(string error)

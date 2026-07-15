@@ -1,5 +1,9 @@
-﻿using SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer;
+﻿using System;
+using System.Collections.Generic;
+using SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer;
+using SaintsField.Interfaces;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace SaintsField.Editor.Drawers.ButtonDrawers.AboveButtonDrawer
@@ -10,6 +14,30 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.AboveButtonDrawer
     [CustomPropertyDrawer(typeof(AboveButtonAttribute), true)]
     public partial class AboveButtonAttributeDrawer: DecButtonAttributeDrawer
     {
+        protected override IReadOnlyList<DecButtonShowIfAttribute> GetCurrentShowHide(IReadOnlyList<PropertyAttribute> attributes, ISaintsAttribute currentAttribute)
+        {
+            List<DecButtonShowIfAttribute> showControlAttributes = new List<DecButtonShowIfAttribute>(attributes.Count);
 
+            foreach (PropertyAttribute attr in attributes)
+            {
+                if (ReferenceEquals(attr, currentAttribute))
+                {
+                    return showControlAttributes;
+                }
+
+                if (attr is DecButtonAttribute)
+                {
+                    showControlAttributes.Clear();
+                    continue;
+                }
+
+                if (attr is AboveButtonShowIfAttribute showOrHide)  // this includes the HideIf (inherent)
+                {
+                    showControlAttributes.Add(showOrHide);
+                }
+            }
+            // not found the decorated, skip all
+            return Array.Empty<DecButtonShowIfAttribute>();
+        }
     }
 }

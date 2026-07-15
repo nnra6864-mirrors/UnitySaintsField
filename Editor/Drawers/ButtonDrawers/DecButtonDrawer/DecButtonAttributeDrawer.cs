@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using System;
+using System.Linq;
 using System.Reflection;
+using SaintsField.Condition;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.Utils;
+using SaintsField.Interfaces;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +18,7 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
     public abstract partial class DecButtonAttributeDrawer: SaintsPropertyDrawer
     {
 #if SAINTSFIELD_UNITASK && !SAINTSFIELD_UNITASK_DISABLE
-        protected static (bool returnIsUniTask, Type returnUniTaskValueType) GetUniTaskReturnInfo(Type returnType)
+        private static (bool returnIsUniTask, Type returnUniTaskValueType) GetUniTaskReturnInfo(Type returnType)
         {
             bool returnIsUniTask = false;
             Type returnUniTaskValueType = null;
@@ -82,5 +85,49 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
         }
 
 
+
+        protected abstract IReadOnlyList<DecButtonShowIfAttribute> GetCurrentShowHide(
+            IReadOnlyList<PropertyAttribute> attributes, ISaintsAttribute currentAttribute);
+
+        private static (string error, bool show) GetShow(SerializedProperty property,
+            IReadOnlyList<DecButtonShowIfAttribute> conditionAttributes,
+            FieldInfo info, object parent)
+        {
+
+            List<bool> showOrResults = new List<bool>();
+
+            foreach (DecButtonShowIfAttribute decButtonShowIfAttribute in conditionAttributes)
+            {
+                IReadOnlyList<ConditionInfo> conditionInfos = decButtonShowIfAttribute.ConditionInfos;
+                bool isShow = decButtonShowIfAttribute.IsShow;
+
+                (IReadOnlyList<string> errors, IReadOnlyList<bool> boolResults) = Util.ConditionChecker(conditionInfos, property, info, parent);
+                // Debug.Log($"isShow={isShow}/result={string.Join(", ", boolResults)}/error={string.Join(", ", errors)}");
+                if (errors.Count > 0)
+                {
+                    return (string.Join("\n", errors), true);
+                }
+
+                bool thisShow;
+                if (isShow)
+                {
+                    thisShow = boolResults.All(each => each);
+                }
+                else
+                {
+                    bool isHidden = boolResults.Any(each => each);
+                    thisShow = !isHidden;
+                }
+                showOrResults.Add(thisShow);
+            }
+
+            bool showFinal = true;
+            if (showOrResults.Count > 0)
+            {
+                showFinal = showOrResults.Any(each => each);
+            }
+
+            return ("", showFinal);
+        }
     }
 }

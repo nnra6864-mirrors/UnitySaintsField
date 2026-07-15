@@ -12,7 +12,7 @@ namespace SaintsField.Editor.Drawers.VisibilityDrawers
     [Sirenix.OdinInspector.Editor.DrawerPriority(Sirenix.OdinInspector.Editor.DrawerPriorityLevel.WrapperPriority)]
 #endif
     [CustomPropertyDrawer(typeof(FieldShowIfAttribute), true)]
-    public class ShowIfAttributeDrawer: VisibilityAttributeDrawer
+    public class FieldShowIfAttributeDrawer: VisibilityAttributeDrawer
     {
         // protected override (string error, bool shown) IsShown(ShowIfAttribute targetAttribute, SerializedProperty property, FieldInfo info, object target)
         // {
