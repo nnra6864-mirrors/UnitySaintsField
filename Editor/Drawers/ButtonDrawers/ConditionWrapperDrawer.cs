@@ -12,6 +12,17 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers
     [CustomPropertyDrawer(typeof(BelowButtonHideIfAttribute), true)]
     [CustomPropertyDrawer(typeof(PostFieldButtonShowIfAttribute), true)]
     [CustomPropertyDrawer(typeof(PostFieldButtonHideIfAttribute), true)]
+
+    [CustomPropertyDrawer(typeof(DecButtonDisableIfAttribute), true)]
+    [CustomPropertyDrawer(typeof(AboveButtonDisableIfAttribute), true)]
+    [CustomPropertyDrawer(typeof(AboveButtonEnableIfAttribute), true)]
+    [CustomPropertyDrawer(typeof(BelowButtonDisableIfAttribute), true)]
+    [CustomPropertyDrawer(typeof(BelowButtonEnableIfAttribute), true)]
+    [CustomPropertyDrawer(typeof(PostFieldButtonDisableIfAttribute), true)]
+    [CustomPropertyDrawer(typeof(PostFieldButtonEnableIfAttribute), true)]
+#if ODIN_INSPECTOR
+    [Sirenix.OdinInspector.Editor.DrawerPriority(Sirenix.OdinInspector.Editor.DrawerPriorityLevel.WrapperPriority)]
+#endif
     public class ConditionWrapperDrawer: SaintsPropertyDrawer
     {
 

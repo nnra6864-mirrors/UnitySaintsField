@@ -89,6 +89,9 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
         protected abstract IReadOnlyList<DecButtonShowIfAttribute> GetCurrentShowHide(
             IReadOnlyList<PropertyAttribute> attributes, ISaintsAttribute currentAttribute);
 
+        protected abstract IReadOnlyList<DecButtonDisableIfAttribute> GetCurrentDisableEnable(
+            IReadOnlyList<PropertyAttribute> attributes, ISaintsAttribute currentAttribute);
+
         private static (string error, bool show) GetShow(SerializedProperty property,
             IReadOnlyList<DecButtonShowIfAttribute> conditionAttributes,
             FieldInfo info, object parent)
@@ -128,6 +131,48 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
             }
 
             return ("", showFinal);
+        }
+
+        private static (string error, bool disable) GetDisable(SerializedProperty property,
+            IReadOnlyList<DecButtonDisableIfAttribute> conditionAttributes,
+            FieldInfo info, object parent)
+        {
+            List<bool> orResults = new List<bool>();
+
+            foreach (DecButtonDisableIfAttribute decButtonShowIfAttribute in conditionAttributes)
+            {
+                IReadOnlyList<ConditionInfo> conditionInfos = decButtonShowIfAttribute.ConditionInfos;
+                bool isDisable = decButtonShowIfAttribute.IsDisable;
+
+                (IReadOnlyList<string> errors, IReadOnlyList<bool> boolResults) = Util.ConditionChecker(conditionInfos, property, info, parent);
+                // Debug.Log($"isDisable={isDisable}/result={string.Join(", ", boolResults)}/error={string.Join(", ", errors)}");
+                if (errors.Count > 0)
+                {
+                    return (string.Join("\n", errors), true);
+                }
+
+                bool thisDisable;
+                if (isDisable)
+                {
+                    thisDisable = boolResults.All(each => each);
+                }
+                else
+                {
+                    bool isHidden = boolResults.Any(each => each);
+                    thisDisable = !isHidden;
+                }
+                orResults.Add(thisDisable);
+            }
+
+            bool resultFinal = false;
+            if (orResults.Count > 0)
+            {
+                resultFinal = orResults.Any(each => each);
+            }
+
+            // Debug.Log($"resultFinal={resultFinal}");
+
+            return ("", resultFinal);
         }
     }
 }

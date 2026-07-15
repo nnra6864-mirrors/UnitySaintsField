@@ -5556,8 +5556,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ab45109167a42a49a02633e4f9f8b7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showHidePostF: 1
+  showHideToggle: 0
   f: 
+  disableToggle: 0
+  f2: 
 --- !u!1 &461860295
 GameObject:
   m_ObjectHideFlags: 0

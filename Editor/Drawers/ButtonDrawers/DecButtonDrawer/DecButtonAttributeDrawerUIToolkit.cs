@@ -328,12 +328,23 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
                 return;
             }
 
+            UIToolkitUtils.SetDisplayStyle(fancyButton, showResult.show? DisplayStyle.Flex: DisplayStyle.None);
+
             if (showResult.reParent != null)
             {
                 reParent = showResult.reParent;
             }
 
-            UIToolkitUtils.SetDisplayStyle(fancyButton, showResult.show? DisplayStyle.Flex: DisplayStyle.None);
+            (string error, bool disable, object reParent) disableResult = GetDisableUIToolkit(property, saintsAttribute, allAttributes, info, reParent);
+            if (disableResult.error != string.Empty)  // TODO: error handling in UI
+            {
+                Debug.LogError(disableResult.error);
+                fancyButton.SetEnabled(false);
+                return;
+            }
+            fancyButton.SetEnabled(!disableResult.disable);
+
+            reParent = disableResult.reParent ?? reParent;
 
             string labelCallback = buttonUserData.Callback;
             bool noNeedUpdate = true;
@@ -413,6 +424,24 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
             object reParent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
             (string error, bool show) result = GetShow(property, showIf, info, reParent);
             return (result.error, result.show, reParent);
+        }
+
+        private (string error, bool disable, object reParent) GetDisableUIToolkit(SerializedProperty property, ISaintsAttribute saintsAttribute,
+            IReadOnlyList<PropertyAttribute> allAttributes, FieldInfo info, object parent)
+        {
+            IReadOnlyList<DecButtonDisableIfAttribute> disableIf = GetCurrentDisableEnable(
+                allAttributes,
+                saintsAttribute
+            );
+            // Debug.Log($"found={string.Join(", ", showIf)} in {string.Join(", ", allAttributes)}");
+            if (disableIf.Count == 0)
+            {
+                return ("", false, null);
+            }
+
+            object reParent = parent ?? SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
+            (string error, bool disable) result = GetDisable(property, disableIf, info, reParent);
+            return (result.error, result.disable, reParent);
         }
 
         protected static VisualElement MakeErrorBox(string error)

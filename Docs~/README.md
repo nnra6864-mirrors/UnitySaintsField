@@ -1195,6 +1195,44 @@ private async UniTask<string> AsyncUniTaskValue()
 
 [![video](https://github.com/user-attachments/assets/c6ee0aa7-2887-45f6-82dd-62e711893215)](https://github.com/user-attachments/assets/f131b677-f07c-409e-8bd6-a5237c501441)
 
+You can control each's show/hide/enable/disable with
+
+*   `AboveButtonShowIf`
+*   `AboveButtonHideIf`
+*   `BelowButtonShowIf`
+*   `BelowButtonHideIf`
+*   `PostFieldButtonShowIf`
+*   `PostFieldButtonHideIf`
+*   `AboveButtonDisableIf`
+*   `AboveButtonEnableIf`
+*   `BelowButtonDisableIf`
+*   `BelowButtonEnableIf`
+*   `PostFieldButtonDisableIf`
+*   `PostFieldButtonEnableIf`
+
+They all shares the same syntax for show/hide/enable/disable-if
+
+```csharp
+public bool showHideToggle;
+
+[PostFieldButtonShowIf(nameof(showHideToggle))]
+[PostFieldButton(":Debug.Log", "show")]
+[PostFieldButtonHideIf(nameof(showHideToggle))]
+[PostFieldButton(":Debug.Log", "hide")]
+public string f;
+
+public bool disableToggle;
+
+[PostFieldButtonDisableIf(nameof(disableToggle))]
+[PostFieldButton(":Debug.Log", "disable")]
+[PostFieldButtonEnableIf(nameof(disableToggle))]
+[PostFieldButton(":Debug.Log", "enable")]
+public string f2;
+```
+
+[![video](https://github.com/user-attachments/assets/09347e25-2b6b-4616-aa6d-18f9b53b5913)](
+https://github.com/user-attachments/assets/6491805d-e5fc-4e28-9b28-2c7d1c59c2f4)
+
 ### Game Related ###
 
 #### `Layer` ####

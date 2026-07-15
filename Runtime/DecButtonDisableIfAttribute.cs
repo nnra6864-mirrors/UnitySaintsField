@@ -10,17 +10,17 @@ namespace SaintsField
 {
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
-    public abstract class DecButtonShowIfAttribute: PropertyAttribute, ISaintsAttribute
+    public abstract class DecButtonDisableIfAttribute: PropertyAttribute, ISaintsAttribute
     {
         public readonly IReadOnlyList<ConditionInfo> ConditionInfos;
-        public virtual bool IsShow => true;
+        public virtual bool IsDisable => true;
 
-        protected DecButtonShowIfAttribute(EMode eMode, params object[] andCallbacks)
+        protected DecButtonDisableIfAttribute(EMode eMode, params object[] andCallbacks)
         {
             ConditionInfos = Parser.Parse(andCallbacks.Prepend(eMode).ToArray()).ToArray();
         }
 
-        protected DecButtonShowIfAttribute(params object[] andCallbacks)
+        protected DecButtonDisableIfAttribute(params object[] andCallbacks)
         {
             ConditionInfos = andCallbacks.Length > 0
                 ? Parser.Parse(andCallbacks).ToArray()

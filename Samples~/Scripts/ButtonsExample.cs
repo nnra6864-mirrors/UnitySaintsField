@@ -74,12 +74,20 @@ namespace SaintsField.Samples.Scripts
         // // [PostFieldButton(nameof(ClickButton))]
         // // public int testDisable;
         //
-        public bool showHidePostF;
+        public bool showHideToggle;
 
-        [PostFieldButtonShowIf(nameof(showHidePostF))]
-        [PostFieldButton(":Debug.Log", "1")]
-        [PostFieldButtonHideIf(nameof(showHidePostF))]
-        [PostFieldButton(":Debug.Log", "2")]
+        [PostFieldButtonShowIf(nameof(showHideToggle))]
+        [PostFieldButton(":Debug.Log", "show")]
+        [PostFieldButtonHideIf(nameof(showHideToggle))]
+        [PostFieldButton(":Debug.Log", "hide")]
         public string f;
+
+        public bool disableToggle;
+
+        [PostFieldButtonDisableIf(nameof(disableToggle))]
+        [PostFieldButton(":Debug.Log", "disable")]
+        [PostFieldButtonEnableIf(nameof(disableToggle))]
+        [PostFieldButton(":Debug.Log", "enable")]
+        public string f2;
     }
 }

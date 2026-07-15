@@ -39,5 +39,31 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.AboveButtonDrawer
             // not found the decorated, skip all
             return Array.Empty<DecButtonShowIfAttribute>();
         }
+
+        protected override IReadOnlyList<DecButtonDisableIfAttribute> GetCurrentDisableEnable(IReadOnlyList<PropertyAttribute> attributes, ISaintsAttribute currentAttribute)
+        {
+            List<DecButtonDisableIfAttribute> disableControlAttributes = new List<DecButtonDisableIfAttribute>(attributes.Count);
+
+            foreach (PropertyAttribute attr in attributes)
+            {
+                if (ReferenceEquals(attr, currentAttribute))
+                {
+                    return disableControlAttributes;
+                }
+
+                if (attr is DecButtonAttribute)
+                {
+                    disableControlAttributes.Clear();
+                    continue;
+                }
+
+                if (attr is AboveButtonDisableIfAttribute disableOrEnable)  // this includes the EnableIf (inherent)
+                {
+                    disableControlAttributes.Add(disableOrEnable);
+                }
+            }
+            // not found the decorated, skip all
+            return Array.Empty<DecButtonDisableIfAttribute>();
+        }
     }
 }

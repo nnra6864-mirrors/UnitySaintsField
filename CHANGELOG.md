@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.23.0 ##
+
+1.  Fix: Layout system didn't read the correct field order when Unity changes the marco which lead to field changes
+2.  Improve: Use `IIncrementalGenerator` for a better code generation/parsing [#401](https://github.com/TylerTemp/SaintsField/issues/401)
+3.  Add: `[Show/Hide/Enable/Disable-If]` for `Above/Below/PostField-Button` [#414](https://github.com/TylerTemp/SaintsField/issues/414)
+
 ## 5.22.4 ##
 
 1.  Fix: `Table` dragging gave an error and failed [#417](https://github.com/TylerTemp/SaintsField/issues/417)
