@@ -297,8 +297,8 @@ namespace SaintsField.Editor.Core
                     : fullWidth / grouped.Count();
 
                 IEnumerable<float> aboveHeights = grouped
-                    .Select(each => each.Value.GetAboveExtraHeight(property, label, eachWidth, each.Key.SaintsAttribute,
-                        each.Key.Index, fieldInfo, parent))
+                    .Select(each => each.Value.GetAboveExtraHeight(property, label, eachWidth, allAttributes,
+                        each.Key.SaintsAttribute, each.Key.Index, fieldInfo, parent))
                     .Where(each => each > 0)
                     .DefaultIfEmpty(0);
                 IEnumerable<float> belowHeights = grouped
@@ -367,7 +367,7 @@ namespace SaintsField.Editor.Core
         // }
 
         protected virtual float GetAboveExtraHeight(SerializedProperty property, GUIContent label,
-            float width,
+            float width, IReadOnlyList<PropertyAttribute> allAttributes,
             ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
         {
             return 0;
@@ -536,8 +536,8 @@ namespace SaintsField.Editor.Core
                         : GetOrCreateSaintsDrawer(property, eachAttributeWithIndex, GetPreferredLabel(property));
 
                     // ReSharper disable once InvertIf
-                    if (drawerInstance.WillDrawAbove(property, eachAttributeWithIndex.SaintsAttribute, fieldInfo,
-                            parent))
+                    if (drawerInstance.WillDrawAbove(property, allAttributes,
+                            eachAttributeWithIndex.SaintsAttribute, fieldInfo, parent))
                     {
                         if (!groupedAboveDrawers.TryGetValue(eachAttributeWithIndex.SaintsAttribute.GroupBy,
                                 out List<(SaintsPropertyDrawer drawer, SaintsWithIndex saintsWithIndex)> currentGroup))
@@ -567,7 +567,8 @@ namespace SaintsField.Editor.Core
                         {
                             Rect newAboveRect =
                                 drawerInstance.DrawAboveImGui(aboveRect, property, bugFixCopyLabel,
-                                    saintsWithIndex.SaintsAttribute, saintsWithIndex.Index, fieldInfo, parent);
+                                    allAttributes, saintsWithIndex.SaintsAttribute, saintsWithIndex.Index, fieldInfo,
+                                    parent);
                             aboveUsedHeight = newAboveRect.y - aboveInitY;
                             aboveRect = newAboveRect;
                         }
@@ -587,7 +588,8 @@ namespace SaintsField.Editor.Core
                             };
                             Rect leftRect =
                                 drawerInstance.DrawAboveImGui(eachRect, property, bugFixCopyLabel,
-                                    saintsWithIndex.SaintsAttribute, saintsWithIndex.Index, fieldInfo, parent);
+                                    allAttributes, saintsWithIndex.SaintsAttribute, saintsWithIndex.Index, fieldInfo,
+                                    parent);
                             height = Mathf.Max(height, leftRect.y - eachRect.y);
                             // Debug.Log($"height={height}");
                         }
@@ -769,7 +771,7 @@ namespace SaintsField.Editor.Core
                         : GetOrCreateSaintsDrawer(property, eachAttributeWithIndex, GetPreferredLabel(property));
                     float curWidth =
                         drawerInstance.GetPostFieldWidth(fieldUseRectWithPost, property, GUIContent.none,
-                            eachAttributeWithIndex.SaintsAttribute, eachAttributeWithIndex.Index,
+                            allAttributes, eachAttributeWithIndex.SaintsAttribute, eachAttributeWithIndex.Index,
                             fieldInfo, parent);
                     postFieldWidth += curWidth;
                     postFieldInfoList.Add((
@@ -1023,7 +1025,8 @@ namespace SaintsField.Editor.Core
 
         #region Callbacks
 
-        protected virtual bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected virtual bool WillDrawAbove(SerializedProperty property,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute,
             FieldInfo info,
             object parent)
         {
@@ -1031,7 +1034,8 @@ namespace SaintsField.Editor.Core
         }
 
         protected virtual Rect DrawAboveImGui(Rect position, SerializedProperty property,
-            GUIContent label, ISaintsAttribute saintsAttribute, int index, FieldInfo info,
+            GUIContent label, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute, int index, FieldInfo info,
             object parent)
         {
             return position;
@@ -1046,7 +1050,8 @@ namespace SaintsField.Editor.Core
 
 
         protected virtual float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             return 0;
         }

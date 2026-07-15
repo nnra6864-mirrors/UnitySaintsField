@@ -110,14 +110,16 @@ namespace SaintsField.Editor.Drawers.ShowImageDrawer
             cache.PreferredHeight = scaleHeight;
         }
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected override bool WillDrawAbove(SerializedProperty property, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute,
             FieldInfo info, object parent)
         {
             return ((ShowImageAttribute)saintsAttribute).Above;
         }
 
         protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             ShowImageAttribute showImageAttribute = (ShowImageAttribute)saintsAttribute;
             InfoIMGUI cache = EnsureKey(property, index);
@@ -132,7 +134,8 @@ namespace SaintsField.Editor.Drawers.ShowImageDrawer
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             ShowImageAttribute showImageAttribute = (ShowImageAttribute)saintsAttribute;
             InfoIMGUI cache = EnsureKey(property, index);

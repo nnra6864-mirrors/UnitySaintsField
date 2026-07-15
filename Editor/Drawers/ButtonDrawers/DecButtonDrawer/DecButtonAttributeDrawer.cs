@@ -92,6 +92,41 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
         protected abstract IReadOnlyList<DecButtonDisableIfAttribute> GetCurrentDisableEnable(
             IReadOnlyList<PropertyAttribute> attributes, ISaintsAttribute currentAttribute);
 
+        private (string error, bool show, object reParent) GetShowResult(SerializedProperty property,
+            ISaintsAttribute saintsAttribute, IReadOnlyList<PropertyAttribute> allAttributes, FieldInfo info)
+        {
+            IReadOnlyList<DecButtonShowIfAttribute> showIf = GetCurrentShowHide(
+                allAttributes,
+                saintsAttribute
+            );
+            if (showIf.Count == 0)
+            {
+                return ("", true, null);
+            }
+
+            object reParent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
+            (string error, bool show) result = GetShow(property, showIf, info, reParent);
+            return (result.error, result.show, reParent);
+        }
+
+        private (string error, bool disable, object reParent) GetDisableResult(SerializedProperty property,
+            ISaintsAttribute saintsAttribute, IReadOnlyList<PropertyAttribute> allAttributes, FieldInfo info,
+            object parent)
+        {
+            IReadOnlyList<DecButtonDisableIfAttribute> disableIf = GetCurrentDisableEnable(
+                allAttributes,
+                saintsAttribute
+            );
+            if (disableIf.Count == 0)
+            {
+                return ("", false, null);
+            }
+
+            object reParent = parent ?? SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
+            (string error, bool disable) result = GetDisable(property, disableIf, info, reParent);
+            return (result.error, result.disable, reParent);
+        }
+
         private static (string error, bool show) GetShow(SerializedProperty property,
             IReadOnlyList<DecButtonShowIfAttribute> conditionAttributes,
             FieldInfo info, object parent)

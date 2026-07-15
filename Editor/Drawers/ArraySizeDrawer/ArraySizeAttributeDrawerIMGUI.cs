@@ -32,16 +32,17 @@ namespace SaintsField.Editor.Drawers.ArraySizeDrawer
             return cache;
         }
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected override bool WillDrawAbove(SerializedProperty property, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute,
             FieldInfo info, object parent) => true;
 
         protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width,
-            ISaintsAttribute saintsAttribute,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute,
             int index,
             FieldInfo info, object parent) => 0f;
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
             FieldInfo info, object parent)
         {
             UpdateArraySize(property, (ArraySizeAttribute)saintsAttribute, info, parent, true);

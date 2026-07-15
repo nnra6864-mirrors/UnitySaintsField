@@ -42,7 +42,8 @@ namespace SaintsField.Editor.Drawers.PostFieldRichLabelDrawer
         private IReadOnlyList<RichTextDrawer.RichTextChunk> _payloads;
 
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             EndTextAttribute targetAttribute = (EndTextAttribute)saintsAttribute;
             (string error, string xml) = RichTextDrawer.GetLabelXml(property, targetAttribute.RichTextXml,

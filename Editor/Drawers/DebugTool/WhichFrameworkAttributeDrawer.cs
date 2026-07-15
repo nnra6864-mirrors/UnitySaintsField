@@ -19,7 +19,8 @@ namespace SaintsField.Editor.Drawers.DebugTool
         // private bool _overrideMessageType;
         // private EMessageType _messageType;
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected override bool WillDrawAbove(SerializedProperty property,
+            System.Collections.Generic.IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute,
             FieldInfo info,
             object parent)
         {
@@ -27,12 +28,14 @@ namespace SaintsField.Editor.Drawers.DebugTool
         }
 
         protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width,
+            System.Collections.Generic.IReadOnlyList<PropertyAttribute> allAttributes,
             ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
         {
             return ImGuiHelpBox.GetHeight(ImGuiContent, width, MessageType.Warning);
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
+            System.Collections.Generic.IReadOnlyList<PropertyAttribute> allAttributes,
             ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
         {
             return ImGuiHelpBox.Draw(position, ImGuiContent, MessageType.Warning);

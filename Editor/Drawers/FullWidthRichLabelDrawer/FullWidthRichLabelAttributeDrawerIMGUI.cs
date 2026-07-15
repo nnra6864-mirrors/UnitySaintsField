@@ -15,7 +15,8 @@ namespace SaintsField.Editor.Drawers.FullWidthRichLabelDrawer
         private readonly RichTextDrawer _richTextDrawer = new RichTextDrawer();
         private string _error = "";
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected override bool WillDrawAbove(SerializedProperty property, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute,
             FieldInfo info,
             object parent)
         {
@@ -37,7 +38,8 @@ namespace SaintsField.Editor.Drawers.FullWidthRichLabelDrawer
         }
 
         protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             FullWidthRichLabelAttribute fullWidthRichLabelAttribute = (FullWidthRichLabelAttribute)saintsAttribute;
             if (!fullWidthRichLabelAttribute.Above)
@@ -57,7 +59,8 @@ namespace SaintsField.Editor.Drawers.FullWidthRichLabelDrawer
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             FullWidthRichLabelAttribute fullWidthRichLabelAttribute = (FullWidthRichLabelAttribute)saintsAttribute;
             if (!fullWidthRichLabelAttribute.Above)

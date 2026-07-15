@@ -33,7 +33,8 @@ namespace SaintsField.Editor.Drawers.SeparatorDrawer
             return infoImGui;
         }
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected override bool WillDrawAbove(SerializedProperty property, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute,
             FieldInfo info,
             object parent)
         {
@@ -73,7 +74,8 @@ namespace SaintsField.Editor.Drawers.SeparatorDrawer
         }
 
         protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             FieldSeparatorAttribute separatorAttribute = (FieldSeparatorAttribute)saintsAttribute;
             if (separatorAttribute.Below)
@@ -85,7 +87,8 @@ namespace SaintsField.Editor.Drawers.SeparatorDrawer
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             FieldSeparatorAttribute separatorAttribute = (FieldSeparatorAttribute)saintsAttribute;
             if (separatorAttribute.Below)

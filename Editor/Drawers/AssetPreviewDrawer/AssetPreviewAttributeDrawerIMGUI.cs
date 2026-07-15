@@ -75,7 +75,8 @@ namespace SaintsField.Editor.Drawers.AssetPreviewDrawer
             cache.UseEditor = cache.Editor != null && cache.Editor.HasPreviewGUI();
         }
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected override bool WillDrawAbove(SerializedProperty property, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute,
             FieldInfo info,
             object parent)
         {
@@ -83,7 +84,8 @@ namespace SaintsField.Editor.Drawers.AssetPreviewDrawer
         }
 
         protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             string error = MismatchError(property, info, parent);
             if (error != null)
@@ -97,7 +99,8 @@ namespace SaintsField.Editor.Drawers.AssetPreviewDrawer
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             string error = MismatchError(property, info, parent);
             if (error != null)

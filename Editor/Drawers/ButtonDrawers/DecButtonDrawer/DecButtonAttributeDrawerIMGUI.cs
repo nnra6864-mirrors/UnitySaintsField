@@ -112,6 +112,40 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
             UpdateLabelIMGUI(EnsureKey(property, index), property, saintsAttribute, info, parent);
         }
 
+        protected (bool show, bool disable) GetConditionsIMGUI(SerializedProperty property,
+            ISaintsAttribute saintsAttribute, IReadOnlyList<PropertyAttribute> allAttributes,
+            FieldInfo info, object parent)
+        {
+            if (!SerializedUtils.IsOk(property))
+            {
+                return (true, false);
+            }
+
+            (string error, bool show, object reParent) showResult =
+                GetShowResult(property, saintsAttribute, allAttributes, info);
+            if (showResult.error != string.Empty)
+            {
+                Debug.LogError(showResult.error);
+                return (true, false);
+            }
+
+            if (!showResult.show)
+            {
+                return (false, false);
+            }
+
+            parent = showResult.reParent ?? parent;
+
+            (string error, bool disable, object reParent) disableResult =
+                GetDisableResult(property, saintsAttribute, allAttributes, info, parent);
+            if (disableResult.error != string.Empty)
+            {
+                Debug.LogError(disableResult.error);
+                return (true, true);
+            }
+
+            return (true, disableResult.disable);
+        }
         protected float GetResultHeightIMGUI(SerializedProperty property, int index, float width)
         {
             ButtonInfoIMGUI buttonInfo = EnsureKey(property, index);

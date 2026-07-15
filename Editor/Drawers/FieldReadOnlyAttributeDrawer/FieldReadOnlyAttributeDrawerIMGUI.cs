@@ -29,7 +29,8 @@ namespace SaintsField.Editor.Drawers.FieldReadOnlyAttributeDrawer
             return infoCache;
         }
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute,
+        protected override bool WillDrawAbove(SerializedProperty property, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute,
             FieldInfo info,
             object parent)
         {
@@ -37,7 +38,8 @@ namespace SaintsField.Editor.Drawers.FieldReadOnlyAttributeDrawer
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property,
-            GUIContent label, ISaintsAttribute saintsAttribute, int index, FieldInfo info,
+            GUIContent label, IReadOnlyList<PropertyAttribute> allAttributes,
+            ISaintsAttribute saintsAttribute, int index, FieldInfo info,
             object parent)
         {
             (string error, bool disabled) = IsDisabledIMGUI(property, info, parent);

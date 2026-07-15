@@ -12,7 +12,8 @@ namespace SaintsField.Editor.Drawers.SceneViewPickerDrawer
     public partial class SceneViewPickerAttributeDrawer
     {
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             Scene currentScene = GetScene(property.serializedObject.targetObject);
             if (!currentScene.IsValid())

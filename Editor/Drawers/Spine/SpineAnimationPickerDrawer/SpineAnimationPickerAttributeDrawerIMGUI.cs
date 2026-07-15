@@ -52,7 +52,8 @@ namespace SaintsField.Editor.Drawers.Spine.SpineAnimationPickerDrawer
         }
 
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             return EditorGUIUtility.singleLineHeight;
         }

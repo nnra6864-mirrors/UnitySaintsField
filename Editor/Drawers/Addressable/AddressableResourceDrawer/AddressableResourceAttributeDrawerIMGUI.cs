@@ -69,7 +69,8 @@ namespace SaintsField.Editor.Drawers.Addressable.AddressableResourceDrawer
         }
 
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             EnsureKey(property, info);
             return SingleLineHeight;

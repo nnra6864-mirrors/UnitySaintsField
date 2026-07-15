@@ -198,7 +198,8 @@ namespace SaintsField.Editor.Drawers
         // private SpriteRenderer _spriteRenderer;
 
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             // SpriteToggleAttribute toggleAttribute = (SpriteToggleAttribute)saintsAttribute;
             // string imageCompName = toggleAttribute.CompName;

@@ -13,13 +13,15 @@ namespace SaintsField.Editor.Drawers.GUIColor
 
         private static string GetKey(SerializedProperty property) => SerializedUtils.GetUniqueId(property);
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute, FieldInfo info, object parent)
+        protected override bool WillDrawAbove(SerializedProperty property,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, FieldInfo info,
+            object parent)
         {
             return true;
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
             FieldInfo info, object parent)
         {
             GUIColorAttribute guiColorAttribute = (GUIColorAttribute)saintsAttribute;

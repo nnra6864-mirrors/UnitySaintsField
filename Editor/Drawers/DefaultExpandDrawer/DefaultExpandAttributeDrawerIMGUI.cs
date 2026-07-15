@@ -11,19 +11,22 @@ namespace SaintsField.Editor.Drawers.DefaultExpandDrawer
     {
         private static readonly HashSet<string> WatchedProp = new HashSet<string>();
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute, FieldInfo info, object parent)
+        protected override bool WillDrawAbove(SerializedProperty property,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, FieldInfo info,
+            object parent)
         {
             return true;
         }
 
-        protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width, ISaintsAttribute saintsAttribute,
+        protected override float GetAboveExtraHeight(SerializedProperty property, GUIContent label, float width,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute,
             int index, FieldInfo info, object parent)
         {
             return 0f;
         }
 
         protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
             FieldInfo info, object parent)
         {
             string key = SerializedUtils.GetUniqueId(property);

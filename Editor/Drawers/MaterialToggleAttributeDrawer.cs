@@ -87,7 +87,8 @@ namespace SaintsField.Editor.Drawers
         private Material _material;
 
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             (string error, Renderer renderer) = GetRenderer(property, saintsAttribute, info, parent);
             _renderer = renderer;

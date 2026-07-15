@@ -320,7 +320,7 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
             FancyButton fancyButton = container.Q<FancyButton>(NameButton(property, index));
             ButtonRenderer.ButtonUserData buttonUserData = (ButtonRenderer.ButtonUserData)fancyButton.userData;
 
-            (string error, bool show, object reParent) showResult = GetShowUIToolkit(property, saintsAttribute, allAttributes, info);
+            (string error, bool show, object reParent) showResult = GetShowResult(property, saintsAttribute, allAttributes, info);
             if (showResult.error != string.Empty)  // TODO: error handling in UI
             {
                 Debug.LogError(showResult.error);
@@ -335,7 +335,7 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
                 reParent = showResult.reParent;
             }
 
-            (string error, bool disable, object reParent) disableResult = GetDisableUIToolkit(property, saintsAttribute, allAttributes, info, reParent);
+            (string error, bool disable, object reParent) disableResult = GetDisableResult(property, saintsAttribute, allAttributes, info, reParent);
             if (disableResult.error != string.Empty)  // TODO: error handling in UI
             {
                 Debug.LogError(disableResult.error);
@@ -406,42 +406,6 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.DecButtonDrawer
             {
                 fancyButton.MainLabel.Add(visualElement);
             }
-        }
-
-        private (string error, bool show, object reParent) GetShowUIToolkit(SerializedProperty property, ISaintsAttribute saintsAttribute,
-            IReadOnlyList<PropertyAttribute> allAttributes, FieldInfo info)
-        {
-            IReadOnlyList<DecButtonShowIfAttribute> showIf = GetCurrentShowHide(
-                allAttributes,
-                saintsAttribute
-            );
-            // Debug.Log($"found={string.Join(", ", showIf)} in {string.Join(", ", allAttributes)}");
-            if (showIf.Count == 0)
-            {
-                return ("", true, null);
-            }
-
-            object reParent = SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
-            (string error, bool show) result = GetShow(property, showIf, info, reParent);
-            return (result.error, result.show, reParent);
-        }
-
-        private (string error, bool disable, object reParent) GetDisableUIToolkit(SerializedProperty property, ISaintsAttribute saintsAttribute,
-            IReadOnlyList<PropertyAttribute> allAttributes, FieldInfo info, object parent)
-        {
-            IReadOnlyList<DecButtonDisableIfAttribute> disableIf = GetCurrentDisableEnable(
-                allAttributes,
-                saintsAttribute
-            );
-            // Debug.Log($"found={string.Join(", ", showIf)} in {string.Join(", ", allAttributes)}");
-            if (disableIf.Count == 0)
-            {
-                return ("", false, null);
-            }
-
-            object reParent = parent ?? SerializedUtils.GetFieldInfoAndDirectParent(property).parent;
-            (string error, bool disable) result = GetDisable(property, disableIf, info, reParent);
-            return (result.error, result.disable, reParent);
         }
 
         protected static VisualElement MakeErrorBox(string error)

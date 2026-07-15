@@ -60,12 +60,15 @@ namespace SaintsField.Editor.Drawers.OnValueChangedDrawer
             return infoCache;
         }
 
-        protected override bool WillDrawAbove(SerializedProperty property, ISaintsAttribute saintsAttribute, FieldInfo info, object parent)
+        protected override bool WillDrawAbove(SerializedProperty property,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, FieldInfo info,
+            object parent)
         {
             return true;
         }
 
-        protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label, ISaintsAttribute saintsAttribute,
+        protected override Rect DrawAboveImGui(Rect position, SerializedProperty property, GUIContent label,
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute,
             int index, FieldInfo info, object parent)
         {
             InfoIMGUI _ = EnsureKey(property, (OnValueChangedAttribute) saintsAttribute, info, parent);

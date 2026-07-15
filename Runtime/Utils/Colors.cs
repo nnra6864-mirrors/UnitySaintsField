@@ -434,9 +434,14 @@ namespace SaintsField.Utils
             int g = Mathf.RoundToInt(color.g * 255);
             int b = Mathf.RoundToInt(color.b * 255);
             int a = Mathf.RoundToInt(color.a * 255);
+            string rawAString = $"{a:X2}";
+            if (rawAString == "FF")
+            {
+                rawAString = "";
+            }
 
             // Create the HTML hex string
-            string htmlHex = $"#{r:X2}{g:X2}{b:X2}{a:X2}";
+            string htmlHex = $"#{r:X2}{g:X2}{b:X2}{rawAString}";
 
             return htmlHex;
         }

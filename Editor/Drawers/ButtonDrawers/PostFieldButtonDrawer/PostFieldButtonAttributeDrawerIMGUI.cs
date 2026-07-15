@@ -9,8 +9,14 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.PostFieldButtonDrawer
     public partial class PostFieldButtonAttributeDrawer
     {
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
+            if (!GetConditionsIMGUI(property, saintsAttribute, allAttributes, info, parent).show)
+            {
+                return 0f;
+            }
+
             return GetButtonWidthIMGUI(position, property, label, saintsAttribute, index, info, parent);
         }
 
@@ -19,7 +25,16 @@ namespace SaintsField.Editor.Drawers.ButtonDrawers.PostFieldButtonDrawer
             ISaintsAttribute saintsAttribute, int index, IReadOnlyList<PropertyAttribute> allAttributes,
             FieldInfo info, object parent)
         {
-            Draw(position, property, label, saintsAttribute, index, info, parent);
+            (bool show, bool disable) = GetConditionsIMGUI(property, saintsAttribute, allAttributes, info, parent);
+            if (!show)
+            {
+                return false;
+            }
+
+            using (new EditorGUI.DisabledScope(disable))
+            {
+                Draw(position, property, label, saintsAttribute, index, info, parent);
+            }
             return true;
         }
 

@@ -44,7 +44,8 @@ namespace SaintsField.Editor.Drawers.ColorPaletteDrawer
         private static readonly Dictionary<string, PaletteSelectorInfoImGui> ImGuiCache = new Dictionary<string, PaletteSelectorInfoImGui>();
 
         protected override float GetPostFieldWidth(Rect position, SerializedProperty property, GUIContent label,
-            ISaintsAttribute saintsAttribute, int index, FieldInfo info, object parent)
+            IReadOnlyList<PropertyAttribute> allAttributes, ISaintsAttribute saintsAttribute, int index,
+            FieldInfo info, object parent)
         {
             if (!EnsureColorPaletteArray())
             {
