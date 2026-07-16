@@ -75,6 +75,8 @@ namespace SaintsField.Editor.UIToolkitElements
         // private readonly bool _isUnityObjectOnly;
         private readonly IReadOnlyList<Type> _canHaveUnityTypes;
 
+        // private readonly Type _nullableValueType;
+
         // ReSharper disable once MemberCanBePrivate.Global
         public GeneralTypeEdit()
         {
@@ -90,6 +92,8 @@ namespace SaintsField.Editor.UIToolkitElements
             _inHorizontalLayout = inHorizontalLayout;
             _richTextTagProvider = richTextTagProvider;
             _foldoutViewKey = foldoutViewKey;
+
+            // _nullableValueType = Nullable.GetUnderlyingType(valueType);
 
             // _isUnityObjectOnly = valueType == typeof(Object) || valueType.IsSubclassOf(typeof(Object));
 
@@ -301,12 +305,25 @@ namespace SaintsField.Editor.UIToolkitElements
                 _curType = instanceFieldType;
                 Type fieldType = valueType ?? value!.GetType();
 
-                _optionTypes = ReferencePickerAttributeDrawer
-                    .GetTypesDerivedFrom(fieldType)
-                    .ToArray();
+                _nullableBaseType = Nullable.GetUnderlyingType(fieldType);
+
+                if(_nullableBaseType == null)
+                {
+                    _optionTypes = ReferencePickerAttributeDrawer
+                        .GetTypesDerivedFrom(fieldType)
+                        .ToArray();
+                }
+                else
+                {
+                    _optionTypes = ReferencePickerAttributeDrawer
+                        .GetTypesDerivedFrom(_nullableBaseType)
+                        .ToArray();
+                    // Debug.Log($"_optionTypes={string.Join<Type>(", ", _optionTypes)}");
+                }
 
                 Dropdown<Type> dropdownList = new Dropdown<Type>();
-                bool canBeNull = !fieldType.IsValueType;
+                bool canBeNull = _nullableBaseType != null  // Nullable<T> can be null
+                                 || !fieldType.IsValueType;  // value type can NOT be null
                 if(canBeNull)
                 {
                     dropdownList.Add("[Null]", null);
@@ -316,7 +333,7 @@ namespace SaintsField.Editor.UIToolkitElements
                     }
                 }
 
-                DisplayStyle dropdownBtnDisplay = DisplayStyle.Flex;
+                DisplayStyle dropdownBtnDisplay;
                 if (_optionTypes.Length <= 1)
                 {
                     dropdownBtnDisplay = DisplayStyle.None;
@@ -335,6 +352,11 @@ namespace SaintsField.Editor.UIToolkitElements
                         }
                     }
                 }
+                else
+                {
+                    dropdownBtnDisplay = DisplayStyle.Flex;
+                }
+
                 UIToolkitUtils.SetDisplayStyle(_dropdownBtn.ButtonElement, dropdownBtnDisplay);
 
                 Dictionary<string, List<Type>> nameSpaceToTypes = new Dictionary<string, List<Type>>();
@@ -404,6 +426,7 @@ namespace SaintsField.Editor.UIToolkitElements
         }
 
         private Dropdown<Type> _cachedDropdownList;
+        private Type _nullableBaseType;
 
         private void OnDropdown()
         {
@@ -464,9 +487,29 @@ namespace SaintsField.Editor.UIToolkitElements
             }
 
             object obj;
+            if(_nullableBaseType == null)
+            {
+                object newObj = CreateInstance(newType);
+                obj = ReferencePickerAttributeDrawer.CopyObj(_curValue, newObj);
+            }
+            else
+            {
+                Type nullableInsType = typeof(Nullable<>).MakeGenericType(_nullableBaseType);
+                object underlyingValue = CreateInstance(_nullableBaseType);
+                obj = Activator.CreateInstance(nullableInsType, underlyingValue);
+            }
+
+            // Debug.Log($"Create {newType}: {obj}");
+
+            _setterOrNull?.Invoke(obj);
+            value = true;
+        }
+
+        private static object CreateInstance(Type newType)
+        {
             try
             {
-                obj = Activator.CreateInstance(newType);
+                return Activator.CreateInstance(newType);
             }
 #pragma warning disable CS0168 // Variable is declared but never used
             catch (Exception e)
@@ -475,14 +518,8 @@ namespace SaintsField.Editor.UIToolkitElements
 #if SAINTSFIELD_DEBUG
                 Debug.LogError(e);
 #endif
-                obj = System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(newType);
+                return System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(newType);
             }
-
-            // Debug.Log($"Create {newType}: {obj}");
-            object copyObj = ReferencePickerAttributeDrawer.CopyObj(_curValue, obj);
-
-            _setterOrNull?.Invoke(copyObj);
-            value = true;
         }
 
         // ReSharper disable once ParameterHidesMember
@@ -514,20 +551,38 @@ namespace SaintsField.Editor.UIToolkitElements
                 return;
             }
 
-            // ReSharper disable once PossibleNullReferenceException
-            List<FieldInfo> fieldTargets = value.GetType().GetFields(bindAttrNormal).ToList();
-            Dictionary<string, FieldInfo> backingToFieldInfo = fieldTargets
-                .Where(each => each.Name.StartsWith("<") && each.Name.EndsWith(">k__BackingField"))
-                .ToDictionary(each => each.Name);
-            PropertyInfo[] propertyTargets = value.GetType().GetProperties(bindAttrNormal);
-            foreach (PropertyInfo propertyInfo in propertyTargets)
+            List<FieldInfo> fieldTargets;
+            PropertyInfo[] propertyTargets;
+            if (_nullableBaseType == null)
             {
-                string propName = propertyInfo.Name;
-                string backingName = $"<{propName}>k__BackingField";
-                if (backingToFieldInfo.TryGetValue(backingName, out FieldInfo dupInfo))
+                // ReSharper disable once PossibleNullReferenceException
+                fieldTargets = value.GetType().GetFields(bindAttrNormal).ToList();
+                Dictionary<string, FieldInfo> backingToFieldInfo = fieldTargets
+                    .Where(each => each.Name.StartsWith("<") && each.Name.EndsWith(">k__BackingField"))
+                    .ToDictionary(each => each.Name);
+                propertyTargets = value.GetType().GetProperties(bindAttrNormal);
+                foreach (PropertyInfo propertyInfo in propertyTargets)
                 {
-                    fieldTargets.Remove(dupInfo);
+                    string propName = propertyInfo.Name;
+                    string backingName = $"<{propName}>k__BackingField";
+                    if (backingToFieldInfo.TryGetValue(backingName, out FieldInfo dupInfo))
+                    {
+                        fieldTargets.Remove(dupInfo);
+                    }
                 }
+            }
+            else
+            {
+                Type nullableInsType = typeof(Nullable<>).MakeGenericType(_nullableBaseType);
+
+                FieldInfo valueProp = nullableInsType.GetField("value",
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+                Debug.Assert(valueProp != null, nullableInsType);
+                fieldTargets = new List<FieldInfo>
+                {
+                    valueProp,
+                };
+                propertyTargets = Array.Empty<PropertyInfo>();
             }
 
             List<VisualElement> children = fieldsBody.Children().ToList();

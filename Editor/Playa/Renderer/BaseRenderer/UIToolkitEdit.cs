@@ -63,6 +63,16 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                 return (null, false);
             }
 
+            Type nullableType = Nullable.GetUnderlyingType(valueType ?? value!.GetType());
+            if (nullableType != null)
+            {
+                return UIToolkitGeneralTypeEdit(oldElement,
+                    label, valueType, value, beforeSet, setterOrNull,
+                    labelGrayColor, inHorizontalLayout,
+                    allAttributes, targets, richTextTagProvider,
+                    foldoutViewKey);
+            }
+
             // Color reColor = EColor.EditorSeparator.GetColor();
 
             foreach (Attribute attribute in allAttributes)
@@ -1268,7 +1278,7 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                     element.RegisterValueChangedCallback(evt =>
                     {
                         beforeSet?.Invoke(value);
-                        setterOrNull((char)evt.newValue);
+                        setterOrNull(evt.newValue);
                     });
                 }
 
@@ -4495,6 +4505,7 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
 
             bool valueIsNull = RuntimeUtil.IsNull(value);
 
+            #region Dictionary
             IEnumerable<Type> genTypes = valueType.GetInterfaces()
                     .Where(each => each.IsGenericType)
                 // .Select(each => each.GetGenericTypeDefinition())
@@ -4503,8 +4514,6 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
             {
                 genTypes = genTypes.Prepend(valueType);
             }
-
-            #region Dictionary
             Type dictionaryInterface = typeof(IDictionary<,>);
             Type readonlyDictionaryInterface = typeof(IReadOnlyDictionary<,>);
             // ReSharper disable once NotAccessedVariable
@@ -4582,66 +4591,31 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                 }), false);
             }
 
-            // if (valueIsNull)
+            // Type nullableValueType = Nullable.GetUnderlyingType(valueType);
+            // if (nullableValueType != null)
             // {
-            //     if (valueType.IsArray || typeof(IList).IsAssignableFrom(valueType))
-            //     {
-            //         if (oldElement is LabelButtonField oldLabel && oldLabel.ClassListContains(foldoutViewKey))
-            //         {
-            //             return (null, false);
-            //         }
-            //         LabelButtonField labelButtonField = new LabelButtonField(label, new Button(() =>
-            //         {
-            //             beforeSet?.Invoke(value);
-            //             object result = valueType.IsArray
-            //                 ? Array.CreateInstance(ReflectUtils.GetElementType(valueType), 0)
-            //                 : Activator.CreateInstance(valueType);
-            //             setterOrNull(result);
-            //             // return;
-            //             // setterOrNull(Activator.CreateInstance(valueType));
-            //         })
-            //         {
-            //             text = "null (Click to Create)",
-            //             tooltip = "Click to Create",
-            //             style =
-            //             {
-            //                 flexGrow = 1,
-            //                 unityTextAlign = TextAnchor.MiddleLeft,
-            //             },
-            //         });
-            //         if (labelGrayColor)
-            //         {
-            //             labelButtonField.labelElement.style.color = AbsRenderer.ReColor;
-            //         }
-            //         labelButtonField.AddToClassList(LabelButtonField.alignedFieldUssClassName);
-            //         labelButtonField.AddToClassList(foldoutViewKey);
-            //         return (labelButtonField, true);
-            //     }
-            //
-            //     if (setterOrNull == null)
-            //     {
-            //         TextField textField = new TextField(label)
-            //         {
-            //             value = "null",
-            //             pickingMode = PickingMode.Ignore,
-            //         };
-            //         if (labelGrayColor)
-            //         {
-            //             textField.labelElement.style.color = AbsRenderer.ReColor;
-            //         }
-            //
-            //         // ReSharper disable once ConvertIfStatementToNullCoalescingAssignment
-            //         if(_nullUss is null)  // bypass life circle
-            //         {
-            //             _nullUss = Util.LoadResource<StyleSheet>("UIToolkit/UnityTextInputElementWarning.uss");
-            //         }
-            //         textField.styleSheets.Add(_nullUss);
-            //
-            //         return (WrapVisualElement(textField), true);
-            //     }
+            //     return NullableValueEdit(oldElement,
+            //         label, valueType, value, beforeSet, setterOrNull,
+            //         labelGrayColor, inHorizontalLayout,
+            //         allAttributes, targets, richTextTagProvider,
+            //         foldoutViewKey);
+            //     // valueType is Nullable<T>
+            //     // nullableValueType is typeof(T)
             // }
 
-            // ReSharper disable once InvertIf
+            return UIToolkitGeneralTypeEdit(oldElement,
+                label, valueType, value, beforeSet, setterOrNull,
+                labelGrayColor, inHorizontalLayout,
+                allAttributes, targets, richTextTagProvider,
+                foldoutViewKey);
+        }
+
+        private static (VisualElement result, bool isNestedField) UIToolkitGeneralTypeEdit(VisualElement oldElement,
+            string label, Type valueType, object value, Action<object> beforeSet, Action<object> setterOrNull,
+            bool labelGrayColor, bool inHorizontalLayout,
+            IReadOnlyList<Attribute> allAttributes, IReadOnlyList<object> targets, IRichTextTagProvider richTextTagProvider,
+            string foldoutViewKey)
+        {
             if (oldElement is GeneralTypeEdit gte && gte.ClassListContains(foldoutViewKey))
             {
 #if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_RENDERER_VALUE_EDIT
@@ -4756,12 +4730,22 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
             return visualElement;
         }
 
-        private class LabelButtonField : BaseField<object>
-        {
-            public LabelButtonField(string label, VisualElement visualInput) : base(label, visualInput)
-            {
-            }
-        }
+        // public static (VisualElement result, bool isNestedField) NullableValueEdit(VisualElement oldElement,
+        //     string label, Type valueType, object value, Action<object> beforeSet, Action<object> setterOrNull,
+        //     bool labelGrayColor, bool inHorizontalLayout,
+        //     IReadOnlyList<Attribute> allAttributes, IReadOnlyList<object> targets,
+        //     IRichTextTagProvider richTextTagProvider,
+        //     string foldoutViewKey)
+        // {
+        //
+        // }
+        //
+        // // private class LabelButtonField : BaseField<object>
+        // // {
+        // //     public LabelButtonField(string label, VisualElement visualInput) : base(label, visualInput)
+        // //     {
+        // //     }
+        // // }
 
         private static StyleSheet _nullUss;
 
