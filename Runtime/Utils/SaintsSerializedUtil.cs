@@ -569,7 +569,6 @@ namespace SaintsField.Utils
             }
         }
 
-
         public static (bool ok, T result) OnAfterDeserialize<T>(SaintsSerializedProperty saintsSerializedProperty, Type targetType)
         {
             switch (saintsSerializedProperty.propertyType)

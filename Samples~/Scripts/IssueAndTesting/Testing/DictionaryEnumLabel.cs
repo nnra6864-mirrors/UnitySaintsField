@@ -21,13 +21,13 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Testing
         [EnumToggleButtons]
         public NamedEnums buttonEnums;
 
-        [FlagsDropdown]
+        [AdvancedFlagsDropdown]
         public NamedEnums flagsEnums;
 
         [Dropdown]
         public NamedEnums treeEnums;
 
-        [FlagsTreeDropdown]
+        [FlagsDropdown]
         public NamedEnums flagsTreeEnums;
 
         [Conditional("UNITY_EDITOR")]

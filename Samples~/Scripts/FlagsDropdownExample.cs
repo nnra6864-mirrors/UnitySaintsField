@@ -19,7 +19,7 @@ namespace SaintsField.Samples.Scripts
             Four = 1 << 3,
         }
 
-        [FlagsDropdown]
+        [AdvancedFlagsDropdown]
         public F flags;
     }
 }

@@ -151,6 +151,19 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
         {
             object newEnum = Enum.ToObject(metaInfo.EnumType, curValue);
             object zeroBit = Enum.ToObject(metaInfo.EnumType, 0);
+            bool isEverything;
+            if (metaInfo.UnderType == typeof(ulong))
+            {
+                ulong current = Convert.ToUInt64(curValue);
+                ulong everything = Convert.ToUInt64(metaInfo.EverythingBit);
+                isEverything = everything != 0 && (current & everything) == everything;
+            }
+            else
+            {
+                long current = Convert.ToInt64(curValue);
+                long everything = Convert.ToInt64(metaInfo.EverythingBit);
+                isEverything = current == ~0L || everything != 0 && (current & everything) == everything;
+            }
             if (newEnum.Equals(zeroBit))  // now is zero, click to everything
             {
                 HToggleButton.style.backgroundImage = _checkboxEmptyTexture2D;
@@ -159,7 +172,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                 HEmptyButton.SetEnabled(false);
                 HCheckAllButton.SetEnabled(true);
             }
-            else if (newEnum.Equals(metaInfo.EverythingBit))  // now is everything, click to zero
+            else if (isEverything)  // now is everything, click to zero
             {
                 HToggleButton.style.backgroundImage = _checkboxCheckedTexture2D;
                 HToggleButton.userData = zeroBit;

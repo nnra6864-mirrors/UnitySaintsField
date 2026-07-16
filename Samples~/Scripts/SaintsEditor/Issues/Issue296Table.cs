@@ -29,7 +29,7 @@ namespace SaintsField.Samples.Scripts.SaintsEditor.Issues
             }
             public Flags f2;
 
-            [FlagsTreeDropdown] public Flags f3;
+            [FlagsDropdown] public Flags f3;
 
             [MinMaxSlider(0, 100)] public Vector2Int range;
         }

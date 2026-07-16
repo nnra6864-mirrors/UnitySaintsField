@@ -83,10 +83,10 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Issue
         [SerializeField, Tooltip("Tooltip for ValueButtons"), ValueButtons(nameof(AdvancedDropdownOptions))]
         private int _valueButtons;
 
-        [SerializeField, Tooltip("Tooltip for FlagsDropdown"), FlagsDropdown]
+        [SerializeField, Tooltip("Tooltip for FlagsDropdown"), AdvancedFlagsDropdown]
         private FlagMode _flagsDropdown;
 
-        [SerializeField, Tooltip("Tooltip for FlagsTreeDropdown"), FlagsTreeDropdown]
+        [SerializeField, Tooltip("Tooltip for FlagsTreeDropdown"), FlagsDropdown]
         private FlagMode _flagsTreeDropdown;
 
         [SerializeField, Tooltip("Tooltip for EnumToggleButtons"), EnumToggleButtons]

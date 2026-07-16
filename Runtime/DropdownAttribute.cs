@@ -7,7 +7,7 @@ namespace SaintsField
     [System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.Method | System.AttributeTargets.Parameter)]
     public class DropdownAttribute: PathedDropdownAttribute
     {
-        public DropdownAttribute(string funcName = null, EUnique unique = EUnique.None): base(funcName, unique)
+        public DropdownAttribute(string funcName = null, EUnique unique = EUnique.None, bool slashAsSub = true): base(funcName, unique, slashAsSub)
         {
         }
 

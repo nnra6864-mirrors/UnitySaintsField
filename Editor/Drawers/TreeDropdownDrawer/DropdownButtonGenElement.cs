@@ -50,6 +50,7 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
             bool isInvalid = false;
             if(_metaInfo.IsFlags)
             {
+                bool isULong = _metaInfo.UnderType == typeof(ulong);
                 List<EnumMetaInfo.EnumValueInfo> renderLabels = new List<EnumMetaInfo.EnumValueInfo>();
                 object zeroBit = Enum.ToObject(_metaInfo.EnumType, 0);
                 if (newEnum.Equals(zeroBit))
@@ -58,7 +59,7 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
                         ? _metaInfo.NothingValue
                         : new EnumMetaInfo.EnumValueInfo(zeroBit, "<b>Nothing</b>", "Nothing"));
                 }
-                else if (newEnum.Equals(_metaInfo.EverythingBit))
+                else if (EnumFlagsUtil.IsOnObject(newEnum, _metaInfo.EverythingBit, isULong))
                 {
                     renderLabels.Add(_metaInfo.EverythingValue.HasValue
                         ? _metaInfo.EverythingValue
@@ -66,8 +67,6 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
                 }
                 else
                 {
-                    bool isULong = _metaInfo.UnderType == typeof(ulong);
-
                     List<EnumMetaInfo.EnumValueInfo>
                         onValueInfos = new List<EnumMetaInfo.EnumValueInfo>(_metaInfo.EnumValues.Count);
 
@@ -191,7 +190,7 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
             Dropdown<object> enumDropdown = new Dropdown<object>("");
             List<object> curValues = new List<object>();
             object curValue = Enum.ToObject(_metaInfo.EnumType, value);
-            bool containsEverythingOrNothing = false;
+            bool containsNothing = false;
 
             object zeroEnum = Enum.ToObject(_metaInfo.EnumType, 0);
             if(_metaInfo.IsFlags)
@@ -205,9 +204,9 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
                     enumDropdown.Add("Nothing", zeroEnum);
                 }
 
-                containsEverythingOrNothing = zeroEnum.Equals(curValue);
+                containsNothing = zeroEnum.Equals(curValue);
 
-                if (containsEverythingOrNothing)
+                if (containsNothing)
                 {
                     curValues.Add(zeroEnum);
                 }
@@ -221,11 +220,11 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
                     enumDropdown.Add("Everything", _metaInfo.EverythingBit);
                 }
 
-                if (!containsEverythingOrNothing)
+                if (!containsNothing)
                 {
-                    containsEverythingOrNothing = EnumFlagsUtil.IsOnObject(curValue, _metaInfo.EverythingBit,
+                    bool containsEverything = EnumFlagsUtil.IsOnObject(curValue, _metaInfo.EverythingBit,
                         isULong);
-                    if (containsEverythingOrNothing)
+                    if (containsEverything)
                     {
                         curValues.Add(_metaInfo.EverythingBit);
                     }
@@ -238,7 +237,7 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
             {
                 // Debug.Log($"Add {enumInfo.Label} {enumInfo.Value}");
                 enumDropdown.Add(enumInfo.Label, enumInfo.Value);
-                if (!containsEverythingOrNothing)
+                if (!containsNothing)
                 {
                     if (_metaInfo.IsFlags)
                     {
@@ -280,30 +279,65 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
                     // beforeSet?.Invoke(refDrawPayload.Value);
                     if (_metaInfo.IsFlags)
                     {
-
-                        if (curItem.Equals(zeroEnum))
+                        if (isULong)
                         {
-                            value = (T)Convert.ChangeType(0, _metaInfo.UnderType);
-                        }
-                        else if (curItem.Equals(_metaInfo.EverythingBit))
-                        {
-                            value = (T)Convert.ChangeType(_metaInfo.EverythingBit, _metaInfo.UnderType);
-                        }
-                        else if (on)
-                        {
-                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                            if (_metaInfo.EverythingBit.Equals(curValue))
+                            ulong selectedValue = Convert.ToUInt64(curItem);
+                            ulong everything = Convert.ToUInt64(_metaInfo.EverythingBit);
+                            ulong originValue = Convert.ToUInt64(value);
+                            if (originValue == ~0UL)
                             {
-                                value = (T)Convert.ChangeType(curItem, _metaInfo.UnderType);
+                                originValue = everything;
+                            }
+
+                            ulong newValue;
+                            if (selectedValue == 0)
+                            {
+                                newValue = 0;
+                            }
+                            else if (on)
+                            {
+                                newValue = originValue | selectedValue;
+                                if (everything != 0 && (newValue & everything) == everything)
+                                {
+                                    newValue = ~0UL;
+                                }
                             }
                             else
                             {
-                                value = (T)Convert.ChangeType(EnumFlagsUtil.SetOnBitObject(curValue, curItem, isULong), _metaInfo.UnderType);
+                                newValue = EnumFlagsUtil.SetOffBit(originValue, selectedValue);
                             }
+
+                            value = (T)Convert.ChangeType(newValue, _metaInfo.UnderType);
                         }
                         else
                         {
-                            value = (T)Convert.ChangeType(EnumFlagsUtil.SetOffBitObject(curValue, curItem, isULong), _metaInfo.UnderType);
+                            long selectedValue = Convert.ToInt64(curItem);
+                            long everything = Convert.ToInt64(_metaInfo.EverythingBit);
+                            long originValue = Convert.ToInt64(value);
+                            if (originValue == ~0L)
+                            {
+                                originValue = everything;
+                            }
+
+                            long newValue;
+                            if (selectedValue == 0)
+                            {
+                                newValue = 0;
+                            }
+                            else if (on)
+                            {
+                                newValue = originValue | selectedValue;
+                                if (everything != 0 && (newValue & everything) == everything)
+                                {
+                                    newValue = ~0L;
+                                }
+                            }
+                            else
+                            {
+                                newValue = EnumFlagsUtil.SetOffBit(originValue, selectedValue);
+                            }
+
+                            value = (T)Convert.ChangeType(newValue, _metaInfo.UnderType);
                         }
                     }
                     else

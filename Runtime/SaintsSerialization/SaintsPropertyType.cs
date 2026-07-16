@@ -11,7 +11,7 @@ namespace SaintsField.SaintsSerialization
 #if UNITY_2022_1_OR_NEWER
         EnumULong = 2,
 #endif
-        ClassOrStruct = 3,
+        // ClassOrStruct = 3,
         Interface = 4,
         DateTime = 5,
         TimeSpan = 6,

@@ -13,6 +13,7 @@ namespace SaintsField
         public ValueButtonsAttribute(string funcName = null, EUnique unique = EUnique.None, bool noFold=false): base(funcName, unique)
         {
             NoFold = noFold;
+            slashAsSub = false;
         }
 
         public ValueButtonsAttribute(EUnique unique) : this(null, unique) {}

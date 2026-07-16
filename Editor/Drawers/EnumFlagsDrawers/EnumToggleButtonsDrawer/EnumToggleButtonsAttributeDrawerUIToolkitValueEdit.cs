@@ -61,7 +61,9 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                 };
                 visualInput.Add(valueButtonsArrangeElementWrapper);
 
-                FlagButtonsArrangeElement = new FlagButtonsArrangeElement(new FlagButtonsCalcElement(false))
+                bool isULong = metaInfo.UnderType == typeof(ulong);
+                FlagButtonsArrangeElement = new FlagButtonsArrangeElement(
+                    new FlagButtonsCalcElement(isULong), isULong)
                 {
                     style =
                     {
@@ -142,15 +144,24 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                         Debug.LogWarning("hToggleButton not init");
                         return;
                     }
+                    object targetValue = userData;
+                    if (userData.Equals(metaInfo.EverythingBit))
+                    {
+                        targetValue = metaInfo.UnderType == typeof(ulong)
+                            ? Enum.ToObject(enumType, ~0UL)
+                            : Enum.ToObject(enumType, ~0L);
+                    }
                     beforeSet?.Invoke(value);
-                    setterOrNull(userData);
+                    setterOrNull(targetValue);
                     // property.intValue = (int)userData;
                     // property.serializedObject.ApplyModifiedProperties();
                 };
                 flagButtonFullToggleGroupElement.HCheckAllButton.clicked += () =>
                 {
                     beforeSet?.Invoke(value);
-                    setterOrNull(metaInfo.EverythingBit);
+                    setterOrNull(metaInfo.UnderType == typeof(ulong)
+                        ? Enum.ToObject(enumType, ~0UL)
+                        : Enum.ToObject(enumType, ~0L));
                 };
                 flagButtonFullToggleGroupElement.HEmptyButton.clicked += () =>
                 {
@@ -184,11 +195,29 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                     object newValue;
                     if (metaInfo.UnderType == typeof(ulong))
                     {
-                        newValue = EnumFlagsUtil.ToggleBit(Convert.ToUInt64(wrapper.Value), Convert.ToUInt64(clickedValue));
+                        ulong everything = Convert.ToUInt64(metaInfo.EverythingBit);
+                        ulong originValue = Convert.ToUInt64(wrapper.Value);
+                        if (originValue == ~0UL)
+                        {
+                            originValue = everything;
+                        }
+                        ulong toggledValue = EnumFlagsUtil.ToggleBit(originValue, Convert.ToUInt64(clickedValue));
+                        newValue = everything != 0 && (toggledValue & everything) == everything
+                            ? ~0UL
+                            : toggledValue;
                     }
                     else
                     {
-                        newValue = EnumFlagsUtil.ToggleBit(Convert.ToInt64(wrapper.Value), Convert.ToInt64(clickedValue));
+                        long everything = Convert.ToInt64(metaInfo.EverythingBit);
+                        long originValue = Convert.ToInt64(wrapper.Value);
+                        if (originValue == ~0L)
+                        {
+                            originValue = everything;
+                        }
+                        long toggledValue = EnumFlagsUtil.ToggleBit(originValue, Convert.ToInt64(clickedValue));
+                        newValue = everything != 0 && (toggledValue & everything) == everything
+                            ? ~0L
+                            : toggledValue;
                     }
 
                     object enumValue = Enum.ToObject(metaInfo.EnumType, newValue);

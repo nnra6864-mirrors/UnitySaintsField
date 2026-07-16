@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using SaintsField.Interfaces;
-using UnityEngine;
 
 // ReSharper disable once CheckNamespace
 namespace SaintsField
@@ -15,6 +13,7 @@ namespace SaintsField
         public EnumToggleButtonsAttribute(bool noFold=false)
         {
             NoFold = noFold;
+            slashAsSub = false;
         }
     }
 }

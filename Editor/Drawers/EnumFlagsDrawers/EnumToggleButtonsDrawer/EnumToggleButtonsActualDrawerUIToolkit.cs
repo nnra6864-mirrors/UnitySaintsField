@@ -207,7 +207,8 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                         };
                         visualInput.Add(valueButtonsArrangeElementWrapper);
 
-                        FlagButtonsArrangeElement valueButtonsArrangeElement = new FlagButtonsArrangeElement(new FlagButtonsCalcElement(false))
+                        FlagButtonsArrangeElement valueButtonsArrangeElement = new FlagButtonsArrangeElement(
+                            new FlagButtonsCalcElement(false))
                         {
                             name = NameArrange(property),
                             style =
@@ -246,14 +247,19 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                             SerializedProperty targetProp =
                                 property.FindPropertyRelative(nameof(SaintsSerializedProperty.longValue));
 
-                            targetProp.longValue = (long) userData;
+                            long targetValue = Convert.ToInt64(userData);
+                            if (targetValue == Convert.ToInt64(metaInfo.EverythingBit))
+                            {
+                                targetValue = ~0L;
+                            }
+                            targetProp.longValue = targetValue;
                             property.serializedObject.ApplyModifiedProperties();
                         };
                         flagButtonFullToggleGroupElement.HCheckAllButton.clicked += () =>
                         {
                             SerializedProperty targetProp =
                                 property.FindPropertyRelative(nameof(SaintsSerializedProperty.longValue));
-                            targetProp.longValue = (long)metaInfo.EverythingBit;
+                            targetProp.longValue = ~0L;
                             property.serializedObject.ApplyModifiedProperties();
                         };
                         flagButtonFullToggleGroupElement.HEmptyButton.clicked += () =>
@@ -329,7 +335,15 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
 
                                 SerializedProperty targetProp =
                                     property.FindPropertyRelative(nameof(SaintsSerializedProperty.longValue));
-                                long newValue = EnumFlagsUtil.ToggleBit(targetProp.longValue, toggle);
+                                long everything = Convert.ToInt64(metaInfo.EverythingBit);
+                                long originValue = targetProp.longValue == ~0L
+                                    ? everything
+                                    : targetProp.longValue;
+                                long newValue = EnumFlagsUtil.ToggleBit(originValue, toggle);
+                                if (everything != 0 && (newValue & everything) == everything)
+                                {
+                                    newValue = ~0L;
+                                }
 
                                 targetProp.longValue = newValue;
                                 property.serializedObject.ApplyModifiedProperties();
@@ -532,7 +546,8 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                         };
                         visualInput.Add(valueButtonsArrangeElementWrapper);
 
-                        FlagButtonsArrangeElement valueButtonsArrangeElement = new FlagButtonsArrangeElement(new FlagButtonsCalcElement(false))
+                        FlagButtonsArrangeElement valueButtonsArrangeElement = new FlagButtonsArrangeElement(
+                            new FlagButtonsCalcElement(true), true)
                         {
                             name = NameArrange(property),
                             style =
@@ -571,14 +586,19 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                             SerializedProperty targetProp =
                                 property.FindPropertyRelative(nameof(SaintsSerializedProperty.uLongValue));
 
-                            targetProp.ulongValue = (ulong) userData;
+                            ulong targetValue = Convert.ToUInt64(userData);
+                            if (targetValue == Convert.ToUInt64(metaInfo.EverythingBit))
+                            {
+                                targetValue = ~0UL;
+                            }
+                            targetProp.ulongValue = targetValue;
                             property.serializedObject.ApplyModifiedProperties();
                         };
                         flagButtonFullToggleGroupElement.HCheckAllButton.clicked += () =>
                         {
                             SerializedProperty targetProp =
                                 property.FindPropertyRelative(nameof(SaintsSerializedProperty.uLongValue));
-                            targetProp.ulongValue = (ulong)metaInfo.EverythingBit;
+                            targetProp.ulongValue = ~0UL;
                             property.serializedObject.ApplyModifiedProperties();
                         };
                         flagButtonFullToggleGroupElement.HEmptyButton.clicked += () =>
@@ -654,7 +674,15 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
 
                                 SerializedProperty targetProp =
                                     property.FindPropertyRelative(nameof(SaintsSerializedProperty.uLongValue));
-                                ulong newValue = EnumFlagsUtil.ToggleBit(targetProp.ulongValue, toggle);
+                                ulong everything = Convert.ToUInt64(metaInfo.EverythingBit);
+                                ulong originValue = targetProp.ulongValue == ~0UL
+                                    ? everything
+                                    : targetProp.ulongValue;
+                                ulong newValue = EnumFlagsUtil.ToggleBit(originValue, toggle);
+                                if (everything != 0 && (newValue & everything) == everything)
+                                {
+                                    newValue = ~0UL;
+                                }
 
                                 targetProp.ulongValue = newValue;
                                 property.serializedObject.ApplyModifiedProperties();
@@ -691,7 +719,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                 }
 #endif
                 case SaintsPropertyType.Undefined:
-                case SaintsPropertyType.ClassOrStruct:
+                // case SaintsPropertyType.ClassOrStruct:
                 case SaintsPropertyType.Interface:
                 case SaintsPropertyType.DateTime:
                 case SaintsPropertyType.TimeSpan:
@@ -722,7 +750,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                     break;
 #endif
                 case SaintsPropertyType.Undefined:
-                case SaintsPropertyType.ClassOrStruct:
+                // case SaintsPropertyType.ClassOrStruct:
                 case SaintsPropertyType.Interface:
                 case SaintsPropertyType.DateTime:
                 case SaintsPropertyType.TimeSpan:

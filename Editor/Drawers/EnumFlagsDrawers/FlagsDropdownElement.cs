@@ -1,4 +1,4 @@
-#if UNITY_2021_3_OR_NEWER && !SAINTSFIELD_UI_TOOLKIT_DISABLE
+#if UNITY_2021_3_OR_NEWER
 using System.Collections.Generic;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.Linq;
@@ -6,7 +6,7 @@ using SaintsField.Editor.UIToolkitElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
+namespace SaintsField.Editor.Drawers.EnumFlagsDrawers
 {
     public class FlagsDropdownElement: IntDropdownElement
     {
@@ -25,25 +25,61 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
 
             if (newValue == 0)
             {
-                string label = "<b>Nothing</b>";
+                EnumFlagsUtil.EnumDisplayInfo label;
 
                 if (_metaInfo.BitValueToName.TryGetValue(newValue, out EnumFlagsUtil.EnumDisplayInfo displayInfo))
-                    label = $"<b>{displayInfo.Name}</b>";
+                {
+                    label =  new EnumFlagsUtil.EnumDisplayInfo
+                    {
+                        HasRichName = true,
+                        RichName = $"<b>{(displayInfo.HasRichName ? displayInfo.RichName : displayInfo.Name)}</b>"
+                    };
+                }
+                else
+                {
+                    label = new EnumFlagsUtil.EnumDisplayInfo
+                    {
+                        HasRichName = true,
+                        RichName = "<b>Nothing</b>",
+                    };
+                }
 
                 // Label.text = label;
-                AddLabelSingleText(Label, label);
+                AddLabelRichText(Label, label);
                 return;
             }
 
             if((newValue & _metaInfo.AllCheckedLong) == _metaInfo.AllCheckedLong)
             {
-                string label = "<b>Everything</b>";
+                EnumFlagsUtil.EnumDisplayInfo label;
 
                 if (_metaInfo.BitValueToName.TryGetValue(newValue, out EnumFlagsUtil.EnumDisplayInfo displayInfo))
-                    label = $"<b>{displayInfo.Name}</b>";
+                {
+                    label = new EnumFlagsUtil.EnumDisplayInfo
+                    {
+                        HasRichName = true,
+                        RichName = $"<b>{(displayInfo.HasRichName ? displayInfo.RichName : displayInfo.Name)}</b>",
+                    };
+                }
+                else if (newValue == ~0 && _metaInfo.BitValueToName.TryGetValue(_metaInfo.AllCheckedLong, out EnumFlagsUtil.EnumDisplayInfo allBitsdisplayInfo))
+                {
+                    label = new EnumFlagsUtil.EnumDisplayInfo
+                    {
+                        HasRichName = true,
+                        RichName = $"<b>{(allBitsdisplayInfo.HasRichName ? allBitsdisplayInfo.RichName : allBitsdisplayInfo.Name)}</b>",
+                    };
+                }
+                else
+                {
+                    label = new EnumFlagsUtil.EnumDisplayInfo
+                    {
+                        HasRichName = true,
+                        RichName = "<b>Everything</b>",
+                    };
+                }
 
                 // Label.text = label;
-                AddLabelSingleText(Label, label);
+                AddLabelRichText(Label, label);
                 return;
             }
 

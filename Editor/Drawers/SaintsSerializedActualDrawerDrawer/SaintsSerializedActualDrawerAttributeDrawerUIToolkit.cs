@@ -67,8 +67,8 @@ namespace SaintsField.Editor.Drawers.SaintsSerializedActualDrawerDrawer
             Attribute[] attributes = ReflectCache.GetCustomAttributes(serInfo);
 
             EnumToggleButtonsAttribute enumToggle = null;
-            FlagsTreeDropdownAttribute flagsTreeDropdownAttribute = null;
             FlagsDropdownAttribute flagsDropdownAttribute = null;
+            AdvancedFlagsDropdownAttribute advancedFlagsDropdownAttribute = null;
             DateTimeAttribute dateTimeAttribute = null;
             TimeSpanAttribute timeSpanAttribute = null;
             foreach (Attribute attr in attributes)
@@ -78,11 +78,11 @@ namespace SaintsField.Editor.Drawers.SaintsSerializedActualDrawerDrawer
                     case EnumToggleButtonsAttribute et:
                         enumToggle = et;
                         break;
-                    case FlagsTreeDropdownAttribute ftd:
-                        flagsTreeDropdownAttribute = ftd;
+                    case FlagsDropdownAttribute ftd:
+                        flagsDropdownAttribute = ftd;
                         break;
-                    case FlagsDropdownAttribute fd:
-                        flagsDropdownAttribute = fd;
+                    case AdvancedFlagsDropdownAttribute fd:
+                        advancedFlagsDropdownAttribute = fd;
                         break;
                     case DateTimeAttribute dt:
                         dateTimeAttribute = dt;
@@ -119,9 +119,9 @@ namespace SaintsField.Editor.Drawers.SaintsSerializedActualDrawerDrawer
 
                     TreeDropdownAttributeDrawer treeDropdownAttributeDrawer =
                         (TreeDropdownAttributeDrawer)MakePropertyDrawer(typeof(TreeDropdownAttributeDrawer), serInfo,
-                            (Attribute)flagsTreeDropdownAttribute ?? flagsDropdownAttribute, label);
+                            (Attribute)flagsDropdownAttribute ?? advancedFlagsDropdownAttribute, label);
                     VisualElement treeElement = treeDropdownAttributeDrawer.RenderSerializedActual(
-                        saintsSerializedActual, (ISaintsAttribute)flagsTreeDropdownAttribute ?? flagsDropdownAttribute,
+                        saintsSerializedActual, (ISaintsAttribute)flagsDropdownAttribute ?? advancedFlagsDropdownAttribute,
                         label, property, parent);
                     return (treeElement, treeElement == null ? null : treeDropdownAttributeDrawer);
                 }

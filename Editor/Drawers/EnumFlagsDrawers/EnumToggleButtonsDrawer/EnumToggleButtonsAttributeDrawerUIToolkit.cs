@@ -148,13 +148,17 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                     return;
                 }
 
-                EnumFlagsUtil.SetSerializedPropertyEnumValue(metaInfo.EnumType, property, Convert.ToInt64(userData));
+                long targetValue = Convert.ToInt64(userData);
+                if (targetValue == Convert.ToInt64(metaInfo.EverythingBit))
+                {
+                    targetValue = ~0L;
+                }
+                EnumFlagsUtil.SetSerializedPropertyEnumValue(metaInfo.EnumType, property, targetValue);
                 property.serializedObject.ApplyModifiedProperties();
             };
             flagButtonFullToggleGroupElement.HCheckAllButton.clicked += () =>
             {
-                long toggle = Convert.ToInt64(metaInfo.EverythingBit);
-                EnumFlagsUtil.SetSerializedPropertyEnumValue(metaInfo.EnumType, property, toggle);
+                EnumFlagsUtil.SetSerializedPropertyEnumValue(metaInfo.EnumType, property, ~0L);
                 property.serializedObject.ApplyModifiedProperties();
             };
             flagButtonFullToggleGroupElement.HEmptyButton.clicked += () =>
@@ -240,8 +244,8 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                 flagButtonsArrangeElement.OnButtonClicked.AddListener(value =>
                 {
                     long toggle = Convert.ToInt64(value);
-
-                    long newValue = EnumFlagsUtil.ToggleBit(property.intValue, toggle);
+                    long curValue = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property);
+                    long newValue = ToggleFlag(curValue, toggle, metaInfo);
 
                     EnumFlagsUtil.SetSerializedPropertyEnumValue(metaInfo.EnumType, property, newValue);
                     property.serializedObject.ApplyModifiedProperties();
@@ -252,13 +256,14 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                 flagButtonsArrangeElement.TrackPropertyValue(property, _ => RefreshCurValue());
             });
 
-            flagButtonsArrangeElement.TrackPropertyValue(property, _ => onValueChangedCallback.Invoke(property.intValue));
+            flagButtonsArrangeElement.TrackPropertyValue(property, _ => onValueChangedCallback.Invoke(
+                EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property)));
 
             return;
 
             void RefreshCurValue()
             {
-                int curValue = property.intValue;
+                long curValue = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property);
 
                 flagButtonsArrangeElement.RefreshCurValue(curValue);
                 flagButtonFullToggleGroupElement.RefreshValue(curValue, metaInfo);

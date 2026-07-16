@@ -3,13 +3,13 @@ using System.Linq;
 using SaintsField.Editor.Core;
 using UnityEditor;
 
-namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
+namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.AdvancedFlagsDropdownDrawer
 {
 #if ODIN_INSPECTOR
     [Sirenix.OdinInspector.Editor.DrawerPriority(Sirenix.OdinInspector.Editor.DrawerPriorityLevel.AttributePriority)]
 #endif
-    [CustomPropertyDrawer(typeof(FlagsDropdownAttribute), true)]
-    public partial class FlagsDropdownAttributeDrawer: SaintsPropertyDrawer
+    [CustomPropertyDrawer(typeof(AdvancedFlagsDropdownAttribute), true)]
+    public partial class AdvancedFlagsDropdownAttributeDrawer: SaintsPropertyDrawer
     {
         private static string GetSelectedNames(IReadOnlyDictionary<long, EnumFlagsUtil.EnumDisplayInfo> bitValueToName, long selectedInt)
         {

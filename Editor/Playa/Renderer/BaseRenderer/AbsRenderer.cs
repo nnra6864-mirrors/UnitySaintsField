@@ -10,6 +10,7 @@ using SaintsField.Editor.Playa.Utils;
 using SaintsField.Editor.Utils;
 using SaintsField.Interfaces;
 using SaintsField.Playa;
+using SaintsField.SaintsSerialization;
 #if (WWISE_2024_OR_LATER || WWISE_2023_OR_LATER || WWISE_2022_OR_LATER || WWISE_2021_OR_LATER || WWISE_2020_OR_LATER || WWISE_2019_OR_LATER || WWISE_2018_OR_LATER || WWISE_2017_OR_LATER || WWISE_2016_OR_LATER || SAINTSFIELD_WWISE) && !SAINTSFIELD_WWISE_DISABLE
 using SaintsField.Editor.Drawers.Wwise.GetWwiseDrawer;
 using SaintsField.Wwise;
@@ -681,18 +682,27 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                     }
                     else
                     {
-                        if (tagName == "field")
+                        if (result.value is SaintsSerializedProperty ssp)
                         {
+                            (string error, object value) r = SaintsSerializedEditorUtil.GetValue(ssp);
+                            result = (r.error, result.index, r.value);
                         }
-                        else
+                        if(result.error != "")
                         {
-                            string revName = tagName["field.".Length..];
+                            if (tagName == "field")
+                            {
+                            }
+                            else
+                            {
+                                string revName = tagName["field.".Length..];
 
-                            (string error, MemberInfo _, object result) getOfValue = Util.GetOf<object>(revName, null,
-                                FieldWithInfo.SerializedProperty,
-                                FieldWithInfo.FieldInfo, result.value, null);
+                                (string error, MemberInfo _, object result) getOfValue = Util.GetOf<object>(revName,
+                                    null,
+                                    FieldWithInfo.SerializedProperty,
+                                    FieldWithInfo.FieldInfo, result.value, null);
 
-                            result = (getOfValue.error, result.index, getOfValue.result);
+                                result = (getOfValue.error, result.index, getOfValue.result);
+                            }
                         }
                     }
 

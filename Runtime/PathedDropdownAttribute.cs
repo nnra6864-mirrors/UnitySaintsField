@@ -30,10 +30,14 @@ namespace SaintsField
         public IReadOnlyList<object> Options;
         public IReadOnlyList<(string path, object value)> Tuples;
 
-        protected PathedDropdownAttribute(string funcName = null, EUnique unique = EUnique.None)
+        // ReSharper disable once InconsistentNaming
+        public bool slashAsSub;
+
+        protected PathedDropdownAttribute(string funcName = null, EUnique unique = EUnique.None, bool slashAsSub=true)
         {
             FuncName = RuntimeUtil.ParseCallback(funcName).content;
             EUnique = unique;
+            this.slashAsSub = slashAsSub;
         }
 
         protected PathedDropdownAttribute(EUnique unique) : this(null, unique) {}

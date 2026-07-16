@@ -113,11 +113,20 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.23.0**
+**5.23.1**
 
-1.  Fix: Layout system didn't read the correct field order when Unity changes the marco which lead to field changes
-2.  Improve: Use `IIncrementalGenerator` for a better code generation/parsing [#401](https://github.com/TylerTemp/SaintsField/issues/401)
-3.  Add: `[Show/Hide/Enable/Disable-If]` for `Above/Below/PostField-Button` [#414](https://github.com/TylerTemp/SaintsField/issues/414)
+1.  Rename: `FlagsDropdown` now uses "TreeDropdown" drawer
+2.  Fix: `FlagsDropdown` cast error when toggle bits
+3.  Fix: for enum flags, when selecting all bits (either by selecting every item, or selecting "Everything"), it now
+    set values to `~0` (all bit on). This is the default behavior of Unity. This affects:
+
+    *   `FlagsDropdown`
+    *   `EnumToggleButtons`
+    *   extended serialization for `long`/`ulong` type of enum flags
+    *   default drawer of enum flags if you have SaintsEditor enabled
+
+4.  Add: `FlagsDropdown`, `Dropdown` add option `bool slashAsSub` so you can control path separator for different situations
+5.  Fix: `FlagsDropdown` button did not use `InspectorName` if there is an all-bit-on defined 
 
 ## Usage ##
 

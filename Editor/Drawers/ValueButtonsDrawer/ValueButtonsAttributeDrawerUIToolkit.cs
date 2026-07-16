@@ -262,7 +262,7 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
                         );
                         RefreshCurValue();
                     }
-                }, property, valueButtonsAttribute, info, parent, false, true);
+                }, property, valueButtonsAttribute, info, parent, false);
             }
         }
     }

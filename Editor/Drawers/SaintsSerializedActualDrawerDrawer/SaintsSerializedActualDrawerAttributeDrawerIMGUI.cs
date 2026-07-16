@@ -67,8 +67,8 @@ namespace SaintsField.Editor.Drawers.SaintsSerializedActualDrawerDrawer
             }
 
             Attribute[] attributes = ReflectCache.GetCustomAttributes(info);
-            (EnumToggleButtonsAttribute enumToggle, FlagsTreeDropdownAttribute flagsTreeDropdownAttribute,
-                FlagsDropdownAttribute flagsDropdownAttribute) = GetAttributeSpecificDrawers(attributes);
+            (EnumToggleButtonsAttribute enumToggle, FlagsDropdownAttribute flagsTreeDropdownAttribute,
+                AdvancedFlagsDropdownAttribute flagsDropdownAttribute) = GetAttributeSpecificDrawers(attributes);
 
             switch (propertyType)
             {
@@ -113,8 +113,8 @@ namespace SaintsField.Editor.Drawers.SaintsSerializedActualDrawerDrawer
             }
 
             Attribute[] attributes = ReflectCache.GetCustomAttributes(info);
-            (EnumToggleButtonsAttribute enumToggle, FlagsTreeDropdownAttribute flagsTreeDropdownAttribute,
-                FlagsDropdownAttribute flagsDropdownAttribute) = GetAttributeSpecificDrawers(attributes);
+            (EnumToggleButtonsAttribute enumToggle, FlagsDropdownAttribute flagsTreeDropdownAttribute,
+                AdvancedFlagsDropdownAttribute flagsDropdownAttribute) = GetAttributeSpecificDrawers(attributes);
 
             switch (propertyType)
             {
@@ -213,13 +213,13 @@ namespace SaintsField.Editor.Drawers.SaintsSerializedActualDrawerDrawer
             return ("", (SaintsPropertyType)propertyTypeProperty.intValue);
         }
 
-        private static (EnumToggleButtonsAttribute enumToggle, FlagsTreeDropdownAttribute flagsTreeDropdownAttribute,
-            FlagsDropdownAttribute flagsDropdownAttribute) GetAttributeSpecificDrawers(
+        private static (EnumToggleButtonsAttribute enumToggle, FlagsDropdownAttribute flagsTreeDropdownAttribute,
+            AdvancedFlagsDropdownAttribute flagsDropdownAttribute) GetAttributeSpecificDrawers(
                 IReadOnlyList<Attribute> attributes)
         {
             EnumToggleButtonsAttribute enumToggle = null;
-            FlagsTreeDropdownAttribute flagsTreeDropdownAttribute = null;
             FlagsDropdownAttribute flagsDropdownAttribute = null;
+            AdvancedFlagsDropdownAttribute advancedFlagsDropdownAttribute = null;
             foreach (Attribute attr in attributes)
             {
                 switch (attr)
@@ -227,16 +227,16 @@ namespace SaintsField.Editor.Drawers.SaintsSerializedActualDrawerDrawer
                     case EnumToggleButtonsAttribute et:
                         enumToggle = et;
                         break;
-                    case FlagsTreeDropdownAttribute ftd:
-                        flagsTreeDropdownAttribute = ftd;
+                    case FlagsDropdownAttribute ftd:
+                        flagsDropdownAttribute = ftd;
                         break;
-                    case FlagsDropdownAttribute fd:
-                        flagsDropdownAttribute = fd;
+                    case AdvancedFlagsDropdownAttribute fd:
+                        advancedFlagsDropdownAttribute = fd;
                         break;
                 }
             }
 
-            return (enumToggle, flagsTreeDropdownAttribute, flagsDropdownAttribute);
+            return (enumToggle, flagsDropdownAttribute, advancedFlagsDropdownAttribute);
         }
 
         private EnumToggleButtonsAttributeDrawer GetEnumToggleButtonsDrawer(FieldInfo info,

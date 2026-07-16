@@ -289,7 +289,7 @@ namespace SaintsField.Editor.Drawers.ValueButtonsDrawer
                     useCache.MetaInfo = metaInfo;
                     useCache.Error = metaInfo.Error;
                     useCache.RawInfos = UtilMakeButtonRawInfos(metaInfo, richTextTagProvider);
-                }, property, valueButtonsAttribute, info, parent, true, true);
+                }, property, valueButtonsAttribute, info, parent, true);
             }
 
             rawInfos = cache.RawInfos;

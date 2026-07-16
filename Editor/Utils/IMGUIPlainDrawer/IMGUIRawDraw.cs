@@ -210,10 +210,10 @@ namespace SaintsField.Editor.Utils.IMGUIPlainDrawer
 
             bool hasFlags = rawType?.GetCustomAttributes(typeof(FlagsAttribute), true).Length > 0;
             Attribute dropdownAttribute = hasFlags
-                ? new FlagsTreeDropdownAttribute()
+                ? new FlagsDropdownAttribute()
                 : new DropdownAttribute();
             Type drawerType = hasFlags
-                ? typeof(FlagsTreeDropdownAttributeDrawer)
+                ? typeof(FlagsDropdownAttributeDrawer)
                 : typeof(TreeDropdownAttributeDrawer);
             SaintsPropertyDrawer enumDropdownDrawer =
                 (SaintsPropertyDrawer)SaintsPropertyDrawer.MakePropertyDrawer(

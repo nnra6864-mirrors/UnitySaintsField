@@ -5,18 +5,22 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
 {
     public class FlagButtonsArrangeElement: AbsValueButtonsArrangeElement<FlagButton>
     {
-        public FlagButtonsArrangeElement(AbsValueButtonsCalcElement valueButtonsCalcElement) : base(valueButtonsCalcElement, MakeRow())
+        private readonly bool _isULong;
+
+        public FlagButtonsArrangeElement(AbsValueButtonsCalcElement valueButtonsCalcElement, bool isULong = false)
+            : base(valueButtonsCalcElement, MakeRow(isULong))
         {
+            _isULong = isULong;
         }
 
         protected override AbsValueButtonsRow<FlagButton> MakeValueButtonsRow()
         {
-            return MakeRow();
+            return MakeRow(_isULong);
         }
 
-        private static AbsValueButtonsRow<FlagButton> MakeRow()
+        private static AbsValueButtonsRow<FlagButton> MakeRow(bool isULong)
         {
-            return new FlagButtonsRow(false);
+            return new FlagButtonsRow(isULong);
         }
     }
 }

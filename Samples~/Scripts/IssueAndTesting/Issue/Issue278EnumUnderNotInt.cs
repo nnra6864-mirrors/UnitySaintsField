@@ -15,7 +15,7 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Issue
 
         public UnderUnsignedInt defaultPickerUInt;
         [Dropdown] public UnderUnsignedInt treePickerSingleUInt;
-        [FlagsTreeDropdown] public UnderUnsignedInt treePickerUInt;
+        [FlagsDropdown] public UnderUnsignedInt treePickerUInt;
         [EnumToggleButtons] public UnderUnsignedInt togglePickerUInt;
         [ValueButtons] public UnderUnsignedInt valuePickerUInt;
 
@@ -30,7 +30,7 @@ namespace SaintsField.Samples.Scripts.IssueAndTesting.Issue
 
         public UnderByte defaultPickerByte;
         [Dropdown] public UnderByte treePickerSingleByte;
-        [FlagsTreeDropdown] public UnderByte treePickerByte;
+        [FlagsDropdown] public UnderByte treePickerByte;
         [EnumToggleButtons] public UnderByte togglePickerByte;
         [ValueButtons] public UnderByte valuePickerByte;
     }

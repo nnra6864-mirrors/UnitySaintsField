@@ -74,7 +74,7 @@ namespace SaintsField.Samples.Scripts
 
         [EnumToggleButtons] public EnumF enumF;
 
-        [FlagsDropdown] public EnumF enumFDrop;
+        [AdvancedFlagsDropdown] public EnumF enumFDrop;
 
         [LeftToggle] public bool leftToggle;
 

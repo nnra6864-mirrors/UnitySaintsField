@@ -59,9 +59,20 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers
 
             #region Get Cur Value
 
-            IReadOnlyList<object> curValues = bitValueToName.Keys
-                .Where(kv => IsOn(curMask, kv))
-                .Append(curMask)
+            IEnumerable<long> onLong = bitValueToName.Keys
+                .Where(kv => IsOn(curMask, kv));
+
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+            if (curMask == ~0L)
+            {
+                onLong = onLong.Append(fullMask);
+            }
+            else
+            {
+                onLong = onLong.Append(curMask);
+            }
+
+            IReadOnlyList<object> curValues = onLong
                 .Cast<object>()
                 .ToArray();
 
@@ -103,12 +114,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers
                 .GetValues(enumType)
                 .Cast<object>()
                 .ToDictionary(
-                    each =>
-                    {
-                        return Convert.ToInt64(each);
-                        // Debug.Log(each);
-                        // return (long)each;
-                    },
+                    Convert.ToInt64,
                     each =>
                     {
                         string normalName = Enum.GetName(enumType, each);

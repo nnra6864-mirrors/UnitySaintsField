@@ -15,16 +15,23 @@ namespace SaintsField.Editor.UIToolkitElements
 
         protected IntDropdownElement()
         {
-            TemplateContainer dropdownElement = UIToolkitUtils.CloneDropdownButtonTree();
-            dropdownElement.style.flexGrow = 1;
+            // TemplateContainer dropdownElement = UIToolkitUtils.CloneDropdownButtonTree();
+            FancyButton fancyButton = new FancyButton
+            {
+                style =
+                {
+                    flexGrow = 1,
+                },
+            };
+            fancyButton.DisplayDropdown();
 
-            Button = dropdownElement.Q<Button>();
+            Button = fancyButton.MainButton;
 
-            Button.style.flexGrow = 1;
+            // Button.style.flexGrow = 1;
 
-            Label = Button.Q<Label>();
+            Label = fancyButton.MainLabel;
 
-            Add(dropdownElement);
+            Add(fancyButton);
         }
 
         public abstract void SetValueWithoutNotify(int newValue);

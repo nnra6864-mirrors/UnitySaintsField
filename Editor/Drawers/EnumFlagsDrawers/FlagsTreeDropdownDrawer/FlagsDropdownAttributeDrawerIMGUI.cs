@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsTreeDropdownDrawer
 {
-    public partial class FlagsTreeDropdownAttributeDrawer
+    public partial class FlagsDropdownAttributeDrawer
     {
         private sealed class InfoIMGUI
         {
@@ -97,12 +97,30 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsTreeDropdownDrawer
                     (curItem, on) =>
                     {
                         long selectedValue = (long)curItem;
-                        long selectedMask = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property);
-                        long newMask = selectedValue == 0
-                            ? 0
-                            : on
-                                ? selectedMask | selectedValue
-                                : EnumFlagsUtil.SetOffBit(selectedMask, selectedValue);
+                        long newMask;
+                        if (selectedValue == 0)
+                        {
+                            newMask = 0;
+                        }
+                        else if (on)
+                        {
+                            newMask = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property) |
+                                      selectedValue;
+                            if ((newMask & metaInfo.AllCheckedLong) == metaInfo.AllCheckedLong)
+                            {
+                                newMask = ~0L;
+                            }
+                        }
+                        else
+                        {
+                            long originValue = property.intValue;
+                            if (originValue == ~0L)
+                            {
+                                originValue = metaInfo.AllCheckedLong;
+                            }
+
+                            newMask = EnumFlagsUtil.SetOffBit(originValue, selectedValue);
+                        }
 
                         EnumFlagsUtil.SetSerializedPropertyEnumValue(metaInfo.EnumType, property, newMask);
                         property.serializedObject.ApplyModifiedProperties();

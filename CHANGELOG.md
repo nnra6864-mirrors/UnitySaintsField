@@ -1,5 +1,20 @@
 # Changelog
 
+## 5.23.1 ##
+
+1.  Rename: `FlagsDropdown` now uses "TreeDropdown" drawer
+2.  Fix: `FlagsDropdown` cast error when toggle bits
+3.  Fix: for enum flags, when selecting all bits (either by selecting every item, or selecting "Everything"), it now
+    set values to `~0` (all bit on). This is the default behavior of Unity. This affects:
+
+    *   `FlagsDropdown`
+    *   `EnumToggleButtons`
+    *   extended serialization for `long`/`ulong` type of enum flags
+    *   default drawer of enum flags if you have SaintsEditor enabled
+
+4.  Add: `FlagsDropdown`, `Dropdown` add option `bool slashAsSub` so you can control path separator for different situations
+5.  Fix: `FlagsDropdown` button did not use `InspectorName` if there is an all-bit-on defined 
+
 ## 5.23.0 ##
 
 1.  Fix: Layout system didn't read the correct field order when Unity changes the marco which lead to field changes

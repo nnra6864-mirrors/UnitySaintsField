@@ -19,6 +19,14 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
         {
             public string Error = "";
             public readonly RichTextDrawer RichTextDrawer = new RichTextDrawer();
+            public readonly IMGUIUtils.IMGUITicker Ticker = new IMGUIUtils.IMGUITicker();
+            public AdvancedDropdownMetaInfo MetaInfo = new AdvancedDropdownMetaInfo
+            {
+                Error = "",
+                CurValues = Array.Empty<object>(),
+                SelectStacks = Array.Empty<AdvancedDropdownAttributeDrawer.SelectStack>(),
+            };
+            public ValueButtonRawInfo[] RawInfos = Array.Empty<ValueButtonRawInfo>();
         }
 
         private static readonly Dictionary<string, ImGuiInfo> InfoCacheIMGUI =
@@ -58,16 +66,31 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
             };
         }
 
-        private AdvancedDropdownMetaInfo UpdateNonFlagsStatus(SerializedProperty property,
-            EnumToggleButtonsAttribute enumToggleButtonsAttribute, MemberInfo info, object parent, out ImGuiInfo cache,
-            out ValueButtonRawInfo[] rawInfos)
+        private (AdvancedDropdownMetaInfo MetaInfo, ImGuiInfo Cache, ValueButtonRawInfo[] RawInfos)
+            UpdateNonFlagsStatus(SerializedProperty property,
+                EnumToggleButtonsAttribute enumToggleButtonsAttribute, MemberInfo info, object parent)
         {
-            cache = EnsureKey(property);
-            AdvancedDropdownMetaInfo metaInfo = AdvancedDropdownAttributeDrawer.GetMetaInfo(property,
-                enumToggleButtonsAttribute, info, parent, true, true);
-            cache.Error = metaInfo.Error;
-            rawInfos = ValueButtonsAttributeDrawer.UtilMakeButtonRawInfos(metaInfo, this);
-            return metaInfo;
+            ImGuiInfo cache = EnsureKey(property);
+            cache.Ticker.Tick();
+            if (cache.Ticker.TickWaiterResult.Exception != null)
+            {
+                cache.Error = cache.Ticker.TickWaiterResult.Exception?.InnerException?.Message
+                              ?? cache.Ticker.TickWaiterResult.Exception?.Message
+                              ?? "";
+            }
+
+            if (!cache.Ticker.Resolved && !cache.Ticker.IsRunning())
+            {
+                ImGuiInfo useCache = cache;
+                AdvancedDropdownAttributeDrawer.GetMetaInfoAsync(useCache.Ticker, metaInfo =>
+                {
+                    useCache.MetaInfo = metaInfo;
+                    useCache.Error = metaInfo.Error;
+                    useCache.RawInfos = ValueButtonsAttributeDrawer.UtilMakeButtonRawInfos(metaInfo, this);
+                }, property, enumToggleButtonsAttribute, info, parent, true);
+            }
+
+            return (cache.MetaInfo, cache, cache.RawInfos);
         }
 
         private static ValueButtonRawInfo[] GetFlagRawInfos(EnumMetaInfo metaInfo,
@@ -95,8 +118,16 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
 
         private static bool IsEverything(long curValue, EnumMetaInfo metaInfo)
         {
-            object currentEnum = Enum.ToObject(metaInfo.EnumType, curValue);
-            return currentEnum.Equals(metaInfo.EverythingBit);
+            long everything = Convert.ToInt64(metaInfo.EverythingBit);
+            return curValue == ~0L || everything != 0 && (curValue & everything) == everything;
+        }
+
+        private static long ToggleFlag(long curValue, long toggle, EnumMetaInfo metaInfo)
+        {
+            long everything = Convert.ToInt64(metaInfo.EverythingBit);
+            long originValue = curValue == ~0L ? everything : curValue;
+            long newValue = EnumFlagsUtil.ToggleBit(originValue, toggle);
+            return everything != 0 && (newValue & everything) == everything ? ~0L : newValue;
         }
 
         private void DrawFlagToggleGroup(Rect position, SerializedProperty property, MemberInfo info, object parent,
@@ -112,7 +143,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
                 {
                     if (GUI.Button(checkAllRect, _checkboxCheckedTexture2D, _iconButtonStyle))
                     {
-                        SetFlagValue(property, info, parent, metaInfo, Convert.ToInt64(metaInfo.EverythingBit));
+                        SetFlagValue(property, info, parent, metaInfo, ~0L);
                     }
                 }
 
@@ -133,7 +164,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
             if (curValue == 0)
             {
                 toggleTexture = _checkboxEmptyTexture2D;
-                targetValue = Convert.ToInt64(metaInfo.EverythingBit);
+                targetValue = ~0L;
             }
             else if (IsEverything(curValue, metaInfo))
             {
@@ -143,7 +174,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
             else
             {
                 toggleTexture = _checkboxIndeterminateTexture2D;
-                targetValue = Convert.ToInt64(metaInfo.EverythingBit);
+                targetValue = ~0L;
             }
 
             if (GUI.Button(position, toggleTexture, _iconButtonStyle))
@@ -167,8 +198,8 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
             EnumFlagsMetaInfo flagsMetaInfo = EnumFlagsUtil.GetMetaInfo(property, info);
             if (!flagsMetaInfo.HasFlags)
             {
-                AdvancedDropdownMetaInfo metaInfo = UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info,
-                    parent, out ImGuiInfo cache, out ValueButtonRawInfo[] rawInfos);
+                (AdvancedDropdownMetaInfo metaInfo, ImGuiInfo cache, ValueButtonRawInfo[] rawInfos) =
+                    UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info, parent);
 
                 Rect fieldRect = EditorGUI.PrefixLabel(position, label);
                 Rect labelRect = new Rect(position)
@@ -244,11 +275,14 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
 
             ValueButtonsAttributeDrawer.UtilDrawButtonRow(buttonRect, flagLayout.Rows[0], flagLayout.MainAvailableWidth,
                 flagsCache.RichTextDrawer,
-                buttonInfo => EnumFlagsUtil.IsOn(property.intValue, Convert.ToInt64(buttonInfo.Value)),
+                buttonInfo => EnumFlagsUtil.IsOn(
+                    EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfoFlags.EnumType, property),
+                    Convert.ToInt64(buttonInfo.Value)),
                 buttonInfo =>
                 {
                     long toggle = Convert.ToInt64(buttonInfo.Value);
-                    long newValue = EnumFlagsUtil.ToggleBit(property.intValue, toggle);
+                    long curValue = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfoFlags.EnumType, property);
+                    long newValue = ToggleFlag(curValue, toggle, metaInfoFlags);
                     SetFlagValue(property, info, parent, metaInfoFlags, newValue);
                 });
         }
@@ -261,7 +295,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
             EnumFlagsMetaInfo metaInfo = EnumFlagsUtil.GetMetaInfo(property, info);
             if (!metaInfo.HasFlags)
             {
-                UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info, parent, out _, out _);
+                UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info, parent);
                 return EnsureKey(property).Error != "" || enumToggleButtonsAttribute.NoFold || property.isExpanded;
             }
 
@@ -276,8 +310,8 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
             EnumFlagsMetaInfo flagsMetaInfo = EnumFlagsUtil.GetMetaInfo(property, info);
             if (!flagsMetaInfo.HasFlags)
             {
-                AdvancedDropdownMetaInfo metaInfo = UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info,
-                    parent, out ImGuiInfo cache, out ValueButtonRawInfo[] rawInfos);
+                (AdvancedDropdownMetaInfo metaInfo, ImGuiInfo cache, ValueButtonRawInfo[] rawInfos) =
+                    UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info, parent);
                 float inputWidth = ValueButtonsAttributeDrawer.UtilGetFieldInputWidth(width, label);
                 ValueButtonsAttributeDrawer.ImGuiButtonLayout layout =
                     ValueButtonsAttributeDrawer.UtilGetButtonLayout(inputWidth, width,
@@ -314,8 +348,8 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
             EnumFlagsMetaInfo flagsMetaInfo = EnumFlagsUtil.GetMetaInfo(property, info);
             if (!flagsMetaInfo.HasFlags)
             {
-                AdvancedDropdownMetaInfo metaInfo = UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info,
-                    parent, out ImGuiInfo cache, out ValueButtonRawInfo[] rawInfos);
+                (AdvancedDropdownMetaInfo metaInfo, ImGuiInfo cache, ValueButtonRawInfo[] rawInfos) =
+                    UpdateNonFlagsStatus(property, enumToggleButtonsAttribute, info, parent);
                 float inputWidth = ValueButtonsAttributeDrawer.UtilGetFieldInputWidth(position.width, label);
                 ValueButtonsAttributeDrawer.ImGuiButtonLayout layout =
                     ValueButtonsAttributeDrawer.UtilGetButtonLayout(inputWidth, position.width,
@@ -353,11 +387,14 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.EnumToggleButtonsDrawer
 
             return ValueButtonsAttributeDrawer.UtilDrawBelow(position, showFullToggles, "", flagsLayout,
                 flagsCache.RichTextDrawer,
-                buttonInfo => EnumFlagsUtil.IsOn(property.intValue, Convert.ToInt64(buttonInfo.Value)),
+                buttonInfo => EnumFlagsUtil.IsOn(
+                    EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfoFlags.EnumType, property),
+                    Convert.ToInt64(buttonInfo.Value)),
                 buttonInfo =>
                 {
                     long toggle = Convert.ToInt64(buttonInfo.Value);
-                    long newValue = EnumFlagsUtil.ToggleBit(property.intValue, toggle);
+                    long curValue = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfoFlags.EnumType, property);
+                    long newValue = ToggleFlag(curValue, toggle, metaInfoFlags);
                     SetFlagValue(property, info, parent, metaInfoFlags, newValue);
                 });
         }

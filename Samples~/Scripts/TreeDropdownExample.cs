@@ -163,7 +163,7 @@ namespace SaintsField.Samples.Scripts
             Five = 1 << 4,
         }
 
-        [FlagsTreeDropdown]
+        [FlagsDropdown]
         public F flags;
     }
 }

@@ -4,15 +4,15 @@ using System.Reflection;
 using SaintsField.DropdownBase;
 using SaintsField.Editor.Drawers.AdvancedDropdownDrawer;
 using SaintsField.Editor.Drawers.ExpandableDrawer;
-using SaintsField.Editor.Drawers.TreeDropdownDrawer;
 using SaintsField.Editor.Utils;
 using SaintsField.Interfaces;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
-namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
+namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.AdvancedFlagsDropdownDrawer
 {
-    public partial class FlagsDropdownAttributeDrawer
+    public partial class AdvancedFlagsDropdownAttributeDrawer
     {
         private sealed class InfoIMGUI
         {
@@ -45,7 +45,7 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
 
             EnumFlagsMetaInfo metaInfo = EnumFlagsUtil.GetMetaInfo(property, info);
             AdvancedDropdownMetaInfo dropdownMetaInfo = EnumFlagsUtil.GetDropdownMetaInfo(
-                property.intValue,
+                EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property),
                 metaInfo.AllCheckedLong,
                 metaInfo.BitValueToName);
             cache.Error = dropdownMetaInfo.Error;
@@ -74,8 +74,9 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
             }
 
             EnumFlagsMetaInfo metaInfo = EnumFlagsUtil.GetMetaInfo(property, info);
+            long currentMask = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property);
             AdvancedDropdownMetaInfo dropdownMetaInfo = EnumFlagsUtil.GetDropdownMetaInfo(
-                property.intValue,
+                currentMask,
                 metaInfo.AllCheckedLong,
                 metaInfo.BitValueToName);
             cache.Error = dropdownMetaInfo.Error;
@@ -90,23 +91,40 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
             DrawOverrideRichText(labelRect, label, overrideRichTextChunks);
 
             GUI.SetNextControlName(FieldControlName);
-            string display = GetSelectedNames(metaInfo.BitValueToName, property.intValue);
+            string display = GetSelectedNames(metaInfo.BitValueToName, currentMask);
             // Debug.Assert(false, "Here");
             // ReSharper disable once InvertIf
             if (EditorGUI.DropdownButton(leftRect, new GUIContent(display), FocusType.Keyboard))
             {
-                PopupWindow.Show(leftRect, new SaintsTreeDropdownIMGUI(
-                    dropdownMetaInfo,
-                    leftRect.width,
-                    320f,
-                    true,
-                    (curItem, _) =>
+                Vector2 size = AdvancedDropdownUtil.GetSizeIMGUI(dropdownMetaInfo.DropdownListValue,
+                    leftRect.width);
+                SaintsAdvancedDropdownIMGUI dropdown = new SaintsAdvancedDropdownIMGUI(
+                    dropdownMetaInfo.DropdownListValue,
+                    size,
+                    leftRect,
+                    new AdvancedDropdownState(),
+                    curItem =>
                     {
                         long selectedValue = (long)curItem;
-                        long currentMask = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property);
-                        long newMask = selectedValue == 0
-                            ? 0
-                            : EnumFlagsUtil.ToggleBit(currentMask, selectedValue);
+                        long originValue = EnumFlagsUtil.GetSerializedPropertyEnumValue(metaInfo.EnumType, property);
+                        if (originValue == ~0L)
+                        {
+                            originValue = metaInfo.AllCheckedLong;
+                        }
+
+                        long newMask;
+                        if (selectedValue == 0)
+                        {
+                            newMask = 0;
+                        }
+                        else
+                        {
+                            newMask = EnumFlagsUtil.ToggleBit(originValue, selectedValue);
+                            if ((newMask & metaInfo.AllCheckedLong) == metaInfo.AllCheckedLong)
+                            {
+                                newMask = ~0L;
+                            }
+                        }
 
                         EnumFlagsUtil.SetSerializedPropertyEnumValue(metaInfo.EnumType, property, newMask);
                         property.serializedObject.ApplyModifiedProperties();
@@ -117,8 +135,10 @@ namespace SaintsField.Editor.Drawers.EnumFlagsDrawers.FlagsDropdownDrawer
                         {
                             property.serializedObject.ApplyModifiedProperties();
                         }
-                        return EnumFlagsUtil.GetDropdownMetaInfo(newMask, metaInfo.AllCheckedLong, metaInfo.BitValueToName).CurValues;
-                    }));
+                    },
+                    icon => Util.LoadResource<Texture2D>(icon));
+                dropdown.Show(leftRect);
+                dropdown.BindWindowPosition();
             }
 
             #endregion

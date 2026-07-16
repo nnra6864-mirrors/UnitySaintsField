@@ -89,7 +89,7 @@ namespace SaintsField.Samples.Scripts.SaintsEditor.Testing
         public int valueButtons;
 
         [LabelText(RichLabel)]
-        [FlagsDropdown]
+        [AdvancedFlagsDropdown]
         public FlagsEnum flagsDropdown;
 
         [LabelText(RichLabel)]

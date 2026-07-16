@@ -1586,8 +1586,8 @@ namespace SaintsField.Editor.Utils
                         }
 
 
-                        FlagsTreeDropdownAttribute flagsDropdownAttribute = new FlagsTreeDropdownAttribute();
-                        FlagsTreeDropdownAttributeDrawer flagsDropdownDrawer = (FlagsTreeDropdownAttributeDrawer) SaintsPropertyDrawer.MakePropertyDrawer(typeof(FlagsTreeDropdownAttributeDrawer), fieldInfo, flagsDropdownAttribute, label);
+                        FlagsDropdownAttribute flagsDropdownAttribute = new FlagsDropdownAttribute();
+                        FlagsDropdownAttributeDrawer flagsDropdownDrawer = (FlagsDropdownAttributeDrawer) SaintsPropertyDrawer.MakePropertyDrawer(typeof(FlagsDropdownAttributeDrawer), fieldInfo, flagsDropdownAttribute, label);
                         flagsDropdownDrawer.OverrideAttributes = new[] { flagsDropdownAttribute };
                         flagsDropdownDrawer.InHorizontalLayout = inHorizontalLayout;
                         return flagsDropdownDrawer.CreatePropertyGUI(property);

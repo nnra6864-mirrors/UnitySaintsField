@@ -103,7 +103,7 @@ namespace SaintsField.Editor.Drawers.TreeDropdownDrawer
                     break;
 #endif
                 case SaintsPropertyType.Undefined:
-                case SaintsPropertyType.ClassOrStruct:
+                // case SaintsPropertyType.ClassOrStruct:
                 case SaintsPropertyType.Interface:
                 case SaintsPropertyType.DateTime:
                 case SaintsPropertyType.TimeSpan:
