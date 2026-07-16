@@ -4498,7 +4498,10 @@ This is the recommended way to make a searchable dropdown.
     When returning a task/ienumerator type, it'll wait the task then show the dropdown. Useful if your option targets needs time to load.
 
 *   `EUnique unique=EUnique.None`: When using on a list/array, a duplicated option can be removed if `Enique.Remove`, or disabled if `EUnique.Disable`. No use for non-list/array.
-*   Allow Multiple: No
+
+*   `bool slashAsSub = true`: should it tread `/` as path seperator in dropdown? This is helpful if you have SaintsField enabled, and has `enum` defined with `InspectorName`, but the `/` does not mean for grouping
+
+Allow Multiple: No
 
 It can make a quick searchable dropdown:
 
@@ -4760,7 +4763,14 @@ public Direction[] treeDireOpt;
 
 #### `FlagsDropdown` ####
 
+>   ![NOTE]
+>   This is default applied to `enum`-flags if you have SaintsEditor enabled
+
 A searchable dropdown for enum flags (bit mask). Useful when you have a big enum flags type.
+
+Parameters:
+
+*   `bool slashAsSub = true`: should it tread `/` as path seperator in dropdown? This is helpful if you have SaintsField enabled, and has `enum`(flags) defined with `InspectorName`, but the `/` does not mean for grouping
 
 ```csharp
 using SaintsField;
