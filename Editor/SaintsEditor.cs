@@ -1046,21 +1046,9 @@ namespace SaintsField.Editor
         public static bool SaintsFieldInfoShouldDraw(SaintsFieldWithInfo saintsFieldWithInfo)
         {
             bool isMethod = saintsFieldWithInfo.MethodInfo != null;
-            bool hasNoPlaya = saintsFieldWithInfo.PlayaAttributes == null || saintsFieldWithInfo.PlayaAttributes.Count == 0;
-
-            bool isPureMethod = isMethod && hasNoPlaya;
-            if (isPureMethod)
-            {
-                return false;
-            }
-
-            // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (saintsFieldWithInfo.RenderType == SaintsRenderType.ClassStruct)
-            {
-                return false;
-            }
-
-            return true;
+            bool hasNoPlaya = saintsFieldWithInfo.PlayaAttributes.Count == 0;
+            bool shouldDraw = !(isMethod && hasNoPlaya);
+            return shouldDraw;
         }
 
         public readonly struct SaintsFieldWithRenderer

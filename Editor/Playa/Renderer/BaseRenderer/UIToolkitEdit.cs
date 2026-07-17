@@ -40,6 +40,7 @@ using SaintsField.Editor.UIToolkitElements.Vector3DoubleType;
 using SaintsField.Editor.UIToolkitElements.Vector4DoubleType;
 using SaintsField.Editor.Utils;
 using SaintsField.Utils;
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -4642,7 +4643,7 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                 richTextTagProvider,
                 foldoutViewKey);
             newCreated.AddToClassList(foldoutViewKey);
-            if (ExpandedValue.Contains(foldoutViewKey))
+            if (SessionState.GetBool(foldoutViewKey, false))
             {
                 // Debug.Log($"created expand {foldoutViewKey}");
                 // newCreated.value = true;
@@ -4650,19 +4651,7 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
                 newCreated.schedule.Execute(() => newCreated.value = true);
             }
 
-            newCreated.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    // Debug.Log($"add {foldoutViewKey}");
-                    ExpandedValue.Add(foldoutViewKey);
-                }
-                else
-                {
-                    // Debug.Log($"remove {foldoutViewKey}");
-                    ExpandedValue.Remove(foldoutViewKey);
-                }
-            });
+            newCreated.RegisterValueChangedCallback(evt => SessionState.SetBool(foldoutViewKey, evt.newValue));
 
             return (newCreated,
                 true);
@@ -4750,7 +4739,7 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
 
         private static StyleSheet _nullUss;
 
-        public static readonly HashSet<string> ExpandedValue = new HashSet<string>();
+        // public static readonly HashSet<string> ExpandedValue = new HashSet<string>();
     }
 }
 #endif

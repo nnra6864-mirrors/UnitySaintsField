@@ -143,7 +143,6 @@ namespace SaintsField.Editor
             // Debug.Log($"renderers.Count={renderers.Count}");
             foreach (ISaintsRenderer saintsRenderer in contentRenderers)
             {
-                // Debug.Log($"renderer={saintsRenderer}");
                 VisualElement ve = saintsRenderer.CreateVisualElement(root);
                 if(ve != null)
                 {

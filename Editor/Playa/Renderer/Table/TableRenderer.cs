@@ -12,6 +12,12 @@ namespace SaintsField.Editor.Playa.Renderer.Table
         {
         }
 
+        internal static bool SaintsFieldInfoShouldDraw(SaintsFieldWithInfo saintsFieldWithInfo)
+        {
+            return saintsFieldWithInfo.RenderType != SaintsRenderType.ClassStruct &&
+                   SaintsEditor.SaintsFieldInfoShouldDraw(saintsFieldWithInfo);
+        }
+
         private static int ChangeArraySize(int newValue, SerializedProperty arrayProp)
         {
             newValue = Mathf.Max(0, newValue);

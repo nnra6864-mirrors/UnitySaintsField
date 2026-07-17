@@ -601,7 +601,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 IEnumerable<SaintsFieldWithInfo> saintsFieldWithInfos = SaintsEditor
                     .HelperGetSaintsFieldWithInfo(FieldWithInfo.SerializedProperty.serializedObject,
                         serializedPropertyDict, null, null, -1, new[] { schemaObject })
-                    .Where(SaintsEditor.SaintsFieldInfoShouldDraw);
+                    .Where(SaintsFieldInfoShouldDraw);
 
                 return BuildColumnsFromFieldInfosIMGUI(saintsFieldWithInfos);
             }
@@ -639,7 +639,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             IEnumerable<SaintsFieldWithInfo> saintsFieldWithInfos = SaintsEditor
                 .HelperGetSaintsFieldWithInfo(FieldWithInfo.SerializedProperty.serializedObject,
                     firstSerializedPropertyDict, null, null, -1, new[] { firstPropValue.value })
-                .Where(SaintsEditor.SaintsFieldInfoShouldDraw);
+                .Where(SaintsFieldInfoShouldDraw);
 
             return ("", BuildColumnsFromFieldInfosIMGUI(saintsFieldWithInfos));
         }

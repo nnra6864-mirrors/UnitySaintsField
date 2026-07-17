@@ -239,7 +239,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             .ToDictionary(each => each.name, each => each.Copy());
                         IEnumerable<SaintsFieldInfoName> saintsFieldWithInfos = SaintsEditor
                             .HelperGetSaintsFieldWithInfo(_fieldWithInfo.SerializedProperty.serializedObject, serializedPropertyDict, null, null, -1, new []{obj0})
-                            .Where(SaintsEditor.SaintsFieldInfoShouldDraw)
+                            .Where(TableRenderer.SaintsFieldInfoShouldDraw)
                             .Select(each => new SaintsFieldInfoName(each, AbsRenderer.GetFriendlyName(each)));
 
                         foreach (SaintsFieldInfoName saintsFieldInfoName in saintsFieldWithInfos)
@@ -443,7 +443,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 
                     IEnumerable<SaintsFieldWithInfo> firstSaintsFieldWithInfos = SaintsEditor
                         .HelperGetSaintsFieldWithInfo(_fieldWithInfo.SerializedProperty.serializedObject, firstSerializedPropertyDict, null, null, -1, new[]{firstPropValue.value})
-                        .Where(SaintsEditor.SaintsFieldInfoShouldDraw);
+                        .Where(TableRenderer.SaintsFieldInfoShouldDraw);
 
                     Dictionary<string, List<string>> columnToMemberIds = new Dictionary<string, List<string>>();
                     Dictionary<string, bool> columnToDefaultHide = new Dictionary<string, bool>();

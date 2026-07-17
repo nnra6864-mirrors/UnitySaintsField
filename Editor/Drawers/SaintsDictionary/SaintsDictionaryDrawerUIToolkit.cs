@@ -51,6 +51,21 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
         private static string NameNumberOfItemsPerPage(SerializedProperty property) =>
             $"{property.propertyPath}__SaintsDictionary_NameNumberOfItemsPerPage";
 
+#if UNITY_6000_0_OR_NEWER
+        private static string SessionKeyColumnWidth(SerializedProperty property, bool isKey) =>
+            $"{property.propertyPath}[{(isKey ? "key" : "value")}:width]";
+
+        private static ResponsiveLength GetSessionColumnWidth(SerializedProperty property, bool isKey,
+            ResponsiveLength fallback)
+        {
+            string sessionKey = SessionKeyColumnWidth(property, isKey);
+            float percent = SessionState.GetFloat(sessionKey, float.NaN);
+            return !float.IsNaN(percent) && percent > 0f && percent < 100f
+                ? new ResponsiveLength(ResponsiveType.Percent, percent)
+                : fallback;
+        }
+#endif
+
         protected override bool UseCreateFieldUIToolKit => true;
 
         protected override VisualElement CreateFieldUIToolKit(SerializedProperty property, ISaintsAttribute saintsAttribute,
@@ -673,7 +688,11 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
             };
 
             ResponsiveLength keyWidth = saintsDictionaryAttribute?.KeyWidth ?? default;
-            multiColumnListView.columns.Add(new Column
+#if UNITY_6000_0_OR_NEWER
+            keyWidth = GetSessionColumnWidth(property, true, keyWidth);
+            VisualElement keyHeader = null;
+#endif
+            Column keyColumn = new Column
             {
                 name = "Keys",
                 // title = "Keys",
@@ -682,6 +701,9 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
                 makeHeader = () =>
                 {
                     VisualElement header = new VisualElement();
+#if UNITY_6000_0_OR_NEWER
+                    keyHeader = header;
+#endif
                     string keyLabel = GetKeyLabel(saintsDictionaryAttribute);
                     if(!string.IsNullOrEmpty(keyLabel))
                     {
@@ -804,10 +826,15 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
                         keyContainer.style.backgroundColor = Color.clear;
                     }
                 },
-            });
+            };
+            multiColumnListView.columns.Add(keyColumn);
 
             ResponsiveLength valueWidth = saintsDictionaryAttribute?.ValueWidth ?? default;
-            multiColumnListView.columns.Add(new Column
+#if UNITY_6000_0_OR_NEWER
+            valueWidth = GetSessionColumnWidth(property, false, valueWidth);
+            VisualElement valueHeader = null;
+#endif
+            Column valueColumn = new Column
             {
                 name = "Values",
                 // title = "Values",
@@ -816,6 +843,9 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
                 makeHeader = () =>
                 {
                     VisualElement header = new VisualElement();
+#if UNITY_6000_0_OR_NEWER
+                    valueHeader = header;
+#endif
 
                     string valueLabel = GetValueLabel(saintsDictionaryAttribute);
 
@@ -929,7 +959,42 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
                     //     valueContainer.Add(propertyField);
                     // }
                 },
-            });
+            };
+            multiColumnListView.columns.Add(valueColumn);
+
+#if UNITY_6000_0_OR_NEWER
+            string keyWidthSessionKey = SessionKeyColumnWidth(property, true);
+            string valueWidthSessionKey = SessionKeyColumnWidth(property, false);
+            void SaveColumnWidths(object sender, BindablePropertyChangedEventArgs args)
+            {
+                if (args.propertyName != nameof(Column.width))
+                {
+                    return;
+                }
+
+                multiColumnListView.schedule.Execute(() =>
+                {
+                    if (keyHeader == null || valueHeader == null)
+                    {
+                        return;
+                    }
+
+                    float keyPixels = keyHeader.resolvedStyle.width;
+                    float valuePixels = valueHeader.resolvedStyle.width;
+                    float totalPixels = keyPixels + valuePixels;
+                    if (float.IsNaN(totalPixels) || totalPixels <= 0f)
+                    {
+                        return;
+                    }
+
+                    SessionState.SetFloat(keyWidthSessionKey, keyPixels / totalPixels * 100f);
+                    SessionState.SetFloat(valueWidthSessionKey, valuePixels / totalPixels * 100f);
+                });
+            }
+
+            keyColumn.propertyChanged += SaveColumnWidths;
+            valueColumn.propertyChanged += SaveColumnWidths;
+#endif
 
             pagePreButton.clicked += () =>
             {
