@@ -8,13 +8,13 @@ namespace SaintsField.Samples.Scripts.SaintsEditor.Testing
     {
         public string dynamicContent;
 
-        // [Serializable]
-        // [InfoBox("This is a struct message")]
-        // public struct MyStruct
-        // {
-        //     public string structString;
-        // }
-        //
-        // public MyStruct myStruct;
+        [Serializable]
+        [InfoBox("This is a struct message")]
+        public struct MyStruct
+        {
+            public string structString;
+        }
+
+        public MyStruct myStruct;
     }
 }

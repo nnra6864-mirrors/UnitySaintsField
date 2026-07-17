@@ -88,6 +88,8 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
             private List<int> _itemIndexToPropertyIndex = new List<int>();
             private bool _treeLoaded;
             private float _lastContentWidth = -1f;
+            private float _lastKeyWidth = float.NaN;
+            private float _lastValueWidth = float.NaN;
             public class SwapEvent: UnityEvent<IReadOnlyList<(int fromIndex, int toIndex)>> {}
 
             public readonly SwapEvent IndexSwapEvent = new SwapEvent();
@@ -127,22 +129,41 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
             public void SetColumnWidths(float totalWidth)
             {
                 float contentWidth = Mathf.Max(100f, totalWidth - 25f);
+                MultiColumnHeaderState.Column[] columns = multiColumnHeader.state.columns;
+                if (columns.Length < 2)
+                {
+                    return;
+                }
+
+                if (!float.IsNaN(_lastKeyWidth) &&
+                    (Mathf.Abs(columns[0].width - _lastKeyWidth) >= 0.5f ||
+                     Mathf.Abs(columns[1].width - _lastValueWidth) >= 0.5f))
+                {
+                    SaveSessionColumnWidths(_property, columns[0].width, columns[1].width);
+                }
+
                 if (Mathf.Abs(_lastContentWidth - contentWidth) < 0.5f)
                 {
                     return;
                 }
 
                 _lastContentWidth = contentWidth;
-                (float keyWidth, float valueWidth) = GetColumnWidths(contentWidth, _keyWidth, _valueWidth);
+                ResponsiveLength keyResponsiveWidth = GetSessionColumnWidth(_property, true, _keyWidth);
+                ResponsiveLength valueResponsiveWidth = GetSessionColumnWidth(_property, false, _valueWidth);
+                (float keyWidth, float valueWidth) = GetColumnWidths(contentWidth, keyResponsiveWidth, valueResponsiveWidth);
 
+                columns[0].width = keyWidth;
+                columns[0].minWidth = 40f;
+                columns[1].width = valueWidth;
+                columns[1].minWidth = 40f;
+                _lastKeyWidth = keyWidth;
+                _lastValueWidth = valueWidth;
+            }
+
+            public float GetKeyColumnWidth(float fallback)
+            {
                 MultiColumnHeaderState.Column[] columns = multiColumnHeader.state.columns;
-                if (columns.Length >= 2)
-                {
-                    columns[0].width = keyWidth;
-                    columns[0].minWidth = 40f;
-                    columns[1].width = valueWidth;
-                    columns[1].minWidth = 40f;
-                }
+                return columns.Length >= 2 ? columns[0].width : fallback;
             }
 
             public void SetItemIndexToPropertyIndex(IReadOnlyList<int> itemIndexToPropertyIndex)
@@ -520,7 +541,9 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
                 (Rect searchRect, Rect restRect) = RectUtils.SplitHeightRect(workRect, SingleLineHeight);
                 workRect = restRect;
 
-                (Rect keySearchRawRect, Rect valueSearchRawRect) = RectUtils.SplitWidthRect(searchRect, searchRect.width * 0.5f);
+                float keySearchWidth = Mathf.Clamp(cache.Table.GetKeyColumnWidth(searchRect.width * 0.5f),
+                    40f, Mathf.Max(40f, searchRect.width - 40f));
+                (Rect keySearchRawRect, Rect valueSearchRawRect) = RectUtils.SplitWidthRect(searchRect, keySearchWidth);
                 DrawSearchField(ShrinkRect(keySearchRawRect), true, cache, context);
                 DrawSearchField(ShrinkRect(valueSearchRawRect), false, cache, context);
             }

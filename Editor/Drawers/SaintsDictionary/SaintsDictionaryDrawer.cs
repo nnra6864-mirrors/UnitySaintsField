@@ -5,6 +5,7 @@ using System.Linq;
 using SaintsField.Editor.Core;
 using SaintsField.Editor.Utils;
 using SaintsField.Playa;
+using SaintsField.Utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,6 +19,30 @@ namespace SaintsField.Editor.Drawers.SaintsDictionary
     public partial class SaintsDictionaryDrawer: SaintsPropertyDrawer
     {
         private static readonly Color WarningColor = new Color(0.8490566f, 0.3003738f, 0.3003738f);
+
+        private static string SessionKeyColumnWidth(SerializedProperty property, bool isKey) =>
+            $"{property.propertyPath}[{(isKey ? "key" : "value")}:width]";
+
+        private static ResponsiveLength GetSessionColumnWidth(SerializedProperty property, bool isKey,
+            ResponsiveLength fallback)
+        {
+            float percent = SessionState.GetFloat(SessionKeyColumnWidth(property, isKey), float.NaN);
+            return !float.IsNaN(percent) && percent > 0f && percent < 100f
+                ? new ResponsiveLength(ResponsiveType.Percent, percent)
+                : fallback;
+        }
+
+        private static void SaveSessionColumnWidths(SerializedProperty property, float keyPixels, float valuePixels)
+        {
+            float totalPixels = keyPixels + valuePixels;
+            if (float.IsNaN(totalPixels) || totalPixels <= 0f)
+            {
+                return;
+            }
+
+            SessionState.SetFloat(SessionKeyColumnWidth(property, true), keyPixels / totalPixels * 100f);
+            SessionState.SetFloat(SessionKeyColumnWidth(property, false), valuePixels / totalPixels * 100f);
+        }
 
         private static bool IncreaseArraySize(int newValue, SerializedProperty keyProp, SerializedProperty valueProp)
         {
