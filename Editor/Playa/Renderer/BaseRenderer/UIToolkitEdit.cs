@@ -55,6 +55,7 @@ namespace SaintsField.Editor.Playa.Renderer.BaseRenderer
             IReadOnlyList<Attribute> allAttributes, IReadOnlyList<object> targets, IRichTextTagProvider richTextTagProvider,
             string foldoutViewKey)
         {
+            // Debug.Log($"render start {valueType}/{value}");
 #if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_RENDERER_VALUE_EDIT
             Debug.Log($"render start {label}/{valueType}/{value}");
 #endif

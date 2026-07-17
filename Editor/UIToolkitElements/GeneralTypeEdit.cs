@@ -319,6 +319,8 @@ namespace SaintsField.Editor.UIToolkitElements
                         .GetTypesDerivedFrom(_nullableBaseType)
                         .ToArray();
                     // Debug.Log($"_optionTypes={string.Join<Type>(", ", _optionTypes)}");
+
+                    _nullableContainerType = typeof(Nullable<>).MakeGenericType(_nullableBaseType);
                 }
 
                 Dropdown<Type> dropdownList = new Dropdown<Type>();
@@ -427,6 +429,7 @@ namespace SaintsField.Editor.UIToolkitElements
 
         private Dropdown<Type> _cachedDropdownList;
         private Type _nullableBaseType;
+        private Type _nullableContainerType;
 
         private void OnDropdown()
         {
@@ -494,9 +497,9 @@ namespace SaintsField.Editor.UIToolkitElements
             }
             else
             {
-                Type nullableInsType = typeof(Nullable<>).MakeGenericType(_nullableBaseType);
+                // Type nullableInsType = typeof(Nullable<>).MakeGenericType(_nullableBaseType);
                 object underlyingValue = CreateInstance(_nullableBaseType);
-                obj = Activator.CreateInstance(nullableInsType, underlyingValue);
+                obj = Activator.CreateInstance(_nullableContainerType, underlyingValue);
             }
 
             // Debug.Log($"Create {newType}: {obj}");
@@ -551,16 +554,16 @@ namespace SaintsField.Editor.UIToolkitElements
                 return;
             }
 
-            List<FieldInfo> fieldTargets;
-            PropertyInfo[] propertyTargets;
+            List<VisualElement> children = fieldsBody.Children().ToList();
+
             if (_nullableBaseType == null)
             {
                 // ReSharper disable once PossibleNullReferenceException
-                fieldTargets = value.GetType().GetFields(bindAttrNormal).ToList();
+                List<FieldInfo> fieldTargets = value.GetType().GetFields(bindAttrNormal).ToList();
                 Dictionary<string, FieldInfo> backingToFieldInfo = fieldTargets
                     .Where(each => each.Name.StartsWith("<") && each.Name.EndsWith(">k__BackingField"))
                     .ToDictionary(each => each.Name);
-                propertyTargets = value.GetType().GetProperties(bindAttrNormal);
+                PropertyInfo[] propertyTargets = value.GetType().GetProperties(bindAttrNormal);
                 foreach (PropertyInfo propertyInfo in propertyTargets)
                 {
                     string propName = propertyInfo.Name;
@@ -570,230 +573,275 @@ namespace SaintsField.Editor.UIToolkitElements
                         fieldTargets.Remove(dupInfo);
                     }
                 }
+
+                foreach (FieldInfo fieldInfo in fieldTargets)
+                {
+                    // string name = fieldInfo.Name;
+                    string subId = $"{foldoutViewKey}.{fieldInfo.Name}";
+
+                    if (AbsRenderer.SkipTypeDrawing(fieldInfo.FieldType))
+                    {
+                        continue;
+                    }
+
+    #if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_RENDERER_VALUE_EDIT
+                    Debug.Log($"render general field {name}/{fieldInfo.FieldType}/{fieldInfo.FieldType.Namespace}/{fieldInfo.FieldType.Name}");
+    #endif
+                    VisualElement oldItemElement = fieldsBody.Q<VisualElement>(className: subId);
+                    children.Remove(oldItemElement);
+                    string thisLabel = ObjectNames.NicifyVariableName(fieldInfo.Name);
+                    VisualElement result = null;
+
+                    object fieldValue = null;
+                    bool getValueSucceed = true;
+                    try
+                    {
+                        fieldValue = fieldInfo.GetValue(value);
+                    }
+                    catch (Exception e)
+                    {
+    #if SAINTSFIELD_DEBUG
+                        Debug.LogWarning($"field {subId}/{fieldInfo.FieldType} inside {value} gives error: {e}");
+    #endif
+                        getValueSucceed = false;
+                        string msg = e.InnerException?.Message ?? e.Message;
+                        if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField errorField)
+                        {
+                            errorField.SetErrorMessage(msg);
+                        }
+                        else
+                        {
+                            oldItemElement?.RemoveFromHierarchy();
+                            oldItemElement = null;
+                            ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField r = new ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField(
+                                thisLabel,
+                                new HelpBox(msg, HelpBoxMessageType.Error)
+                            );
+                            result = r;
+                            if (inHorizontalLayout)
+                            {
+                                result.style.flexDirection = FlexDirection.Column;
+                            }
+                            else
+                            {
+                                result.AddToClassList(ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField.alignedFieldUssClassName);
+                            }
+
+                            if (labelGrayColor)
+                            {
+                                r.labelElement.style.color = AbsRenderer.ReColor;
+                            }
+                        }
+                    }
+
+                    // Debug.Log($"try render field {name}/{fieldInfo.FieldType} under {value}/{value?.GetType()}");
+
+                    if(getValueSucceed)
+                    {
+                        // Debug.Log($"{fieldValue}/{oldItemElement}");
+                        if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField)
+                        {
+                            oldItemElement.RemoveFromHierarchy();
+                            oldItemElement = null;
+                        }
+                        result = UIToolkitEdit.UIToolkitValueEdit(
+                            oldItemElement,
+                            thisLabel,
+                            fieldInfo.FieldType,
+                            fieldValue,
+                            // _ => beforeSet?.Invoke(value),
+                            _ =>
+                            {
+                                // Debug.Log($"Before Set field {fieldInfo.Name}, invoke {value}");
+                                beforeSet?.Invoke(value);
+                            },
+                            newValue =>
+                            {
+                                if (_nullableBaseType == null)
+                                {
+                                    fieldInfo.SetValue(value, newValue);
+                                    setterOrNull?.Invoke(value);
+                                }
+                                else
+                                {
+                                    // Passing boxed T is the correct object representation of
+                                    // a non-null Nullable<T>; the owning setter assigns it.
+                                    setterOrNull?.Invoke(newValue);
+                                }
+                            },
+                            labelGrayColor,
+                            inHorizontalLayout,
+                            ReflectCache.GetCustomAttributes(fieldInfo),
+                            targets, richTextTagProvider,
+                            subId).result;
+                    }
+                    // Debug.Log($"{name}: {result}: {fieldInfo.FieldType}");
+                    // ReSharper disable once InvertIf
+                    if(result != null)
+                    {
+                        oldItemElement?.RemoveFromHierarchy();
+                        result.AddToClassList(subId);
+                        fieldsBody.Add(result);
+                    }
+                }
+
+                foreach (PropertyInfo propertyInfo in propertyTargets)
+                {
+                    if (!propertyInfo.CanRead)
+                    {
+                        continue;
+                    }
+
+                    if (propertyInfo.GetIndexParameters().Length != 0)
+                    {
+                        continue;
+                    }
+
+                    if (AbsRenderer.SkipTypeDrawing(propertyInfo.PropertyType))
+                    {
+                        continue;
+                    }
+
+                    // string name = propertyInfo.Name;
+                    string subId = $"{foldoutViewKey}.{propertyInfo.Name}";
+                    VisualElement oldItemElement = fieldsBody.Q<VisualElement>(className: subId);
+                    // Debug.Log($"old element {subId} = {oldItemElement}");
+                    children.Remove(oldItemElement);
+                    string thisLabel = ObjectNames.NicifyVariableName(propertyInfo.Name);
+    #if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_RENDERER_VALUE_EDIT
+                    Debug.Log(
+                        $"render general property {propertyInfo.Name}/{propertyInfo.PropertyType} inside {value}");
+    #endif
+                    VisualElement result = null;
+                    object propertyValue = null;
+                    bool getValueSucceed = true;
+                    try
+                    {
+                        propertyValue = propertyInfo.GetValue(value);
+                    }
+                    catch (Exception e)
+                    {
+                        getValueSucceed = false;
+    #if SAINTSFIELD_DEBUG
+                        Debug.LogWarning($"property {subId}/{propertyInfo.PropertyType} inside {value} gives error: {e}");
+                        Debug.LogWarning(e.InnerException ?? e);
+    #endif
+                        string msg = e.InnerException?.Message ?? e.Message;
+                        if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField errorField)
+                        {
+                            errorField.SetErrorMessage(msg);
+                        }
+                        else
+                        {
+                            oldItemElement?.RemoveFromHierarchy();
+                            oldItemElement = null;
+                            ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField r = new ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField(
+                                thisLabel,
+                                new HelpBox(msg, HelpBoxMessageType.Error)
+                            );
+                            result = r;
+                            if (inHorizontalLayout)
+                            {
+                                result.style.flexDirection = FlexDirection.Column;
+                            }
+                            else
+                            {
+                                result.AddToClassList(ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField.alignedFieldUssClassName);
+                            }
+
+                            if (labelGrayColor)
+                            {
+                                r.labelElement.style.color = AbsRenderer.ReColor;
+                            }
+                        }
+                    }
+
+                    if (getValueSucceed)
+                    {
+                        if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField)
+                        {
+                            oldItemElement.RemoveFromHierarchy();
+                            oldItemElement = null;
+                        }
+                        result = UIToolkitEdit.UIToolkitValueEdit(
+                            oldItemElement,
+                            thisLabel,
+                            propertyInfo.PropertyType,
+                            propertyValue,
+                            _ => beforeSet?.Invoke(value),
+                            propertyInfo.CanWrite
+                                ? newValue =>
+                                {
+                                    propertyInfo.SetValue(value, newValue);
+                                    setterOrNull?.Invoke(value);
+                                }
+                                : null,
+                            labelGrayColor,
+                            inHorizontalLayout,
+                            ReflectCache.GetCustomAttributes(propertyInfo),
+                            targets,
+                            richTextTagProvider,
+                            subId).result;
+                    }
+
+                    // ReSharper disable once InvertIf
+                    if(result != null)
+                    {
+                        result.AddToClassList(subId);
+                        fieldsBody.Add(result);
+                    }
+                }
             }
             else
             {
-                Type nullableInsType = typeof(Nullable<>).MakeGenericType(_nullableBaseType);
-
-                FieldInfo valueProp = nullableInsType.GetField("value",
-                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
-                Debug.Assert(valueProp != null, nullableInsType);
-                fieldTargets = new List<FieldInfo>
-                {
-                    valueProp,
-                };
-                propertyTargets = Array.Empty<PropertyInfo>();
-            }
-
-            List<VisualElement> children = fieldsBody.Children().ToList();
-
-            // Debug.Log($"fieldTargets={string.Join(",", fieldTargets.Select(each => each.Name))}");
-            // Debug.Log($"propertyTargets={string.Join(",", propertyTargets.Select(each => each.Name))}");
-            //
-            // Debug.Log("Init generic type");
-            foreach (FieldInfo fieldInfo in fieldTargets)
-            {
-                // string name = fieldInfo.Name;
-                string subId = $"{foldoutViewKey}.{fieldInfo.Name}";
-
-                if (AbsRenderer.SkipTypeDrawing(fieldInfo.FieldType))
-                {
-                    continue;
-                }
-
-#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_RENDERER_VALUE_EDIT
-                Debug.Log($"render general field {name}/{fieldInfo.FieldType}/{fieldInfo.FieldType.Namespace}/{fieldInfo.FieldType.Name}");
-#endif
+                object fieldValue = value;
+                string subId = $"{foldoutViewKey}.value";
                 VisualElement oldItemElement = fieldsBody.Q<VisualElement>(className: subId);
                 children.Remove(oldItemElement);
-                string thisLabel = ObjectNames.NicifyVariableName(fieldInfo.Name);
-                VisualElement result = null;
 
-                object fieldValue = null;
-                bool getValueSucceed = true;
-                try
+                FieldInfo fieldInfo = _nullableContainerType.GetField("value",
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+                Debug.Assert(fieldInfo != null, _nullableContainerType);
+
+                // Debug.Log($"{fieldValue}/{oldItemElement}");
+                if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField)
                 {
-                    fieldValue = fieldInfo.GetValue(value);
+                    oldItemElement.RemoveFromHierarchy();
+                    oldItemElement = null;
                 }
-                catch (Exception e)
-                {
-#if SAINTSFIELD_DEBUG
-                    Debug.LogWarning($"field {subId}/{fieldInfo.FieldType} inside {value} gives error: {e}");
-#endif
-                    getValueSucceed = false;
-                    string msg = e.InnerException?.Message ?? e.Message;
-                    if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField errorField)
+                VisualElement result = UIToolkitEdit.UIToolkitValueEdit(
+                    oldItemElement,
+                    "value",
+                    fieldInfo.FieldType,
+                    fieldValue,
+                    // _ => beforeSet?.Invoke(value),
+                    _ =>
                     {
-                        errorField.SetErrorMessage(msg);
-                    }
-                    else
+                        // Debug.Log($"Before Set field {fieldInfo.Name}, invoke {value}");
+                        beforeSet?.Invoke(value);
+                    },
+                    newValue =>
                     {
-                        oldItemElement?.RemoveFromHierarchy();
-                        oldItemElement = null;
-                        ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField r = new ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField(
-                            thisLabel,
-                            new HelpBox(msg, HelpBoxMessageType.Error)
-                        );
-                        result = r;
-                        if (inHorizontalLayout)
-                        {
-                            result.style.flexDirection = FlexDirection.Column;
-                        }
-                        else
-                        {
-                            result.AddToClassList(ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField.alignedFieldUssClassName);
-                        }
-
-                        if (labelGrayColor)
-                        {
-                            r.labelElement.style.color = AbsRenderer.ReColor;
-                        }
-                    }
-                }
-
-                // Debug.Log($"try render field {name}/{fieldInfo.FieldType} under {value}/{value?.GetType()}");
-
-                if(getValueSucceed)
-                {
-                    if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField)
-                    {
-                        oldItemElement.RemoveFromHierarchy();
-                        oldItemElement = null;
-                    }
-                    result = UIToolkitEdit.UIToolkitValueEdit(
-                        oldItemElement,
-                        thisLabel,
-                        fieldInfo.FieldType,
-                        fieldValue,
-                        // _ => beforeSet?.Invoke(value),
-                        _ =>
-                        {
-                            // Debug.Log($"Before Set field {fieldInfo.Name}, invoke {value}");
-                            beforeSet?.Invoke(value);
-                        },
-                        newValue =>
+                        if (_nullableBaseType == null)
                         {
                             fieldInfo.SetValue(value, newValue);
                             setterOrNull?.Invoke(value);
-                        },
-                        labelGrayColor,
-                        inHorizontalLayout,
-                        ReflectCache.GetCustomAttributes(fieldInfo),
-                        targets, richTextTagProvider,
-                        subId).result;
-                }
-                // Debug.Log($"{name}: {result}: {fieldInfo.FieldType}");
-                // ReSharper disable once InvertIf
-                if(result != null)
-                {
-                    oldItemElement?.RemoveFromHierarchy();
-                    result.AddToClassList(subId);
-                    fieldsBody.Add(result);
-                }
-            }
-
-            foreach (PropertyInfo propertyInfo in propertyTargets)
-            {
-                if (!propertyInfo.CanRead)
-                {
-                    continue;
-                }
-
-                if (propertyInfo.GetIndexParameters().Length != 0)
-                {
-                    continue;
-                }
-
-                if (AbsRenderer.SkipTypeDrawing(propertyInfo.PropertyType))
-                {
-                    continue;
-                }
-
-                // string name = propertyInfo.Name;
-                string subId = $"{foldoutViewKey}.{propertyInfo.Name}";
-                VisualElement oldItemElement = fieldsBody.Q<VisualElement>(className: subId);
-                // Debug.Log($"old element {subId} = {oldItemElement}");
-                children.Remove(oldItemElement);
-                string thisLabel = ObjectNames.NicifyVariableName(propertyInfo.Name);
-#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_RENDERER_VALUE_EDIT
-                Debug.Log(
-                    $"render general property {propertyInfo.Name}/{propertyInfo.PropertyType} inside {value}");
-#endif
-                VisualElement result = null;
-                object propertyValue = null;
-                bool getValueSucceed = true;
-                try
-                {
-                    propertyValue = propertyInfo.GetValue(value);
-                }
-                catch (Exception e)
-                {
-                    getValueSucceed = false;
-#if SAINTSFIELD_DEBUG
-                    Debug.LogWarning($"property {subId}/{propertyInfo.PropertyType} inside {value} gives error: {e}");
-                    Debug.LogWarning(e.InnerException ?? e);
-#endif
-                    string msg = e.InnerException?.Message ?? e.Message;
-                    if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField errorField)
-                    {
-                        errorField.SetErrorMessage(msg);
-                    }
-                    else
-                    {
-                        oldItemElement?.RemoveFromHierarchy();
-                        oldItemElement = null;
-                        ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField r = new ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField(
-                            thisLabel,
-                            new HelpBox(msg, HelpBoxMessageType.Error)
-                        );
-                        result = r;
-                        if (inHorizontalLayout)
-                        {
-                            result.style.flexDirection = FlexDirection.Column;
                         }
                         else
                         {
-                            result.AddToClassList(ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField.alignedFieldUssClassName);
+                            // Passing boxed T is the correct object representation of
+                            // a non-null Nullable<T>; the owning setter assigns it.
+                            setterOrNull?.Invoke(newValue);
                         }
-
-                        if (labelGrayColor)
-                        {
-                            r.labelElement.style.color = AbsRenderer.ReColor;
-                        }
-                    }
-                }
-
-                if (getValueSucceed)
-                {
-                    if (oldItemElement is ShowInInspectorFieldRenderer.NativeFieldPropertyRendererErrorField)
-                    {
-                        oldItemElement.RemoveFromHierarchy();
-                        oldItemElement = null;
-                    }
-                    result = UIToolkitEdit.UIToolkitValueEdit(
-                        oldItemElement,
-                        thisLabel,
-                        propertyInfo.PropertyType,
-                        propertyValue,
-                        _ => beforeSet?.Invoke(value),
-                        propertyInfo.CanWrite
-                            ? newValue =>
-                            {
-                                propertyInfo.SetValue(value, newValue);
-                                setterOrNull?.Invoke(value);
-                            }
-                            : null,
-                        labelGrayColor,
-                        inHorizontalLayout,
-                        ReflectCache.GetCustomAttributes(propertyInfo),
-                        targets,
-                        richTextTagProvider,
-                        subId).result;
-                }
-
-                // ReSharper disable once InvertIf
+                    },
+                    labelGrayColor,
+                    inHorizontalLayout,
+                    ReflectCache.GetCustomAttributes(fieldInfo),
+                    targets, richTextTagProvider,
+                    subId).result;
                 if(result != null)
                 {
+                    oldItemElement?.RemoveFromHierarchy();
                     result.AddToClassList(subId);
                     fieldsBody.Add(result);
                 }
