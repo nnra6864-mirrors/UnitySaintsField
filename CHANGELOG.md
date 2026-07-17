@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.23.2 ##
+
+Fix: `ShowInInspector` now can display/edit `Nullable<>`
+
 ## 5.23.1 ##
 
 1.  Rename: `FlagsDropdown` now uses "TreeDropdown" drawer
