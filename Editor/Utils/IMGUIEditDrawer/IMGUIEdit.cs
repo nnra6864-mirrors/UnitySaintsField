@@ -22,6 +22,13 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
                 return;
             }
 
+            if (valueType != null && Nullable.GetUnderlyingType(valueType) != null)
+            {
+                IMGUIGeneralType.OnGUI(position, label, valueType, value, beforeSet, setterOrNull, labelGrayColor,
+                    inHorizontalLayout, allAttributes, targets, richTextTagProvider, foldoutViewKey);
+                return;
+            }
+
             if (IMGUIEditAttribute.TryOnGUI(position, label, valueType, value, beforeSet, setterOrNull,
                     labelGrayColor, inHorizontalLayout, allAttributes, targets, richTextTagProvider, foldoutViewKey))
             {

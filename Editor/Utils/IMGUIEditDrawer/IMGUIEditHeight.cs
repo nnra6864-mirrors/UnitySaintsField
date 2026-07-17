@@ -21,6 +21,13 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
                 return 0f;
             }
 
+            if (valueType != null && Nullable.GetUnderlyingType(valueType) != null)
+            {
+                return IMGUIGeneralType.GetPropertyHeight(
+                    label, valueType, value, beforeSet, setterOrNull, labelGrayColor, inHorizontalLayout,
+                    allAttributes, targets, richTextTagProvider, foldoutViewKey);
+            }
+
             (bool hasAttributeHeight, float attributeHeight) = IMGUIEditAttribute.GetPropertyHeight(label, valueType,
                 value, beforeSet, setterOrNull, labelGrayColor, inHorizontalLayout, allAttributes, targets,
                 richTextTagProvider, foldoutViewKey);

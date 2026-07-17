@@ -69,6 +69,22 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
                 return height;
             }
 
+            if (context.NullableBaseType != null)
+            {
+                return height + IMGUIEdit.GetPropertyHeight(
+                    "value",
+                    context.NullableBaseType,
+                    value,
+                    beforeSet,
+                    setterOrNull,
+                    labelGrayColor,
+                    inHorizontalLayout,
+                    Array.Empty<Attribute>(),
+                    targets,
+                    richTextTagProvider,
+                    $"{key}.value");
+            }
+
             (IReadOnlyList<FieldInfo> fields, IReadOnlyList<PropertyInfo> properties) =
                 GetDrawableMembers(value.GetType());
 
@@ -159,6 +175,13 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
 
             if (context.ValueIsNull)
             {
+                return;
+            }
+
+            if (context.NullableBaseType != null)
+            {
+                DrawNullableValue(bodyRect, value, beforeSet, setterOrNull, labelGrayColor, inHorizontalLayout,
+                    targets, richTextTagProvider, key, context.NullableBaseType);
                 return;
             }
 
@@ -419,6 +442,39 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
             }
         }
 
+        private static void DrawNullableValue(
+            Rect position,
+            object value,
+            Action<object> beforeSet,
+            Action<object> setterOrNull,
+            bool labelGrayColor,
+            bool inHorizontalLayout,
+            IReadOnlyList<object> targets,
+            IRichTextTagProvider richTextTagProvider,
+            string key,
+            Type nullableBaseType)
+        {
+            Rect fieldRect = new Rect(position)
+            {
+                x = position.x + ChildIndentWidth,
+                width = Mathf.Max(0f, position.width - ChildIndentWidth),
+            };
+
+            IMGUIEdit.OnGUI(
+                fieldRect,
+                "value",
+                nullableBaseType,
+                value,
+                _ => beforeSet?.Invoke(value),
+                setterOrNull,
+                labelGrayColor,
+                inHorizontalLayout,
+                Array.Empty<Attribute>(),
+                targets,
+                richTextTagProvider,
+                $"{key}.value");
+        }
+
         private static Rect NextRect(Rect source, ref float y, float height)
         {
             Rect rect = new Rect(source)
@@ -475,14 +531,16 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
             object newValue;
             try
             {
-                newValue = Activator.CreateInstance(newType);
+                newValue = Activator.CreateInstance(context.NullableBaseType ?? newType);
             }
             catch (Exception)
             {
-                newValue = RuntimeHelpers.GetUninitializedObject(newType);
+                newValue = RuntimeHelpers.GetUninitializedObject(context.NullableBaseType ?? newType);
             }
 
-            setterOrNull(ReferencePickerAttributeDrawer.CopyObj(currentValue, newValue));
+            setterOrNull(context.NullableBaseType == null
+                ? ReferencePickerAttributeDrawer.CopyObj(currentValue, newValue)
+                : newValue);
             IMGUIEdit.ViewKey[key] = true;
         }
 
@@ -490,11 +548,13 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
         {
             bool valueIsNull = RuntimeUtil.IsNull(value);
             Type fieldType = valueType ?? (valueIsNull ? null : value.GetType());
+            Type nullableBaseType = fieldType == null ? null : Nullable.GetUnderlyingType(fieldType);
+            Type selectableType = nullableBaseType ?? fieldType;
 
-            Type[] canHaveUnityTypes = fieldType == null
+            Type[] canHaveUnityTypes = selectableType == null
                 ? Array.Empty<Type>()
-                : TypeCache.GetTypesDerivedFrom(fieldType)
-                    .Prepend(fieldType)
+                : TypeCache.GetTypesDerivedFrom(selectableType)
+                    .Prepend(selectableType)
                     .Where(each => !each.IsAbstract)
                     .Where(each => !each.ContainsGenericParameters)
                     .Where(each => typeof(Object).IsAssignableFrom(each))
@@ -513,15 +573,16 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
             }
 
             bool onUnityType = unityObjectOverrideType != null && canHaveUnityTypes.Contains(unityObjectOverrideType);
-            Type[] optionTypes = fieldType == null
+            Type[] optionTypes = selectableType == null
                 ? Array.Empty<Type>()
-                : ReferencePickerAttributeDrawer.GetTypesDerivedFrom(fieldType).ToArray();
+                : ReferencePickerAttributeDrawer.GetTypesDerivedFrom(selectableType).ToArray();
 
             return new GeneralContext
             {
                 FieldType = fieldType,
+                NullableBaseType = nullableBaseType,
                 ValueIsNull = valueIsNull,
-                CanBeNull = fieldType == null || !fieldType.IsValueType,
+                CanBeNull = nullableBaseType != null || fieldType == null || !fieldType.IsValueType,
                 CanHaveUnityTypes = canHaveUnityTypes,
                 UnityObjectOverrideType = onUnityType ? unityObjectOverrideType : null,
                 OnUnityType = onUnityType,
@@ -530,7 +591,7 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
                     ? unityObjectOverrideType
                     : valueIsNull
                         ? null
-                        : value.GetType(),
+                        : nullableBaseType ?? value.GetType(),
                 AllowExpand = !valueIsNull || onUnityType,
             };
         }
@@ -684,6 +745,7 @@ namespace SaintsField.Editor.Utils.IMGUIEditDrawer
         private sealed class GeneralContext
         {
             public Type FieldType;
+            public Type NullableBaseType;
             public bool ValueIsNull;
             public bool CanBeNull;
             public bool AllowExpand;
