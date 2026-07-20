@@ -26,5 +26,13 @@ namespace SaintsField.Samples.Scripts.SaintsEditor.Testing
 
         [LayoutStart("./Continue", paddingLeft: 18)]
         public int nestedIndent2;
+
+        [LayoutStart("GhostGroup", marginTop: 10, marginBottom: 10)]
+        public int g1;
+        [LayoutStart("./GhostGroup")]
+        public int g2;
+        [LayoutStart("./GhostGroup")]
+        public int g3;
+
     }
 }

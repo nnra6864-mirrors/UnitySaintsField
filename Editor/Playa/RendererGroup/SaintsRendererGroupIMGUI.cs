@@ -86,6 +86,52 @@ namespace SaintsField.Editor.Playa.RendererGroup
                 : _renderers.Select(each => each.renderer);
         }
 
+        private RichTextDrawer _groupTitleRichTextDrawerIMGUI;
+        private string _groupTitleRichTextIMGUI;
+        private IReadOnlyList<RichTextDrawer.RichTextChunk> _groupTitleChunksIMGUI;
+
+        private IReadOnlyList<RichTextDrawer.RichTextChunk> GetGroupTitleChunksIMGUI()
+        {
+            string title = _groupPath.Last();
+            if (_groupTitleChunksIMGUI != null && _groupTitleRichTextIMGUI == title)
+            {
+                return _groupTitleChunksIMGUI;
+            }
+
+            _groupTitleRichTextIMGUI = title;
+            _groupTitleChunksIMGUI = RichTextDrawer.ParseRichXmlWithProvider($"<b>{title}</b>",
+                new RichTextDrawer.EmptyRichTextTagProvider()).ToArray();
+            return _groupTitleChunksIMGUI;
+        }
+
+        private void DrawGroupTitleIMGUI(Rect position)
+        {
+            _groupTitleRichTextDrawerIMGUI ??= new RichTextDrawer();
+            _groupTitleRichTextDrawerIMGUI.DrawChunks(position, GetGroupTitleChunksIMGUI());
+        }
+
+        private (float left, float right) GetBodyPaddingIMGUI()
+        {
+            float backgroundPadding = _eLayout.HasFlagFast(ELayout.Background) ? 4 : 0;
+            return (_config.PaddingLeft + backgroundPadding, _config.PaddingRight + backgroundPadding);
+        }
+
+        private sealed class BodyLabelWidthScope : IDisposable
+        {
+            private readonly float _labelWidth;
+
+            public BodyLabelWidthScope(float paddingLeft)
+            {
+                _labelWidth = EditorGUIUtility.labelWidth;
+                EditorGUIUtility.labelWidth = Mathf.Max(0, _labelWidth - paddingLeft);
+            }
+
+            public void Dispose()
+            {
+                EditorGUIUtility.labelWidth = _labelWidth;
+            }
+        }
+
 
         public float GetHeightIMGUI(float width)
         {
@@ -161,21 +207,28 @@ namespace SaintsField.Editor.Playa.RendererGroup
             float contentHeight = 0f;
             if(_foldout)
             {
-                if (_eLayout.HasFlagFast(ELayout.Horizontal))
+                (float paddingLeft, float paddingRight) = GetBodyPaddingIMGUI();
+                float contentWidth = width - paddingLeft - paddingRight;
+                using (new BodyLabelWidthScope(paddingLeft))
                 {
-                    float curMaxHeight = 0f;
-                    foreach (ISaintsRenderer renderer in GetRenderer())
+                    if (_eLayout.HasFlagFast(ELayout.Horizontal))
                     {
-                        float curHeight = renderer.GetHeightIMGUI(width);
-                        curMaxHeight = Mathf.Max(curMaxHeight, curHeight);
+                        ISaintsRenderer[] renderers = GetRenderer().ToArray();
+                        float rendererWidth = renderers.Length == 0 ? contentWidth : contentWidth / renderers.Length;
+                        float curMaxHeight = 0f;
+                        foreach (ISaintsRenderer renderer in renderers)
+                        {
+                            float curHeight = renderer.GetHeightIMGUI(rendererWidth);
+                            curMaxHeight = Mathf.Max(curMaxHeight, curHeight);
+                        }
+                        contentHeight += curMaxHeight;
                     }
-                    contentHeight += curMaxHeight;
-                }
-                else
-                {
-                    foreach (ISaintsRenderer renderer in GetRenderer())
+                    else
                     {
-                        contentHeight += renderer.GetHeightIMGUI(width);
+                        foreach (ISaintsRenderer renderer in GetRenderer())
+                        {
+                            contentHeight += renderer.GetHeightIMGUI(contentWidth);
+                        }
                     }
                 }
             }
@@ -268,7 +321,7 @@ namespace SaintsField.Editor.Playa.RendererGroup
                     if (!hasFoldout && hasTitle)  // in this case, draw title above, alone
                     {
                         titleRect.height = EditorGUIUtility.singleLineHeight;
-                        EditorGUI.LabelField(titleRect, _groupPath.Last(), _titleLabelStyle);
+                        DrawGroupTitleIMGUI(titleRect);
                         titleRect.y += titleRect.height;
                         titleUsedHeight += titleRect.height;
 
@@ -297,7 +350,7 @@ namespace SaintsField.Editor.Playa.RendererGroup
                         {
                             titleRect.height = EditorGUIUtility.singleLineHeight;
 
-                            if (GUI.Button(titleRect, _groupPath.Last(), GetFancyBoxLeftIconButtonStyle()))
+                            if (GUI.Button(titleRect, GUIContent.none, GetFancyBoxLeftIconButtonStyle()))
                             {
                                 _foldout = !_foldout;
                             }
@@ -311,17 +364,34 @@ namespace SaintsField.Editor.Playa.RendererGroup
                             Texture2D icon = _foldout ? dropdownIcon : dropdownRightIcon;
                             GUI.DrawTexture(iconRect, icon);
 
+                            Rect richTitleRect = new Rect(titleRect)
+                            {
+                                xMin = titleRect.xMin + 15,
+                            };
+                            DrawGroupTitleIMGUI(richTitleRect);
+
                             titleRect.y += titleRect.height;
                             titleUsedHeight += titleRect.height;
                         }
                         else
                         {
                             titleRect.height = EditorGUIUtility.singleLineHeight;
-                            _foldout = EditorGUI.Foldout(titleRect, _foldout, _groupPath.Last(), true,
+                            _foldout = EditorGUI.Foldout(titleRect, _foldout, GUIContent.none, false,
                                 new GUIStyle(EditorStyles.foldout)
                                 {
                                     fontStyle = FontStyle.Bold,
                                 });
+
+                            Rect richTitleRect = new Rect(titleRect)
+                            {
+                                xMin = titleRect.xMin + 15,
+                            };
+                            if (GUI.Button(richTitleRect, GUIContent.none, GUIStyle.none))
+                            {
+                                _foldout = !_foldout;
+                            }
+                            DrawGroupTitleIMGUI(richTitleRect);
+
                             titleRect.y += titleRect.height;
                             titleUsedHeight += titleRect.height;
 
@@ -418,41 +488,42 @@ namespace SaintsField.Editor.Playa.RendererGroup
                 if(_foldout)
                 {
                     Rect bodyRect = RectUtils.SplitHeightRect(marginedRect, titleUsedHeight).leftRect;
+                    (float paddingLeft, float paddingRight) = GetBodyPaddingIMGUI();
+                    bodyRect.x += paddingLeft;
+                    bodyRect.width -= paddingLeft + paddingRight;
                     // Rect bodyRect = new Rect(marginedRect)
                     // {
                     //     y = marginedRect.y + titleUsedHeight,
                     //     height = marginedRect.height - titleUsedHeight,
                     // };
-                    if (_eLayout.HasFlagFast(ELayout.Horizontal))
+                    using (new BodyLabelWidthScope(paddingLeft))
                     {
-                        ISaintsRenderer[] renderers = GetRenderer().ToArray();
-                        float splitWidth = bodyRect.width / renderers.Length;
+                        if (_eLayout.HasFlagFast(ELayout.Horizontal))
+                        {
+                            ISaintsRenderer[] renderers = GetRenderer().ToArray();
+                            float splitWidth = bodyRect.width / renderers.Length;
 
-                        foreach ((ISaintsRenderer renderer, int index) in renderers.WithIndex())
-                        {
-                            float x = bodyRect.x + splitWidth * index;
-                            Rect accRect = new Rect(bodyRect)
+                            foreach ((ISaintsRenderer renderer, int index) in renderers.WithIndex())
                             {
-                                x = x,
-                                width = splitWidth,
-                            };
-                            renderer.RenderPositionIMGUI(accRect);
+                                float x = bodyRect.x + splitWidth * index;
+                                Rect accRect = new Rect(bodyRect)
+                                {
+                                    x = x,
+                                    width = splitWidth,
+                                };
+                                renderer.RenderPositionIMGUI(accRect);
+                            }
                         }
-                    }
-                    else
-                    {
-                        Rect accRect = bodyRect;
-                        foreach (ISaintsRenderer renderer in GetRenderer())
+                        else
                         {
-                            float height = renderer.GetHeightIMGUI(position.width);
-                            (Rect useRect, Rect leftRect) = RectUtils.SplitHeightRect(accRect, height);
-                            Rect marginRect = new Rect(useRect)
+                            Rect accRect = bodyRect;
+                            foreach (ISaintsRenderer renderer in GetRenderer())
                             {
-                                x = useRect.x + 2,
-                                width = useRect.width - 4,
-                            };
-                            renderer.RenderPositionIMGUI(marginRect);
-                            accRect = leftRect;
+                                float height = renderer.GetHeightIMGUI(bodyRect.width);
+                                (Rect useRect, Rect leftRect) = RectUtils.SplitHeightRect(accRect, height);
+                                renderer.RenderPositionIMGUI(useRect);
+                                accRect = leftRect;
+                            }
                         }
                     }
 
