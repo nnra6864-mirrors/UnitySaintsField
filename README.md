@@ -113,10 +113,9 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.23.3**
+**5.23.4**
 
-1.  Fix: Class-level `InfoBox`/`BelowInfoBox` did not render in `SaintsEditor` [#418](https://github.com/TylerTemp/SaintsField/issues/418)
-2.  Add: `SaintsDictionary` key/value columns can now remember the resized width (requires Unity >=6k for UI Toolkit) in editor session
+Add: Layout attributes now support `paddingLeft` and `paddingRight` to work like field indent. [#419](https://github.com/TylerTemp/SaintsField/issues/419)
 
 ## Usage ##
 

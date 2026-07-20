@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.23.4 ##
+
+Add: Layout attributes now support `paddingLeft` and `paddingRight` to work like field indent. [#419](https://github.com/TylerTemp/SaintsField/issues/419)
+
 ## 5.23.3 ##
 
 1.  Fix: Class-level `InfoBox`/`BelowInfoBox` did not render in `SaintsEditor` [#418](https://github.com/TylerTemp/SaintsField/issues/418)

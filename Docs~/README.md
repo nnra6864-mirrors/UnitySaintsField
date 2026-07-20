@@ -6757,6 +6757,8 @@ A layout decorator to group fields.
 *   `bool keepGrouping=false`: See `LayoutStart` below
 *   `float marginTop = -1f` add some space before the layout. `-1` for using default spacing.
 *   `float marginBottom = -1f` add some space after the layout. `-1` for using default spacing.
+*   `float paddingLeft = 0f` add space to the left of the layout content. Negative value supported
+*   `float paddingRight = 0f` add space to the right of the layout content.
 
 For more information, see `LayoutStart` below
 
@@ -6771,14 +6773,17 @@ For more information, see `LayoutStart` below
 
 For `LayoutStart`:
 
-*   `string groupBy` same as `Layout`
-*   `ELayout layout=0` same as `Layout`
-*   `float marginTop = -1f` same as `Layout`
-*   `float marginBottom = -1f` same as `Layout`
+*   `string groupBy` the grouping key. Use `/` to separate different groups and create subgroups.
+*   `ELayout layout=ELayout.Vertical` the layout of the current group. Note this is a `EnumFlag`, means you can mix with options.
+*   `float marginTop = -1f` add some space before the layout. `-1` for using default spacing.
+*   `float marginBottom = -1f` add some space after the layout. `-1` for using default spacing.
+*   `float paddingLeft = 0f` add space to the left of the layout content. Negative value supported
+*   `float paddingRight = 0f` add space to the right of the layout content.
 
 For `LayoutEnd`:
 
 *   `string groupBy=null` same as `Layout`. When `null`, close all existing groups.
+*   `float marginTop = -1f`, `float marginBottom = -1f`, `float paddingLeft = 0f`, and `float paddingRight = 0f` update the layout being closed.
 
 It supports `./SubGroup` to create a nested subgroup:
 
@@ -6940,6 +6945,37 @@ public string o3;
 ```
 
 ![](https://github.com/user-attachments/assets/6e926991-b0ae-4221-be52-fac43a187968)
+
+Use padding to make fields indent:
+
+```csharp
+using SaintsField.Playa;
+
+public string top;  // no padding
+[LayoutStart("Indent", paddingLeft: 18)]  // Unity's default padding value is 18
+public int m1;
+[LayoutStart("./Indent", paddingLeft: 18)]  // subgroup will inherent the last padding
+public int m2;
+[LayoutStart("./Indent", paddingLeft: 18)]
+public int m3;
+
+[LayoutEnd]
+public int resetIndent;
+
+[Separator(10)]
+
+[LayoutStart("Top<icon=LensFlare Icon/>Box", ELayout.FoldoutBox, paddingLeft: -4)]  // get rid of the default padding
+public int i1;
+public int i2;
+
+[LayoutStart("./Continue", paddingLeft: 12)]
+public int nestedIndent;
+
+[LayoutStart("./Continue", paddingLeft: 18)]
+public int nestedIndent2;
+```
+
+![](https://github.com/user-attachments/assets/8e235cec-7b44-4376-ba5a-c50ff53620c6)
 
 By combining `Layout` with `Seperator`/`InfoBox`, you can create some complex layout struct:
 
