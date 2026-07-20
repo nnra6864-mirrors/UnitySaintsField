@@ -15,12 +15,17 @@ namespace SaintsField.Playa
 
         public float MarginTop { get; }
         public float MarginBottom { get; }
+        public float PaddingLeft { get; }
+        public float PaddingRight { get; }
 
-        public LayoutEndAttribute(string layoutBy = null, float marginTop = -1f, float marginBottom = -1f)
+        public LayoutEndAttribute(string layoutBy = null, float marginTop = -1f, float marginBottom = -1f,
+            float paddingLeft = 0, float paddingRight = 0)
         {
             LayoutBy = layoutBy?.Trim('/');
             MarginTop = marginTop;
             MarginBottom = marginBottom;
+            PaddingLeft = paddingLeft;
+            PaddingRight = paddingRight;
         }
     }
 }

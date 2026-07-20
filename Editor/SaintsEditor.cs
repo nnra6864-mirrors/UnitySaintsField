@@ -965,6 +965,8 @@ namespace SaintsField.Editor
                                 IsDoTween = saintsGroup is DOTweenPlayAttribute,
                                 MarginTop = saintsGroup.MarginTop,
                                 MarginBottom = saintsGroup.MarginBottom,
+                                PaddingLeft = saintsGroup.PaddingLeft,
+                                PaddingRight = saintsGroup.PaddingRight,
                             };
                             SaintsRendererGroup.Config oldConfig = targetGroup.Config;
                             targetGroup.Config = new SaintsRendererGroup.Config
@@ -973,6 +975,8 @@ namespace SaintsField.Editor
                                 IsDoTween = oldConfig.IsDoTween || newConfig.IsDoTween,
                                 MarginTop = newConfig.MarginTop >= 0? newConfig.MarginTop: oldConfig.MarginTop,
                                 MarginBottom = newConfig.MarginBottom >= 0? newConfig.MarginBottom: oldConfig.MarginBottom,
+                                PaddingLeft = Mathf.Approximately(newConfig.PaddingLeft, 0)? oldConfig.PaddingLeft: newConfig.PaddingLeft,
+                                PaddingRight = Mathf.Approximately(newConfig.PaddingRight, 0)? oldConfig.PaddingRight: newConfig.PaddingRight,
                                 KeepGrouping = saintsGroup.KeepGrouping,
                                 Toggles = (oldConfig?.Toggles ?? Array.Empty<ISaintsLayoutToggle>()).Concat(layoutToggles).ToArray(),
                             };

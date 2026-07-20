@@ -27,6 +27,8 @@ namespace SaintsField.Editor.Playa.RendererGroup
             public bool IsDoTween;
             public float MarginTop;
             public float MarginBottom;
+            public float PaddingLeft;
+            public float PaddingRight;
             public IReadOnlyList<ISaintsLayoutToggle> Toggles;
         }
 

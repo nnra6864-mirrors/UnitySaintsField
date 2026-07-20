@@ -8,5 +8,7 @@
 
         float MarginTop { get; }
         float MarginBottom { get; }
+        float PaddingLeft { get; }
+        float PaddingRight { get; }
     }
 }

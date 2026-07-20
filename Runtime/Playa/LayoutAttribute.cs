@@ -13,8 +13,11 @@ namespace SaintsField.Playa
 
         public float MarginTop { get; }
         public float MarginBottom { get; }
+        public float PaddingLeft { get; }
+        public float PaddingRight { get; }
 
-        public LayoutAttribute(string layoutBy, ELayout layout = 0, bool keepGrouping = false, float marginTop = -1f, float marginBottom = -1f)
+        public LayoutAttribute(string layoutBy, ELayout layout = 0, bool keepGrouping = false,
+            float marginTop = -1f, float marginBottom = -1f, float paddingLeft = 0, float paddingRight = 0)
         {
             LayoutBy = layoutBy.Trim('/');
             Layout = layout;
@@ -22,6 +25,8 @@ namespace SaintsField.Playa
 
             MarginTop = marginTop;
             MarginBottom = marginBottom;
+            PaddingLeft = paddingLeft;
+            PaddingRight = paddingRight;
         }
     }
 }

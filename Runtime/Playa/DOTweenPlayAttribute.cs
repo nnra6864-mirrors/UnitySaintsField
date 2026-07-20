@@ -20,14 +20,19 @@ namespace SaintsField.Playa
 
         public float MarginTop => -1f;
         public float MarginBottom => -1f;
+        public float PaddingLeft { get; }
+        public float PaddingRight { get; }
 
-        public DOTweenPlayAttribute(string label = null, ETweenStop stopAction = ETweenStop.Rewind, string groupBy="", bool keepGrouping = false)
+        public DOTweenPlayAttribute(string label = null, ETweenStop stopAction = ETweenStop.Rewind, string groupBy="",
+            bool keepGrouping = false, float paddingLeft = 0, float paddingRight = 0)
         {
             Label = label;
             DOTweenStop = stopAction;
 
             LayoutBy = string.IsNullOrEmpty(groupBy)? DOTweenPlayGroupBy: $"{groupBy}/{DOTweenPlayGroupBy}";
             KeepGrouping = keepGrouping;
+            PaddingLeft = paddingLeft;
+            PaddingRight = paddingRight;
         }
 
         public DOTweenPlayAttribute(ETweenStop stopAction, string groupBy=""): this(null, stopAction, groupBy)

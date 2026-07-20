@@ -115,6 +115,9 @@ namespace SaintsField.Editor.Playa.RendererGroup
             // }
 
             bool inHorizontal = _eLayout.HasFlagFast(ELayout.Horizontal);
+            float paddingLeft = _config.PaddingLeft;
+            float paddingRight = _config.PaddingRight;
+
             VisualElement body = new VisualElement
             {
                 name = $"saints-field-group--body--{_groupPath}",
@@ -122,11 +125,14 @@ namespace SaintsField.Editor.Playa.RendererGroup
                 {
                     flexGrow = 1,
                     flexDirection = inHorizontal? FlexDirection.Row :FlexDirection.Column,
+                    paddingLeft = paddingLeft,
+                    paddingRight = paddingRight,
                 },
             };
             if (_eLayout.HasFlagFast(ELayout.Background))
             {
-                body.style.paddingLeft = body.style.paddingRight = 4;
+                body.style.paddingLeft = paddingLeft + 4;
+                body.style.paddingRight = paddingRight + 4;
                 body.style.paddingTop = 1;
                 body.style.paddingBottom = 3;
             }
@@ -417,9 +423,8 @@ namespace SaintsField.Editor.Playa.RendererGroup
             //     root.RegisterCallback(switchOnAttach);
             // }
 
-            float marginTop = _config.MarginTop > 0 ? _config.MarginTop : 2;
-
-            float marginBottom = _config.MarginBottom > 0 ? _config.MarginBottom : 0;
+            float marginTop = _config.MarginTop >= 0 ? _config.MarginTop : 2;
+            float marginBottom = _config.MarginBottom >= 0 ? _config.MarginBottom : 0;
 
             root.style.marginTop = marginTop;
             root.style.marginBottom = marginBottom;
