@@ -79,6 +79,8 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             private int _itemCount;
             private bool _loaded;
             private int[] _draggedIndexes = Array.Empty<int>();
+            private float _lastContentWidth = float.NaN;
+            private float[] _lastColumnWidths = Array.Empty<float>();
 
             public TableTreeViewIMGUI(
                 TreeViewState
@@ -113,6 +115,50 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                 _itemCount = itemCount;
                 Reload();
                 _loaded = true;
+            }
+
+            public void SetColumnWidths(float contentWidth)
+            {
+                MultiColumnHeaderState.Column[] columns = multiColumnHeader.state.columns;
+                if (_context?.Columns == null || columns.Length != _context.Columns.Count)
+                {
+                    return;
+                }
+
+                contentWidth = Mathf.Max(1f, contentWidth);
+                if (_lastColumnWidths.Length == columns.Length)
+                {
+                    bool resized = columns.Where((column, index) =>
+                        Mathf.Abs(column.width - _lastColumnWidths[index]) >= 0.5f).Any();
+                    if (resized)
+                    {
+                        float widthForPercent = float.IsNaN(_lastContentWidth)
+                            ? contentWidth
+                            : _lastContentWidth;
+                        for (int index = 0; index < columns.Length; index++)
+                        {
+                            float percent = columns[index].width / widthForPercent * 100f;
+                            SaveSessionColumnWidth(_context.ArrayProperty, _context.Columns[index].Id, percent);
+                        }
+                    }
+                }
+
+                if (float.IsNaN(_lastContentWidth) || Mathf.Abs(_lastContentWidth - contentWidth) >= 0.5f)
+                {
+                    float fallbackWidth = Mathf.Max(DefaultColumnWidthIMGUI,
+                        contentWidth / Mathf.Max(1, columns.Length));
+                    for (int index = 0; index < columns.Length; index++)
+                    {
+                        float percent = GetSessionColumnWidth(_context.ArrayProperty, _context.Columns[index].Id);
+                        columns[index].width = float.IsNaN(percent)
+                            ? fallbackWidth
+                            : Mathf.Max(MinColumnWidthIMGUI, contentWidth * percent / 100f);
+                    }
+
+                    _lastContentWidth = contentWidth;
+                }
+
+                _lastColumnWidths = columns.Select(each => each.width).ToArray();
             }
 
             public new void OnGUI(Rect rect)
@@ -826,6 +872,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
             }
 
             _tableIMGUI.SetContext(context);
+            _tableIMGUI.SetColumnWidths(width);
             _tableIMGUI.SetItemCount(context.ArrayProperty.arraySize);
         }
 
@@ -871,6 +918,14 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 
         private void RefreshTableFoldStateIMGUI()
         {
+            _tableIMGUI?.Reload();
+            GUI.changed = true;
+            EditorWindow.focusedWindow?.Repaint();
+        }
+
+        private void RefreshCellHeightsIMGUI()
+        {
+            _cellHeightCacheIMGUI.Clear();
             _tableIMGUI?.Reload();
             GUI.changed = true;
             EditorWindow.focusedWindow?.Repaint();
@@ -1114,17 +1169,30 @@ namespace SaintsField.Editor.Playa.Renderer.Table
 
             if (content.FallbackProperty != null)
             {
+                float heightBefore = EditorGUI.GetPropertyHeight(content.FallbackProperty, GUIContent.none, true);
                 EditorGUI.PropertyField(rect, content.FallbackProperty, GUIContent.none, true);
+                float heightAfter = EditorGUI.GetPropertyHeight(content.FallbackProperty, GUIContent.none, true);
+                if (Mathf.Abs(heightAfter - heightBefore) >= 0.5f)
+                {
+                    RefreshCellHeightsIMGUI();
+                }
                 return;
             }
 
             Rect leftRect = rect;
+            bool heightChanged = false;
             foreach (AbsRenderer renderer in content.Renderers)
             {
                 float height = renderer.GetHeightIMGUI(rect.width);
                 (Rect rendererRect, Rect newLeftRect) = RectUtils.SplitHeightRect(leftRect, height);
                 leftRect = newLeftRect;
                 renderer.RenderPositionIMGUI(rendererRect);
+                heightChanged |= Mathf.Abs(renderer.GetHeightIMGUI(rect.width) - height) >= 0.5f;
+            }
+
+            if (heightChanged)
+            {
+                RefreshCellHeightsIMGUI();
             }
         }
 

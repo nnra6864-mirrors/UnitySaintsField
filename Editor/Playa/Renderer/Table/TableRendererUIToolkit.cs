@@ -19,6 +19,23 @@ namespace SaintsField.Editor.Playa.Renderer.Table
         private static string NameAddButton(SerializedProperty property) => $"saints-table-container-{property.propertyPath}__Table_AddButton";
         private static string NameRemoveButton(SerializedProperty property) => $"saints-table-container-{property.propertyPath}__Table_RemoveButton";
 
+        private static string SessionKeyColumnWidth(SerializedProperty property, string columnName) =>
+            $"{property.propertyPath}[{columnName}:width]";
+
+        public static float GetSessionColumnWidth(SerializedProperty property, string columnName)
+        {
+            float percent = SessionState.GetFloat(SessionKeyColumnWidth(property, columnName), float.NaN);
+            return !float.IsNaN(percent) && percent > 0f ? percent : float.NaN;
+        }
+
+        public static void SaveSessionColumnWidth(SerializedProperty property, string columnName, float percent)
+        {
+            if (!float.IsNaN(percent) && percent > 0f)
+            {
+                SessionState.SetFloat(SessionKeyColumnWidth(property, columnName), percent);
+            }
+        }
+
         private bool _hasSize;
 
         protected override (VisualElement target, bool needUpdate) CreateSerializedUIToolkit()

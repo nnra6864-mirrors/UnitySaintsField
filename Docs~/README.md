@@ -2155,9 +2155,6 @@ public MyValueStruct[] myStructs;
 
 **`TableHide`**
 
-> [!NOTE]
-> This feature is UI Toolkit only
-
 You can use `TableHide` attribute to exclude some column from the table. It'll hide the column by default, and you can still toggle it in header - right click menu
 
 ```csharp
@@ -2183,9 +2180,6 @@ public List<MyStruct> myStructs;
 [![video](https://github.com/user-attachments/assets/2bf6480a-65f7-4dfc-bf96-bfee9497428e)](https://github.com/user-attachments/assets/66fa7d10-427c-4f8c-b23f-f4bb29faa9f6)
 
 **`TableHeaders`/`TableHeadersHide`**
-
-> [!NOTE]
-> This feature is UI Toolkit only
 
 You can use `TableHeaders` to default show some columns for the table, or `TableHeadersHide` to hide them.
 
@@ -9328,9 +9322,6 @@ If you can't see the wwise related attributes, please add marco `SAINTSFIELD_WWI
 If you face compatibility issue because of API changes in Wwise, please add marco `SAINTSFIELD_WWISE_DISABLE` to disable it.
 
 ### `GetWwise` ###
-
-> [!NOTE]
-> This feature is UI Toolkit only
 
 Like the auto getters, this can auto-sign a wwise object (a state, a switch, a soundBank etc.) to a field.
 

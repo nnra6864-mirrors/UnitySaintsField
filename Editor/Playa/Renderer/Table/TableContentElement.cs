@@ -305,6 +305,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             stretchable = true,
                             visible = thisIsVisible,
                         };
+                        ApplySessionColumnWidth(curColumn);
                         multiColumnListView.columns.Add(curColumn);
 
                         curColumn.makeCell = MakeTableCellFoldableElement;
@@ -424,7 +425,11 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             });
                         };
 #if UNITY_6000_0_OR_NEWER
-                        curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
+                        curColumn.propertyChanged += (_, args) =>
+                        {
+                            ScheduleColumnFoldoutRefreshDisplay();
+                            SaveSessionColumnWidth(curColumn, args);
+                        };
 #endif
                     }
                 }
@@ -509,6 +514,7 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             stretchable = true,
                             visible = thisIsVisible,
                         };
+                        ApplySessionColumnWidth(curColumn);
                         multiColumnListView.columns.Add(curColumn);
 
                         curColumn.makeCell = MakeTableCellFoldableElement;
@@ -625,7 +631,11 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                             });
                         };
 #if UNITY_6000_0_OR_NEWER
-                        curColumn.propertyChanged += (_, _) => ScheduleColumnFoldoutRefreshDisplay();
+                        curColumn.propertyChanged += (_, args) =>
+                        {
+                            ScheduleColumnFoldoutRefreshDisplay();
+                            SaveSessionColumnWidth(curColumn, args);
+                        };
 #endif
                     }
                 }
@@ -710,6 +720,42 @@ namespace SaintsField.Editor.Playa.Renderer.Table
                         RefreshColumnFoldoutsDisplay(multiColumnListView);
                     });
                 }
+
+                void ApplySessionColumnWidth(Column column)
+                {
+                    float percent = TableRenderer.GetSessionColumnWidth(arrayProp, column.name);
+                    if (float.IsNaN(percent))
+                    {
+                        return;
+                    }
+
+                    column.stretchable = false;
+                    column.width = Length.Percent(percent);
+                }
+
+#if UNITY_6000_0_OR_NEWER
+                void SaveSessionColumnWidth(Column column, BindablePropertyChangedEventArgs args)
+                {
+                    if (args.propertyName != nameof(Column.width))
+                    {
+                        return;
+                    }
+
+                    multiColumnListView.schedule.Execute(() =>
+                    {
+                        float tableWidth = multiColumnListView.resolvedStyle.width;
+                        if (float.IsNaN(tableWidth) || tableWidth <= 0f)
+                        {
+                            return;
+                        }
+
+                        float percent = column.width.unit == LengthUnit.Percent
+                            ? column.width.value
+                            : column.width.value / tableWidth * 100f;
+                        TableRenderer.SaveSessionColumnWidth(arrayProp, column.name, percent);
+                    });
+                }
+#endif
 
                 TableCellFoldableElement MakeTableCellFoldableElement()
                 {
