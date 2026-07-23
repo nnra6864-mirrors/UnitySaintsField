@@ -113,9 +113,12 @@ namespace: `SaintsField`
 
 ## Change Log ##
 
-**5.23.4**
+**5.24.0**
 
-Add: Layout attributes now support `paddingLeft` and `paddingRight` to work like field indent. [#419](https://github.com/TylerTemp/SaintsField/issues/419)
+1.  Unity Fix: You can now enable UI Toolkit support for Animator, which allows you to use UI Toolkit attribute/field type in `StateMachineBehavior`. Menu: `Tools` - `SaintsField` - `Enable UI Toolkit To Animator`
+2.  Add: You can now apply SaintsEditor to `NetworkBehavior` by `Tools` - `Saints Field` - `Enable SaintsEditor To NetworkBehavior`
+3.  Add: You can now apply SaintsEditor to Scriptable Renderer Data by `Tools` - `Saints Field` - `Enable SaintsEditor To Scriptable Rendererer`
+4.  Add: `Table` now saves col's width if you drag it
 
 ## Usage ##
 
@@ -297,6 +300,7 @@ Add: Layout attributes now support `paddingLeft` and `paddingRight` to work like
     *   [Inherent](https://saintsfield.comes.today/saintseditor/inherent)
     *   [Extend](https://saintsfield.comes.today/saintseditor/extend)
     *   [Integerate](https://saintsfield.comes.today/saintseditor/integerate)
+    *   [`Animator`](https://saintsfield.comes.today/saintseditor/animator)
     *   [Netcode for Game Objects](https://saintsfield.comes.today/saintseditor/netcode-for-game-objects)
     *   [Scriptable Renderer Data](https://saintsfield.comes.today/saintseditor/scriptable-renderer-data)
     *   [`Unity.Mathematics`](https://saintsfield.comes.today/saintseditor/unitymathematics)
