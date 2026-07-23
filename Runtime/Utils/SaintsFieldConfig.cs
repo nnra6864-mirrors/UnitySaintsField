@@ -11,8 +11,8 @@ using UnityEditor;
 // ReSharper disable once CheckNamespace
 namespace SaintsField.Utils
 {
-#if SAINTSFIELD_DEBUG
-    [CreateAssetMenu(fileName = "SaintsFieldConfig", menuName = "ScriptableObject/SaintsFieldConfig", order = 20)]
+#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_MENU_ITEM
+    [CreateAssetMenu(fileName = "SaintsFieldConfig", menuName = "SaintsField Debug/SaintsFieldConfig", order = 20)]
 #endif
     public class SaintsFieldConfig : ScriptableObject
     {

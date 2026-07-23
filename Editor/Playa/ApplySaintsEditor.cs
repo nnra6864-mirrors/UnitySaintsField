@@ -1,4 +1,7 @@
 ﻿using UnityEditor;
+#if SAINTSFIELD_SAINTS_EDITOR_ANIMATOR_STATE_APPLY
+using UnityEngine;
+#endif
 
 namespace SaintsField.Editor.Playa
 {
@@ -55,4 +58,18 @@ namespace SaintsField.Editor.Playa
     {
     }
 
+#if SAINTSFIELD_SAINTS_EDITOR_ANIMATOR_STATE_APPLY
+    [CanEditMultipleObjects]
+    [CustomEditor(typeof(StateMachineBehaviour), true)]
+    public class StateMachineBehaviourEditor : ApplySaintsEditorBase
+    {
+        // UnityEditor.Graphs.AnimationStateMachine.StateEditor
+    }
+#endif
+
+    [CanEditMultipleObjects]
+    [CustomEditor(typeof(SaintsStateMachineBehaviour), true)]
+    public class SaintsStateMachineBehaviourEditor : ApplySaintsEditorBase
+    {
+    }
 }

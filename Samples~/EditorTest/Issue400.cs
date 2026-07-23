@@ -10,7 +10,7 @@ namespace SaintsField.Samples.EditorTest
 {
     public class Issue400 : SaintsEditorWindow
     {
-#if SAINTSFIELD_DEBUG
+#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_MENU_ITEM
         [MenuItem(RuntimeUtil.MenuRoot + "DEBUG Issue 400")]
 #endif
         public static void OpenWindow()

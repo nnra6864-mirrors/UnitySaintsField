@@ -494,7 +494,7 @@ namespace SaintsField.Editor.Playa.ScriptableRenderer
             SerializedObject serializedRendererFeaturesEditor = rendererFeatureEditor?.serializedObject;
             // serializedRendererFeaturesEditor.Update();
 
-            Urp.ScriptableRendererTitleElement titleElement = new Urp.ScriptableRendererTitleElement(serializedRendererFeaturesEditor, () =>
+            ScriptableRendererTitleElement titleElement = new ScriptableRendererTitleElement(serializedRendererFeaturesEditor, () =>
             {
                 Type type = typeof(ScriptableRendererDataEditor);
 
@@ -513,7 +513,7 @@ namespace SaintsField.Editor.Playa.ScriptableRenderer
                 // _mRendererFeatures.DeleteArrayElementAtIndex(index);
             });
             root.Add(titleElement);
-            titleElement.SetCustomViewData(renderFeatureProperty.propertyPath);
+            titleElement.viewDataKey = renderFeatureProperty.propertyPath;
             if (serializedRendererFeaturesEditor == null)
             {
                 titleElement.Add(new HelpBox("Missing reference, due to compilation issues or missing files. you can attempt auto fix or choose to remove the feature.", HelpBoxMessageType.Error));

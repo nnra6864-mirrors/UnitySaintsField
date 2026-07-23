@@ -64,6 +64,7 @@ namespace SaintsField.Editor.Utils
 
 #pragma warning disable CS0414 // Type or member is only assigned
         private bool _loadingSaintsEditor;
+        private bool _loadingAnimator;
         private bool _loadingCodeAnalysis;
 #pragma warning restore CS0414 // Type or member is only assigned
         // private bool _loadingUnitySerialization;
@@ -87,6 +88,7 @@ namespace SaintsField.Editor.Utils
         {
             _loadingSaintsEditor = false;
             _loadingCodeAnalysis = false;
+            _loadingAnimator = false;
             // _loadingUnitySerialization = false;
         }
 
@@ -146,6 +148,47 @@ namespace SaintsField.Editor.Utils
         {
             _loadingSaintsEditor = true;
             SaintsMenu.RemoveCompileDefine(SaintsMenu.SAINTSFIELD_SAINTS_EDITOR_APPLY);
+        }
+
+        [LayoutEnd]
+
+        #endregion
+
+
+        #region SAINTSFIELD_ANIMATOR_EDITOR_HIJACK
+
+        [LayoutStart("Animator Support", ELayout.TitleBox)]
+
+        [AboveText(
+            "By default, Animator uses IMGUI, which can not correctly render `StateMachineBehaviour`. You can force UI Toolkit support for it.",
+            5, 5)]
+        [Separator(5)]
+        [InfoBox("<size=+1>This feature uses a lot of undocumented/internal API from Unity which may not work at all in feature version of Unity. Remove `SAINTSFIELD_ANIMATOR_EDITOR_HIJACK` marco if you face any issue and report it", EMessageType.Warning)]
+
+        [InfoBox("Loading, please wait...", show: nameof(_loadingAnimator))]
+
+        [LayoutStart("./Animator Buttons", ELayout.Horizontal)]
+#if SAINTSFIELD_ANIMATOR_EDITOR_HIJACK
+        [DisableIf(true)]
+#endif
+        [Button("Enable")]
+        // ReSharper disable once UnusedMember.Local
+        private void EnableAnimatorUIToolkit()
+        {
+            _loadingAnimator = true;
+            SaintsMenu.AddCompileDefine(SaintsMenu.SAINTSFIELD_ANIMATOR_EDITOR_HIJACK);
+        }
+
+
+#if !SAINTSFIELD_ANIMATOR_EDITOR_HIJACK
+        [DisableIf(true)]
+#endif
+        [Button("Disable")]
+        // ReSharper disable once UnusedMember.Local
+        private void DisableAnimatorUIToolkit()
+        {
+            _loadingSaintsEditor = true;
+            SaintsMenu.RemoveCompileDefine(SaintsMenu.SAINTSFIELD_ANIMATOR_EDITOR_HIJACK);
         }
 
         [LayoutEnd]

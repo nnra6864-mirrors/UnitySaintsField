@@ -65,13 +65,36 @@ namespace SaintsField.Editor.Utils
 
         #endregion
 
+        // ReSharper disable once InconsistentNaming
+        public const string SAINTSFIELD_ANIMATOR_EDITOR_HIJACK = "SAINTSFIELD_ANIMATOR_EDITOR_HIJACK";
+        private const string AnimatorEditorHijackPath = RuntimeUtil.MenuRoot + "Enable UI Toolkit in Animator";
+        [MenuItem(AnimatorEditorHijackPath, priority = 3)]
+        public static void AnimatorEditorHijackApply()
+        {
+#if SAINTSFIELD_ANIMATOR_EDITOR_HIJACK
+            RemoveCompileDefine(
+#else
+            AddCompileDefine(
+#endif
+                SAINTSFIELD_ANIMATOR_EDITOR_HIJACK);
+        }
+
+        [MenuItem(AnimatorEditorHijackPath, true)]
+        public static bool AnimatorEditorHijackValidate() =>
+#if SAINTSFIELD_UI_TOOLKIT_DISABLE
+            false
+#else
+            true
+#endif
+        ;
+
 // #endif
 
         #endregion
 
         #region Config
 
-        [MenuItem(RuntimeUtil.MenuRoot + "Edit Config...", priority = 3)]
+        [MenuItem(RuntimeUtil.MenuRoot + "Edit Config...", priority = 4)]
         private static void CreateOrEditSaintsFieldConfig()
         {
             Selection.activeObject = EnsureCreateSaintsFieldConfig();
@@ -114,7 +137,7 @@ namespace SaintsField.Editor.Utils
 
         #endregion
 
-        [MenuItem(RuntimeUtil.MenuRoot + "Troubleshoot...", priority = 4)]
+        [MenuItem(RuntimeUtil.MenuRoot + "Troubleshoot...", priority = 5)]
         private static void Troubleshoot()
         {
             TroubleshootEditorWindow.Open();
@@ -329,6 +352,32 @@ namespace SaintsField.Editor.Utils
         ;
         #endregion
 
+        #region Inject Animator
+
+        public const int EnableSaintsEditorToAnimatorPathPriority = 200;
+        // ReSharper disable once InconsistentNaming
+        private const string SAINTSFIELD_SAINTS_EDITOR_ANIMATOR_STATE_APPLY = "SAINTSFIELD_SAINTS_EDITOR_ANIMATOR_STATE_APPLY";
+        private const string EnableSaintsEditorToAnimatorPath = RuntimeUtil.MenuRoot + "Enable SaintsEditor To Animator";
+        [MenuItem(EnableSaintsEditorToAnimatorPath, priority = EnableSaintsEditorToAnimatorPathPriority)]
+        public static void EnableSaintsEditorToAnimator()
+        {
+#if SAINTSFIELD_NETCODE_GAMEOBJECTS_DISABLED
+            RemoveCompileDefine
+#else
+            AddCompileDefine
+#endif
+                (SAINTSFIELD_SAINTS_EDITOR_ANIMATOR_STATE_APPLY);
+        }
+        [MenuItem(EnableSaintsEditorToAnimatorPath, true)]
+        public static bool EnableSaintsEditorToAnimatorValidate() =>
+#if SAINTSFIELD_ANIMATOR_EDITOR_HIJACK
+            true
+#else
+            false
+#endif
+        ;
+        #endregion
+
         #region Header GUI
 
         private const string EnableStandAloneHeaderGUISupportPath = RuntimeUtil.MenuRoot + "Enable Stand-Alone Header GUI Support";
@@ -536,6 +585,15 @@ namespace SaintsField.Editor.Utils
 #endif
             );
 
+            Menu.SetChecked(AnimatorEditorHijackPath,
+#if SAINTSFIELD_ANIMATOR_EDITOR_HIJACK
+                 true
+#else
+                false
+#endif
+                );
+
+
             Menu.SetChecked(EnableDOTweenPath,
 #if DOTWEEN && SAINTSFIELD_DOTWEEN_ENABLE
                 true
@@ -607,6 +665,14 @@ namespace SaintsField.Editor.Utils
                 false
 #endif
             );
+
+            Menu.SetChecked(EnableSaintsEditorToAnimatorPath,
+#if SAINTSFIELD_SAINTS_EDITOR_ANIMATOR_STATE_APPLY
+                true
+#else
+                false
+#endif
+                );
 
 
         }

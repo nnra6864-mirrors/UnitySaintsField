@@ -4757,7 +4757,7 @@ public Direction[] treeDireOpt;
 
 #### `FlagsDropdown` ####
 
->   ![NOTE]
+>   [!NOTE]
 >   This is default applied to `enum`-flags if you have SaintsEditor enabled
 
 A searchable dropdown for enum flags (bit mask). Useful when you have a big enum flags type.
@@ -9536,7 +9536,6 @@ public class ToggleInputRenderer: AbsRenderer
 
 [![video](https://github.com/user-attachments/assets/922d2cf8-267f-4c9c-b30e-c77fb4ed6675)](https://github.com/user-attachments/assets/6feb2f62-6396-4347-87ec-686874524a3a)
 
-
 ### Integerate ###
 
 You can integrate `SaintsEditor` with other editors.
@@ -9581,6 +9580,23 @@ public class IntegerateSaintsEditor: MyEditor
     }
 }
 ```
+
+### `Animator` ###
+
+Animator State & Animator SubStateMachine uses IMGUI to render. Even if you enabled SaintsEditor, the `StateMachineBehaviour` will display incorrectly for some SaintsField attribute (because IMGUI still have some problem in rendering).
+
+You can use `Tools` - `SaintsField` - `Enable UI Toolkit To Animator` to hijack Unity's default drawer to UI Toolkit's implement.
+
+> [!WARNING] 
+> This feature uses a lot of undocumented/internal API from Unity which may not work at all in feature version of Unity. Remove `SAINTSFIELD_ANIMATOR_EDITOR_HIJACK` marco if you face any issue and report it
+
+Before:
+
+![](https://github.com/user-attachments/assets/8b53d3ac-9b29-43e8-b2fe-cc3926da857c)
+
+After:
+
+![](https://github.com/user-attachments/assets/85c3b44d-0a78-437c-bfb2-5c8b0a0d23a4)
 
 ### Netcode for Game Objects ###
 
@@ -9628,6 +9644,8 @@ The drawer is called `SaintsField.Editor.Playa.NetCode.SaintsNetworkBehaviourEdi
 
 Please note: `NetworkVariable` and `NetworkList` will always be rendered at the top, just like Unity's default behavior. Putting it under `Layout` will not change this order and will have no effect.
 
+If you do not want to inherent from `SaintsNetworkBehaviour` at all, please do `Tools` - `Saints Field` - `Enable SaintsEditor To NetworkBehavior`
+
 ### Scriptable Renderer Data ###
 
 `ScriptableRendererData` uses `ScriptableRendererDataEditor` with IMGUI. Which makes `SaintsEditor` unable to kick-in.
@@ -9670,6 +9688,8 @@ public class MyRendererFeature: SaintsScriptableRendererFeature
     // ...
 }
 ```
+
+If you do not want to inherent from `SaintsUniversalRendererData` at all, please do `Tools` - `Saints Field` - `Enable SaintsEditor To Scriptable Rendererer`
 
 ### `Unity.Mathematics` ###
 

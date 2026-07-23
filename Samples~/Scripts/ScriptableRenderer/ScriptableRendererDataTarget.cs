@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace SaintsField.Samples.Scripts.ScriptableRenderer
 {
-#if SAINTSFIELD_DEBUG
+#if SAINTSFIELD_DEBUG && SAINTSFIELD_DEBUG_MENU_ITEM
     [CreateAssetMenu(
         fileName = "ScriptableRendererDataTarget",
-        menuName = "SAINTSFIELD_DEBUG/ScriptableRendererDataTarget")]
+        menuName = "SaintsField Debug/ScriptableRendererDataTarget")]
 #endif
     public class ScriptableRendererDataTarget: SaintsScriptableRendererData
     {

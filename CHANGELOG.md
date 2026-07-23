@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.24.0 ##
+
+1.  Unity Fix: You can now enable UI Toolkit support for Animator, which allows you to use UI Toolkit attribute/field type in `StateMachineBehavior`. Menu: `Tools` - `SaintsField` - `Enable UI Toolkit To Animator`
+2.  Add: You can now apply SaintsEditor to `NetworkBehavior` by `Tools` - `Saints Field` - `Enable SaintsEditor To NetworkBehavior`
+3.  Add: You can now apply SaintsEditor to Scriptable Renderer Data by `Tools` - `Saints Field` - `Enable SaintsEditor To Scriptable Rendererer`
+
 ## 5.23.4 ##
 
 Add: Layout attributes now support `paddingLeft` and `paddingRight` to work like field indent. [#419](https://github.com/TylerTemp/SaintsField/issues/419)

@@ -69,7 +69,13 @@ namespace SaintsField
 
         public decimal GetValueAllowCache()
         {
-            return cached ? value : GetValue();
+            if (cached)
+            {
+                return value;
+            }
+
+            cached = true;
+            return value = GetValue();
         }
 
         public int CompareTo(decimal other)

@@ -20,6 +20,7 @@
         "SaintsField.Runtime.Events",
         "SaintsField.Runtime.I2Loc",
         "SaintsField.Runtime.Spine",
+        "Unity.Timeline",
         "UniTask"
     ],
     "includePlatforms": [],

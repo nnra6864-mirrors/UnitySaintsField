@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using SaintsField.Editor.UIToolkitElements;
 using SaintsField.Editor.Utils;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -8,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UIElements;
 
-namespace SaintsField.Editor.Playa.ScriptableRenderer.Urp
+namespace SaintsField.Editor.Playa.ScriptableRenderer
 {
 #if UNITY_6000_0_OR_NEWER
     [UxmlElement]
@@ -24,7 +25,6 @@ namespace SaintsField.Editor.Playa.ScriptableRenderer.Urp
         private static readonly Dictionary<string, bool> CustomViewDataCache = new Dictionary<string, bool>();
 
         private readonly VisualElement _foldoutIcon;
-        private bool _expanded = true;
 
         public ScriptableRendererTitleElement() : this(null, null)
         {
@@ -32,23 +32,13 @@ namespace SaintsField.Editor.Playa.ScriptableRenderer.Urp
 
         public ScriptableRendererTitleElement(SerializedObject rendererFeatureSo, Action onRemove)
         {
-            _template ??= Util.LoadResource<VisualTreeAsset>("UIToolkit/ScriptableRenderer/Title.uxml");
-            TemplateContainer element = _template.CloneTree();
-            hierarchy.Add(element);
+            ComponentTitleMockElement title = new ComponentTitleMockElement(rendererFeatureSo?.targetObject);
+            hierarchy.Add(title);
 
-            contentContainer = element.Q<VisualElement>(name: "content");
-
-            Button titleButton = element.Q<Button>(name: "titleButton");
-            titleButton.clicked += () =>
-            {
-                _expanded = !_expanded;
-                RefreshExpand();
-            };
-
-            _foldoutIcon = element.Q<VisualElement>(name: "foldoutIcon");
+            contentContainer = title.contentContainer;
 
             #region contextMenuButton
-            Button contextMenuButton = element.Q<Button>(name: "contextMenuButton");
+            Button contextMenuButton = title.ContextMenuButton;
             contextMenuButton.clicked += () =>
             {
                 GenericDropdownMenu genericDropdownMenu = new GenericDropdownMenu();
@@ -75,18 +65,17 @@ namespace SaintsField.Editor.Playa.ScriptableRenderer.Urp
             };
             #endregion
 
-            Label titleLabel = element.Q<Label>(name: "titleLabel");
+            Label titleLabel = title.TitleLabel;
 
             if (rendererFeatureSo == null)
             {
-                _expanded = true;
-                RefreshExpand();
+                title.value = true;
                 titleLabel.text = "Missing";
                 return;
             }
 
             SerializedProperty activeProperty = rendererFeatureSo.FindProperty("m_Active");
-            Toggle toggleActive = element.Q<Toggle>(name: "toggleActive");
+            Toggle toggleActive = title.ToggleActive;
             toggleActive.bindingPath = activeProperty.propertyPath;
             toggleActive.TrackPropertyValue(activeProperty, p =>
             {
@@ -103,18 +92,7 @@ namespace SaintsField.Editor.Playa.ScriptableRenderer.Urp
                 titleLabel.text = GetCustomTitle(rendererFeatureSo.targetObject);
             });
             titleLabel.text = GetCustomTitle(rendererFeatureSo.targetObject);
-
-            Button helpButton = element.Q<Button>(name: "helpButton");
-            string helpURL = TryGetHelpURL(rendererFeatureSo.targetObject.GetType());
-            if (string.IsNullOrEmpty(helpURL))
-            {
-                helpButton.style.display = DisplayStyle.None;
-            }
-            else
-            {
-                helpButton.style.display = DisplayStyle.Flex;
-                helpButton.clicked += () => Application.OpenURL(helpURL);
-            }
+            titleLabel.style.color = new Color(128/255f, 128/255f, 128/255f);
 
             this.Bind(rendererFeatureSo);
         }
@@ -147,33 +125,5 @@ namespace SaintsField.Editor.Playa.ScriptableRenderer.Urp
         }
 
         public override VisualElement contentContainer { get; }
-
-        private string _customViewDataKey;
-
-        public void SetCustomViewData(string key)
-        {
-            _customViewDataKey = key;
-            if (CustomViewDataCache.TryGetValue(key, out bool expand))
-            {
-                _expanded = expand;
-                RefreshExpand();
-            }
-        }
-
-        private void RefreshExpand()
-        {
-            contentContainer.style.display = _expanded? DisplayStyle.Flex: DisplayStyle.None;
-            _foldoutIcon.style.rotate = _expanded ? new StyleRotate(new Rotate(90)) : new StyleRotate(StyleKeyword.None);
-            if (!string.IsNullOrEmpty(_customViewDataKey))
-            {
-                CustomViewDataCache[_customViewDataKey] = _expanded;
-            }
-        }
-
-        private static string TryGetHelpURL(Type type)
-        {
-            HelpURLAttribute attribute = type.GetCustomAttribute<HelpURLAttribute>(false);
-            return attribute?.URL;
-        }
     }
 }

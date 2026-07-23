@@ -230,6 +230,7 @@ MonoBehaviour:
   - {fileID: -5100868503608945421}
   - {fileID: -1387455674226930310}
   m_RendererFeatureMap: 5a5fcaba09ff72a1a796ea331323c9edb31b3a6dcb118836af24d1b6daf4dba346fbca985efd229adbc12e616f7ec5d7f314691c1f1336b97a8d1a546ac4beec
+  m_UseNativeRenderPass: 0
 --- !u!114 &3929410240289315763
 MonoBehaviour:
   m_ObjectHideFlags: 1

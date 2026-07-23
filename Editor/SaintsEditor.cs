@@ -44,8 +44,8 @@ namespace SaintsField.Editor
     {
         // ReSharper disable once FieldCanBeMadeReadOnly.Local
         // ReSharper disable once ConvertToConstant.Local
-        private static bool _saintsEditorIMGUI = true;
-        private SaintsEditorCore _coreEditor;
+        protected static bool _saintsEditorIMGUI = true;
+        protected SaintsEditorCore _coreEditor;
 
         // private MonoScript _monoScript;
         // private List<SaintsFieldWithInfo> _fieldWithInfos = new List<SaintsFieldWithInfo>();
